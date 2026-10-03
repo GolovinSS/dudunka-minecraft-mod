@@ -20,7 +20,7 @@ public final class FamilyBehaviorGoal extends Goal {
     private final Companion mob;
     private Activity task = Activity.IDLE;
     private Entity targetEntity;
-    private BlockPos targetBlock;
+    private BlockPos targetBlock,approachBlock;
     private long nextDecision, until;
     private int waitingTicks;
 
@@ -38,6 +38,7 @@ public final class FamilyBehaviorGoal extends Goal {
         task = Activity.IDLE;
         targetEntity = null;
         targetBlock = null;
+        approachBlock = null;
 
         if (mob.kind == Kind.MARUSYA) {
             var threats = mob.level().getEntitiesOfClass(Monster.class, mob.getBoundingBox().inflate(10), Entity::isAlive);
@@ -78,6 +79,7 @@ public final class FamilyBehaviorGoal extends Goal {
         }
 
         if (mob.kind == Kind.DUDUNKA) {
+            if(mob.openChestTarget()!=null)return false; // Let the reactive chest goal run after safety/family tasks.
             var apples = mob.level().getEntitiesOfClass(ItemEntity.class, mob.getBoundingBox().inflate(5),
                     item -> item.isAlive() && item.getItem().is(Items.APPLE) && !item.hasPickUpDelay());
             if (!apples.isEmpty()) {
@@ -85,10 +87,16 @@ public final class FamilyBehaviorGoal extends Goal {
                 task = Activity.CURIOUS;
                 return true;
             }
+            targetBlock=findBlock(6,p->mob.level().getBlockState(p).is(Blocks.CAKE));
+            if(targetBlock!=null) {
+                approachBlock=InterestTargets.approach(mob,targetBlock);
+                if(approachBlock!=null){task=Activity.CAKE_RUN;return true;}
+                targetBlock=null;
+            }
             if (mob.getRandom().nextInt(4) == 0) {
                 targetBlock = findBlock(4, p -> {
                     BlockState state = mob.level().getBlockState(p);
-                    return state.is(BlockTags.FLOWERS) || state.is(Blocks.CAKE) || state.getBlock() instanceof ChestBlock;
+                    return state.is(BlockTags.FLOWERS) || state.getBlock() instanceof ChestBlock;
                 });
                 if (targetBlock != null) { task = Activity.CURIOUS; return true; }
             }
@@ -125,6 +133,10 @@ public final class FamilyBehaviorGoal extends Goal {
 
     @Override public boolean canContinueToUse() {
         if (mob.staying() || mob.level().getGameTime() >= until || (targetEntity != null && (!targetEntity.isAlive() || targetEntity.level() != mob.level()))) return false;
+        if(task==Activity.CAKE_RUN && (targetBlock==null || !mob.level().hasChunkAt(targetBlock)
+                || !mob.level().getBlockState(targetBlock).is(Blocks.CAKE) || approachBlock==null
+                || !HomeRules.safeStanding(mob.level(),approachBlock,mob)))return false;
+        if(mob.openChestTarget()!=null && (task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE || task==Activity.ADJUST_GLASSES))return false;
         if (mob.kind == Kind.MARUSYA && task != Activity.ALERT && mob.tickCount % 20 == 0
                 && !mob.level().getEntitiesOfClass(Monster.class, mob.getBoundingBox().inflate(10), Entity::isAlive).isEmpty()) return false;
         if (task == Activity.WAIT_FOR_SYUSYA) return targetEntity instanceof Companion snail && mob.sameFamily(snail)
@@ -137,6 +149,9 @@ public final class FamilyBehaviorGoal extends Goal {
     }
 
     @Override public void tick() {
+        if(task==Activity.CAKE_RUN && !canContinueToUse()) {
+            until=0;targetBlock=null;approachBlock=null;mob.getNavigation().stop();mob.setActivity(Activity.IDLE);return;
+        }
         if (task == Activity.WAIT_FOR_SYUSYA || task == Activity.ALERT || task == Activity.WAVE || task == Activity.ADJUST_GLASSES
                 || (task == Activity.CURIOUS && mob.kind == Kind.MARUSYA)) {
             mob.getNavigation().stop();
@@ -151,8 +166,9 @@ public final class FamilyBehaviorGoal extends Goal {
             mob.setActivity(Activity.IDLE);
             return;
         }
-        Vec3 target = targetEntity == null ? Vec3.atCenterOf(targetBlock) : targetEntity.position();
+        Vec3 target = approachBlock!=null?Vec3.atBottomCenterOf(approachBlock):targetEntity == null ? Vec3.atCenterOf(targetBlock) : targetEntity.position();
         if (targetEntity != null) mob.getLookControl().setLookAt(targetEntity, 15, 25);
+        if(targetBlock!=null){Vec3 look=Vec3.atCenterOf(targetBlock);mob.getLookControl().setLookAt(look.x,look.y,look.z,15,25);}
         boolean resting = targetBlock != null && (task == Activity.SLEEP || task == Activity.SIT);
         if (task == Activity.SLEEP && mob.kind == Kind.MARUSYA && targetBlock != null) {
             BlockPos support = targetBlock.below();
@@ -160,11 +176,11 @@ public final class FamilyBehaviorGoal extends Goal {
             if (!shape.isEmpty()) target = new Vec3(targetBlock.getX() + .5, support.getY() + shape.bounds().maxY, targetBlock.getZ() + .5);
         }
         double distance = mob.distanceToSqr(target);
-        if (distance > (resting ? .36 : 2.25)) {
-            if (mob.tickCount % 10 == 0) mob.getNavigation().moveTo(target.x, target.y, target.z, 1);
+        if (distance > (resting || task==Activity.CAKE_RUN ? .36 : 2.25)) {
+            if (mob.tickCount % 10 == 0) mob.getNavigation().moveTo(target.x, target.y, target.z, task==Activity.CAKE_RUN?1.35:1);
         } else {
             mob.getNavigation().stop();
-            mob.setActivity(task);
+            mob.setActivity(task==Activity.CAKE_RUN?Activity.CURIOUS:task);
             if (task == Activity.SLEEP && mob.kind == Kind.MARUSYA && targetBlock != null
                     && mob.level().getBlockState(targetBlock.below()).is(BlockTags.BEDS)) FamilyAchievements.award(mob, "occupied_bed");
             if (targetEntity instanceof ItemEntity item && mob.kind == Kind.DUDUNKA && takeApple(mob, item)) {
@@ -183,6 +199,7 @@ public final class FamilyBehaviorGoal extends Goal {
         nextDecision = mob.level().getGameTime() + (task == Activity.WAVE || task == Activity.ADJUST_GLASSES ? 400 : 60);
         targetEntity = null;
         targetBlock = null;
+        approachBlock = null;
     }
 
     /** Server-only, revalidates the item immediately before consuming it. */

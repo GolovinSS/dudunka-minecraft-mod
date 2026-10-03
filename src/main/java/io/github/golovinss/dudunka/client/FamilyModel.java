@@ -71,7 +71,7 @@ public class FamilyModel extends EntityModel<Companion> {
         if(e.activity() != Activity.SIT && e.activity() != Activity.SLEEP && e.activity() != Activity.WAIT_FOR_SYUSYA)
             for(int i=0;i<legs.size();i++)legs.get(i).xRot=Mth.cos(limbSwing*(amount > .4f ? 1.1f : .8f)+(i%2==0?0:Mth.PI))*amount;
         AnimationPoses.apply(root, e.kind, e.activity(), age);
-        if(e.kind == Kind.DUDUNKA && amount > .4f && e.activity() == Activity.IDLE) root.y += Math.abs(Mth.sin(limbSwing * 1.1f)) * amount * .4f;
+        if(e.kind == Kind.DUDUNKA && amount > .4f && (e.activity() == Activity.IDLE || e.activity() == Activity.CAKE_RUN)) root.y += Math.abs(Mth.sin(limbSwing * 1.1f)) * amount * .4f;
     }
     @Override public void renderToBuffer(PoseStack p,VertexConsumer v,int light,int overlay,float red,float green,float blue,float alpha){root.render(p,v,light,overlay,red,green,blue,alpha);}
 }

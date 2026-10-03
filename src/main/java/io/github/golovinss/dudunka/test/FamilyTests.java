@@ -337,4 +337,77 @@ public class FamilyTests {
         player.discard();h.succeed();
     }
 
+    private static void interestFloor(GameTestHelper h) {
+        for(BlockPos p:BlockPos.betweenClosed(h.absolutePos(new BlockPos(0,1,0)),h.absolutePos(new BlockPos(5,1,5))))h.getLevel().setBlock(p,Blocks.STONE.defaultBlockState(),3);
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void actualChestOpenRespectsOwnerAndClose(GameTestHelper h) {
+        interestFloor(h);var player=testOwner(h);var other=testOwner(h);var level=h.getLevel();
+        var pos=h.absolutePos(new BlockPos(3,2,3));level.setBlock(pos,Blocks.CHEST.defaultBlockState(),3);
+        var chest=(net.minecraft.world.level.block.entity.ChestBlockEntity)level.getBlockEntity(pos);
+        chest.setItem(0,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,3));
+        var mob=create(h,Kind.DUDUNKA,player.getUUID(),new BlockPos(1,2,2));
+        var foreign=create(h,Kind.DUDUNKA,other.getUUID(),new BlockPos(2,2,2));
+        var cat=create(h,Kind.MARUSYA,player.getUUID(),new BlockPos(1,2,1));
+        var staying=create(h,Kind.DUDUNKA,player.getUUID(),new BlockPos(2,2,1));var data=new CompoundTag();staying.addAdditionalSaveData(data);data.putBoolean("Staying",true);staying.readAdditionalSaveData(data);
+        player.moveTo(pos.getX()+.5,pos.getY(),pos.getZ()+1.5,0,0);other.moveTo(player.position());
+        h.assertTrue(player.openMenu(chest).isPresent(),"Actual server chest menu must open");
+        h.assertTrue(pos.equals(mob.openChestTarget()),"Opening event must notify owner's Dudunka");
+        h.assertTrue(foreign.openChestTarget()==null && cat.openChestTarget()==null && staying.openChestTarget()==null,"Foreign family, cat and explicit stay must ignore the event");
+        mob.setOnGround(true);var goal=new ChestCuriosityGoal(mob);h.assertTrue(goal.canUse(),"Opened chest must have a reachable nearby standing position");goal.start();goal.tick();
+        h.assertTrue(mob.activity()==Activity.CURIOUS && chest.getItem(0).getCount()==3,"Reaction must not change chest contents");
+        player.closeContainer();h.assertTrue(!goal.canContinueToUse() && mob.openChestTarget()==null,"Closing the menu must end the reaction");goal.tick();goal.stop();
+        player.openMenu(chest);h.assertTrue(mob.openChestTarget()==null,"Reopening immediately must respect reaction cooldown");player.closeContainer();
+        other.openMenu(chest);h.assertTrue(foreign.openChestTarget()!=null && mob.openChestTarget()==null,"Another owner may notify only their own Dudunka");
+        other.closeContainer();player.discard();other.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void doubleChestUsesContainerIdentity(GameTestHelper h) {
+        interestFloor(h);var player=testOwner(h);var level=h.getLevel();
+        var a=h.absolutePos(new BlockPos(3,2,3));var b=a.east();
+        level.setBlock(a,Blocks.CHEST.defaultBlockState(),3);level.setBlock(b,Blocks.CHEST.defaultBlockState(),3);
+        var left=(net.minecraft.world.level.block.entity.ChestBlockEntity)level.getBlockEntity(a);var right=(net.minecraft.world.level.block.entity.ChestBlockEntity)level.getBlockEntity(b);
+        var compound=new net.minecraft.world.CompoundContainer(left,right);
+        var mob=create(h,Kind.DUDUNKA,player.getUUID(),new BlockPos(1,2,2));player.moveTo(a.getX(),a.getY(),a.getZ()+1,0,0);
+        player.containerMenu=net.minecraft.world.inventory.ChestMenu.sixRows(55,player.getInventory(),compound);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(player,player.containerMenu));
+        h.assertTrue(ChestCuriosity.isViewing(player,a) && ChestCuriosity.isViewing(player,b) && mob.openChestTarget()!=null,"Both halves of a compound chest must resolve by identity");
+        player.closeContainer();
+        player.containerMenu=net.minecraft.world.inventory.ChestMenu.threeRows(56,player.getInventory(),new net.minecraft.world.SimpleContainer(27));
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(player,player.containerMenu));
+        h.assertTrue(mob.openChestTarget()==null,"Generic menu without a world chest must not trigger interest");
+        player.closeContainer();player.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void cakeRunStopsWhenCakeDisappears(GameTestHelper h) {
+        interestFloor(h);var level=h.getLevel();var pos=h.absolutePos(new BlockPos(4,2,2));level.setBlock(pos,Blocks.CAKE.defaultBlockState(),3);
+        var cake=level.getBlockState(pos);var mob=create(h,Kind.DUDUNKA,UUID.randomUUID(),new BlockPos(1,2,2));
+        mob.setOnGround(true);var goal=new FamilyBehaviorGoal(mob);h.assertTrue(goal.canUse(),"Reachable cake must deterministically attract Dudunka");goal.start();
+        h.assertTrue(mob.activity()==Activity.CAKE_RUN,"Cake approach must synchronize the running activity");goal.tick();
+        h.assertTrue(mob.getNavigation().getPath()!=null && level.getBlockState(pos).equals(cake),"Cake approach must start navigation without consuming the cake");
+        level.setBlock(pos,Blocks.AIR.defaultBlockState(),3);
+        h.assertTrue(!goal.canContinueToUse(),"Removing cake must end the goal");goal.tick();goal.tick();
+        h.assertTrue(mob.activity()==Activity.IDLE && mob.getNavigation().isDone(),"Extra ticks after cake removal must safely clear navigation");goal.stop();
+        level.setBlock(pos,cake,3);var saved=new CompoundTag();mob.addAdditionalSaveData(saved);saved.putBoolean("Staying",true);mob.readAdditionalSaveData(saved);
+        h.assertTrue(!new FamilyBehaviorGoal(mob).canUse(),"Stay must override cake interest");h.succeed();
+    }
+
+    @GameTest(template="empty",timeoutTicks=140)
+    public static void chestReactionExpiresAndWaitsForFamily(GameTestHelper h) {
+        interestFloor(h);var player=testOwner(h);var level=h.getLevel();
+        var pos=h.absolutePos(new BlockPos(2,2,3));level.setBlock(pos,Blocks.CHEST.defaultBlockState(),3);
+        var chest=(net.minecraft.world.level.block.entity.ChestBlockEntity)level.getBlockEntity(pos);
+        var mob=create(h,Kind.DUDUNKA,player.getUUID(),new BlockPos(0,2,2));mob.setOnGround(true);
+        var snail=create(h,Kind.SYUSYA,player.getUUID(),new BlockPos(5,2,2));
+        player.moveTo(pos.getX()+.5,pos.getY(),pos.getZ()+1.5,0,0);player.openMenu(chest);
+        h.assertTrue(mob.openChestTarget()!=null,"Open chest must create a short-lived request");
+        var family=new FamilyBehaviorGoal(mob);h.assertTrue(family.canUse(),"Family waiting must remain selectable during a chest request");family.start();
+        h.assertTrue(mob.activity()==Activity.WAIT_FOR_SYUSYA,"Waiting for own Syusya must precede chest curiosity");family.stop();snail.discard();
+        h.assertTrue(!new FamilyBehaviorGoal(mob).canUse() && new ChestCuriosityGoal(mob).canUse(),"Without safety tasks, ambient curiosity must yield to the chest reaction");
+        h.runAfterDelay(110,()->{
+            h.assertTrue(mob.openChestTarget()==null,"Reaction request must expire even if the chest stays open");
+            player.closeContainer();player.discard();h.succeed();
+        });
+    }
+
 }
