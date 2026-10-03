@@ -34,6 +34,18 @@ def generate_snail(root):
                     for dy in range(2,64,9):
                         if (dx*3+dy)%5<3:draw.rectangle((x+dx,y+dy,x+dx+1,y+dy+1),fill='#cfad7b')
         atlas.save(root/f'syusya_{name}.png')
+def generate_cat(root):
+    colors=['#15151a','#1d1d23','#27272e','#07070a','#18181d','#202026','#232329','#f0c72f','#24242a','#69414a','#1a1a20','#fff3cb','#222228','#1f1f25','#29292f','#16161b']
+    for name,adult in [('teen',False),('adult',True)]:
+        atlas=Image.new('RGB',(256,256));draw=ImageDraw.Draw(atlas)
+        for i,hexcolor in enumerate(colors):
+            x,y=i%4*64,i//4*64;rgb=tuple(bytes.fromhex(hexcolor[1:]));draw.rectangle((x,y,x+63,y+63),fill=rgb)
+            if i not in (3,7,9,11):
+                for dx in range(64):
+                    for dy in range(64):
+                        offset=((dx*5+dy//(3 if adult else 5)+i)%5-2)
+                        draw.point((x+dx,y+dy),fill=tuple(max(0,min(255,c+offset)) for c in rgb))
+        atlas.save(root/f'marusya_{name}.png')
 if __name__=='__main__':
     root=Path(__file__).resolve().parents[1]/'src/main/resources/assets/dudunka/textures/entity'
-    generate(root);generate_snail(root)
+    generate(root);generate_snail(root);generate_cat(root)

@@ -37,7 +37,7 @@ public final class AnimationPoses {
             root.getChild("tail").yRot=Mth.sin(age*.08f)*.35f;
         }
         if (activity == Activity.ALERT && kind == Kind.MARUSYA) {
-            root.getChild("tail").xRot = -1.1f;
+            root.getChild("tail").xRot = root.getChild("tail").hasChild("tip") ? .25f : -1.1f;
             root.getChild("head").getChild("ear0").xRot = -.15f;
             root.getChild("head").getChild("ear1").xRot = -.15f;
         }

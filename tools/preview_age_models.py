@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 r=Path(__file__).resolve().parents[1]
 kind=sys.argv[1] if len(sys.argv)>1 else 'dudunka'
-if kind not in ('dudunka','syusya'):raise ValueError('Expected dudunka or syusya')
+if kind not in ('dudunka','syusya','marusya'):raise ValueError('Expected dudunka, syusya or marusya')
 data=[m for m in json.loads((r/'build/model-preview.json').read_text()) if m.get('kind','dudunka')==kind]
-if kind=='syusya':
+if kind in ('syusya','marusya'):
     fig,axes=plt.subplots(3,3,figsize=(12,7),gridspec_kw={'width_ratios':[1,2.45,1]});axes=axes.flatten()
 else:fig,axes=plt.subplots(1,9,figsize=(18,5))
 fig.patch.set_facecolor('#f5f1e9')
@@ -31,7 +31,7 @@ for model in data:
             else:xy=xyz[:,[0,1]]*np.array([-1,1]);depth=xyz[:,2].mean()
             faces.append((depth,xy,color))
         faces.sort(key=lambda item:item[0]);ax.add_collection(PolyCollection([x[1] for x in faces],facecolors=[x[2] for x in faces],edgecolors='none'))
-        ax.set(xlim=(-3.3,3.3) if kind=='dudunka' else ((-4.9,4.9) if view==1 else (-2,2)),ylim=(-.2,10.2) if kind=='dudunka' else (-.2,5),aspect='equal');ax.axis('off')
+        ax.set(xlim=(-3.3,3.3) if kind=='dudunka' else (((-6,8) if view==1 else (-3,3)) if kind=='marusya' else ((-4.9,4.9) if view==1 else (-2,2))),ylim=(-.2,10.2) if kind=='dudunka' else ((-.2,10) if kind=='marusya' else (-.2,5)),aspect='equal');ax.axis('off')
         ax.set_title(['Малыш','Подросток','Взрослая'][stage]+'\n'+['Спереди','Сбоку','Сзади'][view],fontsize=10)
-fig.suptitle(('Дюдюнька: геометрия моделей 0.8.0-alpha' if kind=='dudunka' else 'Сюся: геометрия моделей 0.9.0-alpha')+' • общий масштаб',fontsize=15)
+fig.suptitle(('Дюдюнька: геометрия моделей 0.8.0-alpha' if kind=='dudunka' else ('Сюся: геометрия моделей 0.9.0-alpha' if kind=='syusya' else 'Маруся: геометрия моделей 0.10.0-alpha'))+' • общий масштаб',fontsize=15)
 fig.tight_layout();fig.savefig(r/f'docs/{kind.upper()}-AGES-PREVIEW.png',dpi=120,facecolor=fig.get_facecolor());plt.close(fig)

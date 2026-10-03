@@ -21,6 +21,21 @@ public class CheckModels {
     });
    }
    if (k == Kind.DUDUNKA && !root.getChild("arm1").hasChild("ring")) throw new AssertionError("Ring must move with the hand");
+   if(k==Kind.MARUSYA){
+    if(!root.hasChild("chest_fur") || !root.hasChild("tail"))throw new AssertionError("Missing cat joints");
+    for(int i=0;i<4;i++)if(!root.hasChild("leg"+i))throw new AssertionError("Missing cat leg");
+    if(stage>0){
+     if(!root.getChild("head").getChild("ear0").hasChild("tuft"))throw new AssertionError("Missing ear tuft");
+     if(!root.getChild("leg0").hasChild("paw"))throw new AssertionError("Missing broad paw");
+     var random=net.minecraft.util.RandomSource.create(42);var tail=root.getChild("tail");
+     if(!overlap(tail.getRandomCube(random),tail.getChild("middle").getRandomCube(random))
+       || !overlap(tail.getChild("middle").getRandomCube(random),tail.getChild("upper").getRandomCube(random))
+       || !overlap(tail.getChild("upper").getRandomCube(random),tail.getChild("tip").getRandomCube(random)))throw new AssertionError("Disconnected fluffy tail");
+    }
+    var body=root.getChild("body").getRandomCube(net.minecraft.util.RandomSource.create(42));
+    double expected=6*(stage==0?1:stage==1?1.35:1.8);
+    if(Math.abs(body.maxZ-body.minZ-expected)>.002)throw new AssertionError("Cat body length ratio");
+   }
    if(k==Kind.SYUSYA){
     if(!root.getChild("head").hasChild("stalk0") || !root.getChild("head").hasChild("stalk1"))throw new AssertionError("Missing animated feelers");
     if(stage>0 && !root.hasChild("tail_tip"))throw new AssertionError("Missing rear body tip");

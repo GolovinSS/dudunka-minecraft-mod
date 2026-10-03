@@ -556,4 +556,22 @@ public class FamilyTests {
         h.assertTrue(copy.stage()==2 && copy.ownerId().equals(mob.ownerId()) && copy.trust()==60 && Math.abs(copy.getBbWidth()/baby-1.7f)<.001f,"Carrier NBT must preserve age, owner, trust and footprint");h.succeed();
     }
 
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void marusyaAgeDimensionsAndPettingPersist(GameTestHelper h) {
+        var owner=testOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(2,2,2));
+        float baby=mob.getBbWidth();var saved=new CompoundTag();mob.addAdditionalSaveData(saved);
+        saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*20+1);mob.readAdditionalSaveData(saved);
+        h.assertTrue(mob.stage()==1 && Math.abs(mob.getBbWidth()/baby-1.35f)<.001f,"Teen footprint must grow 1.35x");
+        saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);mob.readAdditionalSaveData(saved);
+        h.assertTrue(mob.stage()==2 && Math.abs(mob.getBbWidth()/baby-1.8f)<.001f && Math.abs(mob.growthScale()-.55f)<.001f,"Adult footprint grows without double render scaling");
+        owner.setShiftKeyDown(false);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,net.minecraft.world.item.ItemStack.EMPTY);
+        mob.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);
+        var after=new CompoundTag();mob.addAdditionalSaveData(after);
+        h.assertTrue(mob.trust()==2 && after.getInt("PetCooldown")==600,"Adult cat must still accept normal petting");
+        mob.readAdditionalSaveData(after);
+        h.assertTrue(mob.stage()==2 && mob.trust()==2 && Math.abs(mob.getBbWidth()/baby-1.8f)<.001f,"Age, trust and footprint must survive reload");
+        owner.setShiftKeyDown(true);mob.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(mob.staying(),"Shift interaction must retain stay command");owner.discard();h.succeed();
+    }
+
 }
