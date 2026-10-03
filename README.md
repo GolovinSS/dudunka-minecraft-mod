@@ -1,7 +1,11 @@
-# Dudunka Family — 0.3.0 alpha
+# Dudunka Family — 0.3.1 alpha
 
 Целевая сборка: **Better MC [FORGE] BMC4, Minecraft 1.20.1, v55.5, Forge 47.4.13**.
 Версия Forge подтверждена в manifest.json официального архива v55.5 (CurseForge file 7443284).
+
+## Исправление ошибки поедания яблока
+
+В 0.2.0-alpha и 0.3.0-alpha возможна ошибка `FamilyBehaviorGoal.tick`: повторный тик после поедания яблока обращается к уже очищенной цели. Исправлено в 0.2.1-alpha и 0.3.1-alpha. Для продолжения проверки поведения 0.2 используйте [0.2.1-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/main/dist/dudunka-0.2.1-alpha.jar); домашние места и переноска в нее не добавлены. Замените предыдущий JAR, оставьте в mods один файл Dudunka Family.
 
 ## Статус
 
@@ -26,7 +30,7 @@ Windows PowerShell:
 .\gradlew.bat build
 ```
 
-Результат: `build/libs/dudunka-0.3.0-alpha.jar`. Использовать обычный JAR, не sources и не dev.
+Результат: `build/libs/dudunka-0.3.1-alpha.jar`. Использовать обычный JAR, не sources и не dev.
 
 ## Установка
 
