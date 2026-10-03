@@ -17,7 +17,7 @@ public final class CampfireRestGoal extends Goal {
     @Override public boolean requiresUpdateEveryTick(){return true;}
     @Override public void start(){mob.getNavigation().stop();mob.setActivity(Activity.CURIOUS);}
     @Override public void tick(){
-        if(!canContinueToUse()){mob.getNavigation().stop();mob.setActivity(Activity.IDLE);return;}
+        if(!canContinueToUse()){FamilyFriendships.pause(mob);mob.getNavigation().stop();mob.setActivity(Activity.IDLE);return;}
         Vec3 target=Vec3.atBottomCenterOf(scene.seats().get(mob.getUUID()));
         Vec3 look=Vec3.atCenterOf(scene.fire());mob.getLookControl().setLookAt(look.x,look.y,look.z,10,25);
         if(mob.distanceToSqr(target)>.36){
@@ -28,6 +28,7 @@ public final class CampfireRestGoal extends Goal {
                 else {mob.getNavigation().stop();scene=null;mob.setActivity(Activity.IDLE);}
             }
         }else{mob.getNavigation().stop();mob.setActivity(Activity.CAMP_REST);}
+        FamilyFriendships.tick(mob,scene);
     }
-    @Override public void stop(){mob.getNavigation().stop();mob.setActivity(Activity.IDLE);scene=null;nextCheck=mob.level().getGameTime()+40;}
+    @Override public void stop(){FamilyFriendships.pause(mob);mob.getNavigation().stop();mob.setActivity(Activity.IDLE);scene=null;nextCheck=mob.level().getGameTime()+40;}
 }

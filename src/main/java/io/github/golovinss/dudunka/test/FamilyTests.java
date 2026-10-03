@@ -97,15 +97,18 @@ public class FamilyTests {
         h.succeed();
     }
 
-    private static net.minecraft.server.level.ServerPlayer testOwner(GameTestHelper h) {
+    private static net.minecraft.server.level.ServerPlayer testOwner(GameTestHelper h) {return testOwner(h,null);}
+    private static net.minecraft.server.level.ServerPlayer testOwner(GameTestHelper h,java.util.List<net.minecraft.network.chat.Component> messages) {
         // Ordinary ServerPlayer is needed: Forge rejects FakePlayer advancement awards.
         // Register directly in the test level with a no-op listener; there is no real network client.
         var player = new net.minecraft.server.level.ServerPlayer(h.getLevel().getServer(), h.getLevel(),
                 new com.mojang.authlib.GameProfile(UUID.randomUUID(), "DudunkaTest"));
         var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
         player.connection = new net.minecraft.server.network.ServerGamePacketListenerImpl(h.getLevel().getServer(), connection, player) {
-            @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {}
-            @Override public void send(net.minecraft.network.protocol.Packet<?> packet, net.minecraft.network.PacketSendListener listener) {}
+            @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {
+                if(messages!=null && packet instanceof net.minecraft.network.protocol.game.ClientboundSystemChatPacket chat)messages.add(chat.content());
+            }
+            @Override public void send(net.minecraft.network.protocol.Packet<?> packet, net.minecraft.network.PacketSendListener listener) {send(packet);}
         };
         player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
         h.getLevel().addNewPlayer(player);
@@ -572,6 +575,92 @@ public class FamilyTests {
         h.assertTrue(mob.stage()==2 && mob.trust()==2 && Math.abs(mob.getBbWidth()/baby-1.8f)<.001f,"Age, trust and footprint must survive reload");
         owner.setShiftKeyDown(true);mob.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);
         h.assertTrue(mob.staying(),"Shift interaction must retain stay command");owner.discard();h.succeed();
+    }
+
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void friendshipLedgerDeduplicatesPersistsAndCaps(GameTestHelper h) {
+        var ledger=new FamilyFriendships();UUID owner=UUID.randomUUID(),a=UUID.randomUUID(),b=UUID.randomUUID();
+        for(int i=0;i<=59;i++){
+            ledger.observe(owner,a,Kind.DUDUNKA,b,Kind.MARUSYA,i*20);
+            ledger.observe(owner,b,Kind.MARUSYA,a,Kind.DUDUNKA,i*20);
+        }
+        h.assertTrue(ledger.score(owner,a,b)==0 && ledger.progress(owner,a,b)==1180,"Two reporters must not double-count the same pair/second");
+        var saved=ledger.save(new CompoundTag());var restored=FamilyFriendships.load(saved);
+        restored.observe(owner,a,Kind.DUDUNKA,b,Kind.MARUSYA,100000);
+        h.assertTrue(restored.score(owner,a,b)==0 && restored.progress(owner,a,b)==1180,"First observation after reload must not credit offline time");
+        restored.observe(owner,b,Kind.MARUSYA,a,Kind.DUDUNKA,100020);
+        h.assertTrue(restored.score(owner,a,b)==1 && restored.progress(owner,a,b)==0,"Persisted partial minute must finish after one valid second");
+        restored.observe(owner,a,Kind.DUDUNKA,b,Kind.MARUSYA,200000);
+        h.assertTrue(restored.score(owner,a,b)==1,"Long gap must not grant retroactive points");
+        restored.pause(owner,a);restored.observe(owner,a,Kind.DUDUNKA,b,Kind.MARUSYA,200020);
+        h.assertTrue(restored.progress(owner,a,b)==0,"Pause must clear the continuity sample");
+        for(int sample=1;sample<=6100;sample++)restored.observe(owner,a,Kind.DUDUNKA,b,Kind.MARUSYA,200020+sample*20);
+        h.assertTrue(restored.score(owner,a,b)==100 && restored.progress(owner,a,b)==0,"Friendship must cap at 100");
+        UUID stranger=UUID.randomUUID();h.assertTrue(restored.score(stranger,a,b)==0 && restored.relations(stranger,a).isEmpty(),"Owners must have isolated relationships");
+        h.assertTrue(!restored.observe(owner,a,Kind.DUDUNKA,a,Kind.DUDUNKA,0),"Self friendship must be rejected");
+        var relation=restored.relations(owner,a).get(0);h.assertTrue(relation.partner().equals(b) && relation.kind()==Kind.MARUSYA,"Symmetric pair ordering must preserve the partner's kind");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=120)
+    public static void friendshipAccruesOnlyDuringSeatedCampfireRest(GameTestHelper h) {
+        var owner=testOwner(h);restFire(h,owner);
+        var a=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(0,2,2));a.setOnGround(true);
+        var b=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));b.setOnGround(true);
+        var foreign=create(h,Kind.MARUSYA,UUID.randomUUID(),new BlockPos(4,2,4));foreign.setOnGround(true);
+        var scene=CampfireScenes.select(a);h.assertTrue(scene!=null,"Fixture must form own campfire scene");
+        for(var mob:java.util.List.of(a,b)){
+            var seat=scene.seats().get(mob.getUUID());mob.moveTo(seat.getX()+.5,seat.getY(),seat.getZ()+.5,0,0);
+        }
+        var ledger=FamilyFriendships.get(h.getLevel().getServer());long now=h.getLevel().getServer().overworld().getGameTime();
+        long start=now/20*20-1180;
+        for(int sample=0;sample<=59;sample++)ledger.observe(owner.getUUID(),a.getUUID(),a.kind,b.getUUID(),b.kind,start+sample*20);
+        var ga=new CampfireRestGoal(a);var gb=new CampfireRestGoal(b);
+        h.assertTrue(ga.canUse() && gb.canUse(),"Both rest goals must start");ga.start();gb.start();
+        h.onEachTick(()->{ga.tick();gb.tick();FamilyFriendships.tick(foreign,scene);});
+        int[] paused={-1};
+        h.runAfterDelay(45,()->{
+            h.assertTrue(a.activity()==Activity.CAMP_REST && b.activity()==Activity.CAMP_REST,"Both must really be seated in the scene");
+            h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==1,"Goal ticks must finish the seeded minute once, without duplicate credit");
+            h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),foreign.getUUID())==0,"Foreign character must not earn friendship");
+            owner.setShiftKeyDown(false);ga.tick();gb.tick();paused[0]=ledger.progress(owner.getUUID(),a.getUUID(),b.getUUID());
+        });
+        h.runAfterDelay(85,()->{
+            h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==1 && ledger.progress(owner.getUUID(),a.getUUID(),b.getUUID())==paused[0],"Standing owner must stop accumulation");
+            ga.stop();gb.stop();owner.discard();h.succeed();
+        });
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void establishedFriendsPreferNearbySafeSeats(GameTestHelper h) {
+        var messages=new java.util.ArrayList<net.minecraft.network.chat.Component>();var owner=testOwner(h,messages);restFire(h,owner);
+        var a=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(0,2,2));a.setOnGround(true);
+        var b=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));b.setOnGround(true);
+        var ledger=FamilyFriendships.get(h.getLevel().getServer());
+        for(int sample=0;sample<=600;sample++)ledger.observe(owner.getUUID(),a.getUUID(),a.kind,b.getUUID(),b.kind,sample*20);
+        ledger.pause(owner.getUUID(),a.getUUID());
+        h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==10,"Fixture must reach friends tier");
+        var scene=CampfireScenes.select(a);h.assertTrue(scene!=null,"Friend scene must remain reachable");
+        var first=scene.seats().get(a.getUUID());var second=scene.seats().get(b.getUUID());
+        h.assertTrue(!first.equals(second) && first.distSqr(second)<=4,"Established friends must reserve adjacent distinct ring places");
+        h.assertTrue(HomeRules.safeStanding(h.getLevel(),second,b) && CampfireScenes.safePath(b,b.getNavigation().createPath(second,0)),"Preference must still require safe standing and reachable path");
+        var book=new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BOOK);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,book);
+        int trust=b.trust();boolean stay=b.staying();messages.clear();b.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(messages.stream().anyMatch(message->message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+            && text.getKey().equals("message.dudunka.friendship_row") && text.getArgs()[1].equals(10)),"Book click must actually send the relationship score to its owner");
+        h.assertTrue(book.getCount()==1 && b.trust()==trust && b.staying()==stay,"Book interaction must not consume item, pet cat or change stay");
+        var foreignMessages=new java.util.ArrayList<net.minecraft.network.chat.Component>();var stranger=testOwner(h,foreignMessages);
+        stranger.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BOOK));
+        b.interact(stranger,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(foreignMessages.stream().noneMatch(message->message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+            && text.getKey().startsWith("message.dudunka.friendship_")) && !FamilyFriendships.show(stranger,b),"Foreign viewer must not receive relationship packets");
+        owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void friendshipLoadRejectsMalformedRows(GameTestHelper h) {
+        UUID owner=UUID.randomUUID(),a=UUID.randomUUID(),b=UUID.randomUUID();var rows=new net.minecraft.nbt.ListTag();
+        var valid=new CompoundTag();valid.putUUID("Owner",owner);valid.putUUID("First",a);valid.putUUID("Second",b);
+        valid.putString("FirstKind","dudunka");valid.putString("SecondKind","syusya");valid.putInt("Score",500);valid.putInt("Progress",999999);rows.add(valid);
+        var self=valid.copy();self.putUUID("Second",a);rows.add(self);var unknown=valid.copy();unknown.putString("FirstKind","missing");rows.add(unknown);rows.add(new CompoundTag());
+        var tag=new CompoundTag();tag.put("Bonds",rows);var ledger=FamilyFriendships.load(tag);
+        h.assertTrue(ledger.relations(owner,a).size()==1 && ledger.score(owner,a,b)==100 && ledger.progress(owner,a,b)==0,"Load must reject invalid rows and clamp valid values");h.succeed();
     }
 
 }

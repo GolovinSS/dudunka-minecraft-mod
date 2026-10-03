@@ -120,6 +120,7 @@ public class Companion extends PathfinderMob {
         if(owner!=null&&!owner.equals(player.getUUID())) { player.displayClientMessage(Component.translatable("message.dudunka.not_owner"),true); return InteractionResult.CONSUME; }
         if(owner==null) { player.displayClientMessage(Component.translatable("message.dudunka.hatch_first"),true); return InteractionResult.CONSUME; }
         var food=player.getItemInHand(hand);
+        if(food.is(net.minecraft.world.item.Items.BOOK)){FamilyFriendships.show(player,this);return InteractionResult.CONSUME;}
         if(food.is(DudunkaMod.CARRIER.get())) { SyusyaCarrierItem.capture(this,player,food); return InteractionResult.CONSUME; }
         if(kind.likes(food)) {
             if(feedCooldown>0){player.displayClientMessage(Component.translatable("message.dudunka.full"),true);return InteractionResult.CONSUME;}

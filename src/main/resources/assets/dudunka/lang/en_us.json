@@ -55,5 +55,13 @@
   "message.dudunka.carrier_stale": "This carrier no longer has a valid Syusya",
   "message.dudunka.carrier_space": "Syusya needs clear space and a safe floor",
   "message.dudunka.petted": "Marusya purrs. Trust: %s",
-  "message.dudunka.pet_cooldown": "Marusya is already content. Pet again in %s s"
+  "message.dudunka.pet_cooldown": "Marusya is already content. Pet again in %s s",
+  "message.dudunka.friendship_header": "%s's friendships:",
+  "message.dudunka.friendship_empty": "No acquaintances yet. Rest together by a campfire.",
+  "message.dudunka.friendship_row": "%s — %s/100, %s",
+  "message.dudunka.friendship_more": "More relationships: %s",
+  "friendship.dudunka.acquainted": "acquaintances",
+  "friendship.dudunka.friends": "friends",
+  "friendship.dudunka.close": "close friends",
+  "friendship.dudunka.family": "inseparable"
 }

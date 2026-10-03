@@ -55,5 +55,13 @@
   "message.dudunka.carrier_stale": "Эта переноска больше не содержит действующую Сюсю",
   "message.dudunka.carrier_space": "Для Сюси нужны свободное место и безопасный пол",
   "message.dudunka.petted": "Маруся мурчит. Доверие: %s",
-  "message.dudunka.pet_cooldown": "Маруся уже довольна. Погладить снова через %s с"
+  "message.dudunka.pet_cooldown": "Маруся уже довольна. Погладить снова через %s с",
+  "message.dudunka.friendship_header": "Дружба %s:",
+  "message.dudunka.friendship_empty": "Пока нет знакомств. Отдохните вместе у костра.",
+  "message.dudunka.friendship_row": "%s — %s/100, %s",
+  "message.dudunka.friendship_more": "Еще отношений: %s",
+  "friendship.dudunka.acquainted": "знакомые",
+  "friendship.dudunka.friends": "друзья",
+  "friendship.dudunka.close": "близкие друзья",
+  "friendship.dudunka.family": "неразлучные"
 }

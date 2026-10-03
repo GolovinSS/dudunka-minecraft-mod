@@ -40,8 +40,9 @@ public final class CampfireScenes {
                 || mob.level().isRainingAt(mob.blockPosition()))return false;
         var current=SCENES.get(mob.level());
         BlockPos seat=scene.seats().get(mob.getUUID());
-        return current!=null && current.get(scene.owner())==scene && baseValid(mob.level(),scene)
-                && seat!=null && HomeRules.safeStanding(mob.level(),seat,mob);
+        if(current==null || current.get(scene.owner())!=scene)return false;
+        if(!baseValid(mob.level(),scene)){current.remove(scene.owner());return false;}
+        return seat!=null && HomeRules.safeStanding(mob.level(),seat,mob);
     }
     public static boolean safePath(Companion mob,net.minecraft.world.level.pathfinder.Path path) {
         if(path==null || !path.canReach())return false;
@@ -83,7 +84,9 @@ public final class CampfireScenes {
             if(other.isInWaterOrBubble() || other.level().isRainingAt(other.blockPosition()))continue;
             List<BlockPos> candidates=new ArrayList<>();
             for(int[] offset:OFFSETS)candidates.add(fire.offset(offset[0],0,offset[1]));
-            candidates.sort(Comparator.comparingDouble(other.blockPosition()::distSqr));
+            BlockPos friend=FamilyFriendships.get(((net.minecraft.server.level.ServerLevel)mob.level()).getServer()).friendSeat(owner.getUUID(),other.getUUID(),seats);
+            candidates.sort(Comparator.comparingDouble((BlockPos seat)->friend==null?0:friend.distSqr(seat))
+                .thenComparingDouble(other.blockPosition()::distSqr));
             for(BlockPos seat:candidates) {
                 if(used.contains(seat) || !HomeRules.safeStanding(other.level(),seat,other))continue;
                 var path=other.getNavigation().createPath(seat,0);
