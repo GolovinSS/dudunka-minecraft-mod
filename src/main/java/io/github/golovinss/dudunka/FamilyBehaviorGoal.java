@@ -144,6 +144,13 @@ public final class FamilyBehaviorGoal extends Goal {
             if (task == Activity.WAIT_FOR_SYUSYA && ++waitingTicks == 120) FamilyAchievements.award(mob, "wait_for_syusya");
             return;
         }
+        // GoalSelector can tick a running goal again before its next continuation check.
+        // Eating an apple clears the entity target immediately; there is no destination left.
+        if (targetEntity == null && targetBlock == null) {
+            until = 0;
+            mob.setActivity(Activity.IDLE);
+            return;
+        }
         Vec3 target = targetEntity == null ? Vec3.atCenterOf(targetBlock) : targetEntity.position();
         if (targetEntity != null) mob.getLookControl().setLookAt(targetEntity, 15, 25);
         boolean resting = targetBlock != null && (task == Activity.SLEEP || task == Activity.SIT);

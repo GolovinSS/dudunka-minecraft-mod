@@ -1,1 +1,2 @@
 ad33b58afd16b48b52ff4710214834b42f1aedce00da28cb38737a0c19c164de  dist/dudunka-0.2.0-alpha.jar
+f972699d9ef4e02ea4bea43b192a4e0c5f010491d40542168e5fe56809808124  dist/dudunka-0.2.1-alpha.jar

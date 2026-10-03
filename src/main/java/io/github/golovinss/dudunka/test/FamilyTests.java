@@ -159,4 +159,21 @@ public class FamilyTests {
         });
     }
 
+    @GameTest(template="empty", timeoutTicks=40)
+    public static void appleGoalToleratesTicksAfterConsumption(GameTestHelper h) {
+        var mob=create(h,Kind.DUDUNKA,UUID.randomUUID(),new BlockPos(2,2,2));
+        var item=new net.minecraft.world.entity.item.ItemEntity(h.getLevel(),mob.getX(),mob.getY(),mob.getZ(),new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.APPLE,2));
+        item.setNoPickUpDelay();h.getLevel().addFreshEntity(item);
+        var goal=new FamilyBehaviorGoal(mob);
+        h.assertTrue(goal.canUse(),"Nearby apple must start a behavior goal");goal.start();goal.tick();
+        h.assertTrue(item.isAlive() && item.getItem().getCount()==1,"First goal tick must consume exactly one apple");
+        // Minecraft checks continuation less often than it ticks running goals.
+        for(int i=0;i<3;i++)goal.tick();
+        h.assertTrue(item.getItem().getCount()==1,"Extra ticks after clearing the target must not consume another apple");
+        h.assertTrue(!goal.canContinueToUse() && mob.activity()==Activity.IDLE,"Completed goal must stop safely");
+        goal.stop();goal.tick();
+        h.assertTrue(item.getItem().getCount()==1,"Tick with no active target must be harmless");
+        h.succeed();
+    }
+
 }
