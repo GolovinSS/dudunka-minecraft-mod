@@ -21,6 +21,7 @@ public class Companion extends PathfinderMob {
     private UUID owner;
     private BlockPos home;
     private String homeDimension;
+    private boolean homeIsMarker;
     private int growthTicks,trust,feedCooldown,recoveryTicks;
     public Companion(EntityType<? extends Companion> type,Level l,Kind kind) {
         super(type,l); this.kind=kind; setPersistenceRequired();
@@ -46,7 +47,12 @@ public class Companion extends PathfinderMob {
     public Player ownerPlayer() { return owner == null ? null : level().getPlayerByUUID(owner); }
     public boolean sameFamily(Companion other) { return owner != null && owner.equals(other.ownerId()); }
     public int trust() { return trust; }
-    public BlockPos homePosition() { return home != null && level().dimension().location().toString().equals(homeDimension) && level().hasChunkAt(home) ? home : null; }
+    public void bindHome(BlockPos anchor) { home=anchor.immutable(); homeDimension=level().dimension().location().toString(); homeIsMarker=true; }
+    public BlockPos homePosition() {
+        if(home==null || !level().dimension().location().toString().equals(homeDimension) || !level().hasChunkAt(home)) return null;
+        if(homeIsMarker && (!(level().getBlockEntity(home) instanceof HomeMarkerEntity marker) || !marker.validFor(this))) return null;
+        return HomeRules.nearbyStanding(level(),home,this);
+    }
     public Activity activity() {
         if (staying()) return Activity.SIT;
         return Activity.values()[Math.max(0, Math.min(Activity.values().length - 1, entityData.get(ACTIVITY)))];
@@ -69,7 +75,10 @@ public class Companion extends PathfinderMob {
         if(owner != null && tickCount % 200 == 0) FamilyAchievements.checkFamily(this);
         // Home radius bounds idle exploration without forcing chunk loads.
         Player p=owner==null?null:level().getPlayerByUUID(owner);
-        if(activity() == Activity.IDLE && !staying()&&home!=null&&level().dimension().location().toString().equals(homeDimension)&&(p==null||distanceToSqr(p)>400)&&tickCount%100==0&&blockPosition().distSqr(home)>144&&level().hasChunkAt(home))getNavigation().moveTo(home.getX()+.5,home.getY(),home.getZ()+.5,1);
+        if(activity()==Activity.IDLE && !staying() && (p==null||distanceToSqr(p)>400) && tickCount%100==0) {
+            BlockPos target=homePosition();
+            if(target!=null && blockPosition().distSqr(target)>144)getNavigation().moveTo(target.getX()+.5,target.getY(),target.getZ()+.5,1);
+        }
     }
     private void updateStage() {
         int next=Math.min(2,growthTicks/(DudunkaMod.GROWTH_SECONDS.get()*20));
@@ -80,6 +89,7 @@ public class Companion extends PathfinderMob {
         if(owner!=null&&!owner.equals(player.getUUID())) { player.displayClientMessage(Component.translatable("message.dudunka.not_owner"),true); return InteractionResult.CONSUME; }
         if(owner==null) { player.displayClientMessage(Component.translatable("message.dudunka.hatch_first"),true); return InteractionResult.CONSUME; }
         var food=player.getItemInHand(hand);
+        if(food.is(DudunkaMod.CARRIER.get())) { SyusyaCarrierItem.capture(this,player,food); return InteractionResult.CONSUME; }
         if(kind.likes(food)) {
             if(feedCooldown>0){player.displayClientMessage(Component.translatable("message.dudunka.full"),true);return InteractionResult.CONSUME;}
             boolean cookie = food.is(net.minecraft.world.item.Items.COOKIE);
@@ -104,22 +114,18 @@ public class Companion extends PathfinderMob {
         return super.hurt(source,amount);
     }
     private void returnHomeSafely() {
-        if(home==null||!level().dimension().location().toString().equals(homeDimension)||!level().hasChunkAt(home))return;
-        for(int dy=0;dy<=3;dy++)for(int dx=-2;dx<=2;dx++)for(int dz=-2;dz<=2;dz++){
-            BlockPos p=home.offset(dx,dy,dz);
-            if(!level().hasChunkAt(p)||!level().getBlockState(p.below()).isSolid()||!level().getFluidState(p).isEmpty())continue;
-            var box=getBoundingBox().move(p.getX()+.5-getX(),p.getY()-getY(),p.getZ()+.5-getZ());
-            if(level().noCollision(this,box)){teleportTo(p.getX()+.5,p.getY(),p.getZ()+.5);fallDistance=0;return;}
-        }
+        BlockPos p=homePosition();
+        if(p!=null){teleportTo(p.getX()+.5,p.getY(),p.getZ()+.5);fallDistance=0;}
     }
+
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public void addAdditionalSaveData(CompoundTag t) {
         super.addAdditionalSaveData(t); if(owner!=null)t.putUUID("FamilyOwner",owner); if(home!=null)t.putLong("FamilyHome",home.asLong()); if(homeDimension!=null)t.putString("HomeDimension",homeDimension);
-        t.putInt("GrowthTicks",growthTicks);t.putInt("Trust",trust);t.putInt("FeedCooldown",feedCooldown);t.putInt("RecoveryTicks",recoveryTicks);t.putBoolean("Staying",staying());
+        t.putBoolean("HomeMarker",homeIsMarker);t.putInt("GrowthTicks",growthTicks);t.putInt("Trust",trust);t.putInt("FeedCooldown",feedCooldown);t.putInt("RecoveryTicks",recoveryTicks);t.putBoolean("Staying",staying());
     }
     @Override public void readAdditionalSaveData(CompoundTag t) {
         super.readAdditionalSaveData(t);owner=t.hasUUID("FamilyOwner")?t.getUUID("FamilyOwner"):null;home=t.contains("FamilyHome")?BlockPos.of(t.getLong("FamilyHome")):null;
-        homeDimension=t.getString("HomeDimension");
+        homeDimension=t.getString("HomeDimension");homeIsMarker=t.getBoolean("HomeMarker");
         growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));updateStage();
     }
     private static class FollowOwner extends Goal {

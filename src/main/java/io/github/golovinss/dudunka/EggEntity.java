@@ -19,6 +19,7 @@ public class EggEntity extends BlockEntity {
     private int offerings,progress;
     private UUID owner;
     public EggEntity(BlockPos p,BlockState s) { super(DudunkaMod.EGG_BE.get(),p,s); }
+    public UUID ownerId() { return owner; }
     private Kind kind() { return ((EggBlock)getBlockState().getBlock()).kind; }
     public void interact(Player p,InteractionHand hand) {
         if(owner!=null&&!owner.equals(p.getUUID())) { p.displayClientMessage(Component.translatable("message.dudunka.egg_owned"),true); return; }
