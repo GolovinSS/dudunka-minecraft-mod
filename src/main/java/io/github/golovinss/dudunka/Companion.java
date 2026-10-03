@@ -1,0 +1,114 @@
+package io.github.golovinss.dudunka;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.*;
+import net.minecraft.world.*;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.*;
+import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import java.util.UUID;
+
+public class Companion extends PathfinderMob {
+    private static final EntityDataAccessor<Integer> STAGE=SynchedEntityData.defineId(Companion.class,EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> STAY=SynchedEntityData.defineId(Companion.class,EntityDataSerializers.BOOLEAN);
+    public final Kind kind;
+    private UUID owner;
+    private BlockPos home;
+    private String homeDimension;
+    private int growthTicks,trust,feedCooldown,recoveryTicks;
+    public Companion(EntityType<? extends Companion> type,Level l,Kind kind) {
+        super(type,l); this.kind=kind; setPersistenceRequired();
+    }
+    public static AttributeSupplier.Builder attributes(Kind k) {
+        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH,20).add(Attributes.MOVEMENT_SPEED,k.speed).add(Attributes.FOLLOW_RANGE,24);
+    }
+    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(STAGE,0); entityData.define(STAY,false); }
+    @Override protected void registerGoals() {
+        goalSelector.addGoal(0,new FloatGoal(this));
+        goalSelector.addGoal(1,new FollowOwner(this));
+        goalSelector.addGoal(4,new WaterAvoidingRandomStrollGoal(this, .8) {
+            @Override public boolean canUse() { return !staying()&&super.canUse(); }
+        });
+        goalSelector.addGoal(5,new LookAtPlayerGoal(this,Player.class,6));
+        goalSelector.addGoal(6,new RandomLookAroundGoal(this));
+    }
+    public void initialize(UUID owner,BlockPos home) { this.owner=owner; this.home=home.immutable(); this.homeDimension=level().dimension().location().toString(); setCustomName(Component.translatable("entity.dudunka."+kind.id)); }
+    public int stage() { return entityData.get(STAGE); }
+    public boolean staying() { return entityData.get(STAY); }
+    public float growthScale() { return stage()==0?.55f:stage()==1?.78f:1f; }
+    @Override public EntityDimensions getDimensions(Pose p) { return super.getDimensions(p).scale(growthScale()); }
+    @Override public void onSyncedDataUpdated(EntityDataAccessor<?> key) { super.onSyncedDataUpdated(key); if(STAGE.equals(key))refreshDimensions(); }
+    @Override public void aiStep() {
+        super.aiStep();
+        if(level().isClientSide) return;
+        if(feedCooldown>0)feedCooldown--;
+        if(recoveryTicks>0)recoveryTicks--;
+        if(staying())getNavigation().stop();
+        if(stage()<2) { growthTicks++; updateStage(); }
+        // Home radius bounds idle exploration without forcing chunk loads.
+        Player p=owner==null?null:level().getPlayerByUUID(owner);
+        if(!staying()&&home!=null&&level().dimension().location().toString().equals(homeDimension)&&(p==null||distanceToSqr(p)>400)&&tickCount%100==0&&blockPosition().distSqr(home)>144&&level().hasChunkAt(home))getNavigation().moveTo(home.getX()+.5,home.getY(),home.getZ()+.5,1);
+    }
+    private void updateStage() {
+        int next=Math.min(2,growthTicks/(DudunkaMod.GROWTH_SECONDS.get()*20));
+        if(next!=stage()){entityData.set(STAGE,next);refreshDimensions();}
+    }
+    @Override protected InteractionResult mobInteract(Player player,InteractionHand hand) {
+        if(level().isClientSide) return InteractionResult.SUCCESS;
+        if(owner!=null&&!owner.equals(player.getUUID())) { player.displayClientMessage(Component.translatable("message.dudunka.not_owner"),true); return InteractionResult.CONSUME; }
+        if(owner==null) { player.displayClientMessage(Component.translatable("message.dudunka.hatch_first"),true); return InteractionResult.CONSUME; }
+        var food=player.getItemInHand(hand);
+        if(kind.likes(food)) {
+            if(feedCooldown>0){player.displayClientMessage(Component.translatable("message.dudunka.full"),true);return InteractionResult.CONSUME;}
+            if(!player.getAbilities().instabuild)food.shrink(1);
+            feedCooldown=600; trust=Math.min(100,trust+5); heal(4);
+            if(stage()<2){growthTicks=Math.min(DudunkaMod.GROWTH_SECONDS.get()*40,growthTicks+600);updateStage();}
+            ((net.minecraft.server.level.ServerLevel)level()).sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,getX(),getY()+getBbHeight(),getZ(),3,.2,.1,.2,0);
+        } else if(player.isShiftKeyDown()&&food.isEmpty()) {
+            entityData.set(STAY,!staying()); getNavigation().stop();
+        }
+        player.displayClientMessage(Component.translatable("message.dudunka.companion_status",Component.translatable("stage.dudunka."+stage()),trust,Component.translatable(staying()?"mode.dudunka.stay":"mode.dudunka.follow")),true);
+        return InteractionResult.CONSUME;
+    }
+    @Override public boolean hurt(DamageSource source,float amount) {
+        if(level().isClientSide)return false;
+        if(source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL))return super.hurt(source,amount); // /kill remains administrative.
+        if(recoveryTicks>0)return false;
+        if(getHealth()-amount<=0) {
+            setHealth(getMaxHealth()); recoveryTicks=200; getNavigation().stop(); returnHomeSafely(); return false;
+        }
+        return super.hurt(source,amount);
+    }
+    private void returnHomeSafely() {
+        if(home==null||!level().dimension().location().toString().equals(homeDimension)||!level().hasChunkAt(home))return;
+        for(int dy=0;dy<=3;dy++)for(int dx=-2;dx<=2;dx++)for(int dz=-2;dz<=2;dz++){
+            BlockPos p=home.offset(dx,dy,dz);
+            if(!level().hasChunkAt(p)||!level().getBlockState(p.below()).isSolid()||!level().getFluidState(p).isEmpty())continue;
+            var box=getBoundingBox().move(p.getX()+.5-getX(),p.getY()-getY(),p.getZ()+.5-getZ());
+            if(level().noCollision(this,box)){teleportTo(p.getX()+.5,p.getY(),p.getZ()+.5);fallDistance=0;return;}
+        }
+    }
+    @Override public boolean removeWhenFarAway(double d) { return false; }
+    @Override public void addAdditionalSaveData(CompoundTag t) {
+        super.addAdditionalSaveData(t); if(owner!=null)t.putUUID("FamilyOwner",owner); if(home!=null)t.putLong("FamilyHome",home.asLong()); if(homeDimension!=null)t.putString("HomeDimension",homeDimension);
+        t.putInt("GrowthTicks",growthTicks);t.putInt("Trust",trust);t.putInt("FeedCooldown",feedCooldown);t.putInt("RecoveryTicks",recoveryTicks);t.putBoolean("Staying",staying());
+    }
+    @Override public void readAdditionalSaveData(CompoundTag t) {
+        super.readAdditionalSaveData(t);owner=t.hasUUID("FamilyOwner")?t.getUUID("FamilyOwner"):null;home=t.contains("FamilyHome")?BlockPos.of(t.getLong("FamilyHome")):null;
+        homeDimension=t.getString("HomeDimension");
+        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));updateStage();
+    }
+    private static class FollowOwner extends Goal {
+        private final Companion mob; private Player player;
+        FollowOwner(Companion mob){this.mob=mob;setFlags(java.util.EnumSet.of(Flag.MOVE,Flag.LOOK));}
+        @Override public boolean canUse(){player=mob.owner==null?null:mob.level().getPlayerByUUID(mob.owner);return !mob.staying()&&player!=null&&!player.isSpectator()&&mob.distanceToSqr(player)>9;}
+        @Override public boolean canContinueToUse(){return !mob.staying()&&player!=null&&player.isAlive()&&mob.distanceToSqr(player)>4&&mob.distanceToSqr(player)<576;}
+        @Override public void tick(){mob.getLookControl().setLookAt(player,10,30);if(mob.tickCount%10==0)mob.getNavigation().moveTo(player,1.1);}
+        @Override public void stop(){mob.getNavigation().stop();player=null;}
+    }
+}

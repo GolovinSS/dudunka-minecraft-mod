@@ -1,0 +1,11 @@
+{
+  "type": "dudunka:egg",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:chests/village/village_plains_house"
+    }
+  ],
+  "kind": "dudunka",
+  "chance": 0.04
+}

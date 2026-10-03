@@ -1,0 +1,32 @@
+{
+  "display": {
+    "icon": {
+      "item": "dudunka:marusya_egg"
+    },
+    "title": {
+      "text": "Кто там мурчит?"
+    },
+    "description": {
+      "text": "Найти яйцо Маруся"
+    },
+    "background": "minecraft:textures/block/moss_block.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "found": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "dudunka:marusya_egg"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

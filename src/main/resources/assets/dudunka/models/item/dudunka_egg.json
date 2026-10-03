@@ -1,0 +1,17 @@
+{
+  "parent": "dudunka:block/dudunka_egg",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    }
+  }
+}

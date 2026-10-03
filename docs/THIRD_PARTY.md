@@ -1,0 +1,1 @@
+Build scaffold and Gradle wrapper originate from the official Forge 1.20.1 MDK. See LICENSE-FORGE-MDK.txt. Minecraft/Forge libraries and Better MC modpack files are not redistributed in this archive. Model geometry, palette textures and game logic were created for this project.
