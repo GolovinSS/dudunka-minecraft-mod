@@ -663,4 +663,104 @@ public class FamilyTests {
         h.assertTrue(ledger.relations(owner,a).size()==1 && ledger.score(owner,a,b)==100 && ledger.progress(owner,a,b)==0,"Load must reject invalid rows and clamp valid values");h.succeed();
     }
 
+    private static BlockPos sceneHome(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner,Kind kind) {
+        interestFloor(h);var level=h.getLevel();var anchor=h.absolutePos(new BlockPos(2,2,2));
+        for(BlockPos p:BlockPos.betweenClosed(h.absolutePos(new BlockPos(0,4,0)),h.absolutePos(new BlockPos(5,4,5))))level.setBlock(p,Blocks.STONE.defaultBlockState(),3);
+        level.setBlock(anchor,DudunkaMod.HOMES.get(kind).get().defaultBlockState(),3);
+        ((HomeMarkerEntity)level.getBlockEntity(anchor)).claim(owner.getUUID());
+        level.setBlock(h.absolutePos(new BlockPos(0,2,0)),Blocks.CHEST.defaultBlockState(),3);
+        level.setBlock(h.absolutePos(new BlockPos(0,2,4)),Blocks.CAKE.defaultBlockState(),3);
+        level.setBlock(h.absolutePos(new BlockPos(1,2,0)),Blocks.TORCH.defaultBlockState(),3);
+        var bed=Blocks.RED_BED.defaultBlockState().setValue(net.minecraft.world.level.block.BedBlock.FACING,net.minecraft.core.Direction.NORTH);
+        level.setBlock(h.absolutePos(new BlockPos(4,2,1)),bed.setValue(net.minecraft.world.level.block.BedBlock.PART,net.minecraft.world.level.block.state.properties.BedPart.HEAD),3);
+        level.setBlock(h.absolutePos(new BlockPos(4,2,2)),bed.setValue(net.minecraft.world.level.block.BedBlock.PART,net.minecraft.world.level.block.state.properties.BedPart.FOOT),3);
+        level.setBlock(h.absolutePos(new BlockPos(4,2,3)),Blocks.DANDELION.defaultBlockState(),3);
+        var position=h.absolutePos(new BlockPos(1,2,1));owner.moveTo(position.getX()+.5,position.getY(),position.getZ()+.5,0,0);
+        h.assertTrue(((HomeMarkerEntity)level.getBlockEntity(anchor)).conditions(true).ready(),"Fixture must be a complete marked house");return anchor;
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void homeCatReservesBedAndYieldsToPlayer(GameTestHelper h) {
+        var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.MARUSYA);long previous=h.getLevel().getDayTime();
+        h.getLevel().setDayTime(12500);
+        try {
+            var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(3,2,1));cat.bindHome(anchor);cat.setOnGround(true);
+            var goal=new HomeSceneGoal(cat);h.assertTrue(goal.canUse(),"Evening cat must select reachable free house bed");
+            var scene=HomeScenes.select(cat);h.assertTrue(scene!=null && scene.activity()==Activity.SLEEP,"Scene must choose bed sleep");
+            goal.start();cat.moveTo(scene.destination().x,scene.destination().y,scene.destination().z,0,0);goal.tick();
+            h.assertTrue(cat.activity()==Activity.SLEEP && scene.focus().equals(cat.homeSceneTarget()),"Only arrival must set sleep and reserve bed");
+            var other=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(3,2,3));other.bindHome(anchor);other.setOnGround(true);
+            h.assertTrue(HomeScenes.select(other)==null,"Second cat must not reserve the same bed");
+            var bed=h.getLevel().getBlockState(scene.focus());h.getLevel().setBlock(scene.focus(),bed.setValue(net.minecraft.world.level.block.BedBlock.OCCUPIED,true),3);
+            goal.tick();goal.tick();h.assertTrue(cat.activity()==Activity.IDLE && cat.homeSceneTarget()==null,"Player occupation must end scene, including extra tick");
+            h.getLevel().setBlock(scene.focus(),bed,3);h.getLevel().setDayTime(6000);
+            h.assertTrue(HomeScenes.select(cat)==null,"Daytime must not trigger before-bed scene");
+            owner.discard();h.succeed();
+        } finally {h.getLevel().setDayTime(previous);}
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void homePlantsRequireOwnerAndRevalidate(GameTestHelper h) {
+        var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.SYUSYA);
+        var snail=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(3,2,3));snail.setOnGround(true);
+        h.assertTrue(HomeScenes.select(snail)==null,"Legacy egg home must not start marked house scenes");
+        snail.bindHome(anchor);var scene=HomeScenes.select(snail);h.assertTrue(scene!=null && scene.activity()==Activity.SEEK_PLANT,"Snail must select reachable house flower");
+        var goal=new HomeSceneGoal(snail);h.assertTrue(goal.canUse(),"Plant scene must start");goal.start();
+        snail.moveTo(scene.destination().x,scene.destination().y,scene.destination().z,0,0);goal.tick();
+        h.assertTrue(snail.activity()==Activity.SEEK_PLANT,"Arrived snail must watch plant");
+        h.getLevel().setBlock(scene.focus(),Blocks.AIR.defaultBlockState(),3);goal.tick();goal.tick();
+        h.assertTrue(snail.activity()==Activity.IDLE && snail.homeSceneTarget()==null,"Destroyed plant must release scene without stale target");
+        h.getLevel().setBlock(scene.focus(),Blocks.DANDELION.defaultBlockState(),3);
+        owner.moveTo(owner.getX()+20,owner.getY(),owner.getZ(),0,0);h.assertTrue(HomeScenes.select(snail)==null,"Leaving home must end selection");
+        owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void homeSceneHonorsStayAndHomeOwnership(GameTestHelper h) {
+        var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.DUDUNKA);
+        var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(3,2,3));mob.bindHome(anchor);mob.setOnGround(true);
+        var scene=HomeScenes.select(mob);h.assertTrue(scene!=null && scene.activity()==Activity.SIT,"Dudunka must select quiet flower seat");
+        var goal=new HomeSceneGoal(mob);h.assertTrue(goal.canUse(),"Dudunka scene starts");goal.start();
+        owner.setShiftKeyDown(true);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,net.minecraft.world.item.ItemStack.EMPTY);mob.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);goal.tick();
+        h.assertTrue(mob.staying() && mob.homeSceneTarget()==null,"Stay command must release temporary scene");
+        var foreign=create(h,Kind.DUDUNKA,UUID.randomUUID(),new BlockPos(3,2,1));foreign.bindHome(anchor);foreign.setOnGround(true);
+        h.assertTrue(HomeScenes.select(foreign)==null,"Foreign marker must not support a scene");
+        mob.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);owner.setShiftKeyDown(false);
+        h.assertTrue(HomeScenes.select(mob)==null && !mob.homeSceneReady(),"Home scene pause must also let ambient goals run");
+        var ambient=new FamilyBehaviorGoal(mob);h.assertTrue(ambient.canUse(),"Cake interest must become available between home scenes");ambient.start();
+        h.assertTrue(mob.activity()==Activity.CAKE_RUN,"Existing cake behavior must resume during home scene cooldown");ambient.stop();
+        h.getLevel().setBlock(anchor,Blocks.AIR.defaultBlockState(),3);
+        h.assertTrue(HomeScenes.select(mob)==null && mob.homeAnchor()==null,"Removed marker must invalidate house");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=140)
+    public static void homeDudunkaActuallyWalksToFlower(GameTestHelper h) {
+        var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.DUDUNKA);
+        var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(1,2,3));mob.bindHome(anchor);mob.setOnGround(true);mob.setNoAi(false);
+        h.runAfterDelay(100,()->{
+            h.assertTrue(mob.activity()==Activity.SIT && mob.homeSceneTarget()!=null,"Live navigation: activity="+mob.activity()+", position="+mob.position()+", target="+mob.homeSceneTarget()+", path="+mob.getNavigation().getPath()+", scene="+HomeScenes.select(mob));
+            h.assertTrue(mob.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(anchor))<=100,"Home scene remains local");
+            owner.discard();h.succeed();
+        });
+    }
+
+    @GameTest(template="empty",batch="home_evening",timeoutTicks=160)
+    public static void adultHomeCatActuallyClimbsBedAndYieldsToSleep(GameTestHelper h) {
+        var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.MARUSYA);long previous=h.getLevel().getDayTime();
+        h.getLevel().setDayTime(12500);
+        var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(2,2,1));cat.bindHome(anchor);cat.setOnGround(true);
+        var data=new CompoundTag();cat.addAdditionalSaveData(data);data.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);cat.readAdditionalSaveData(data);cat.setNoAi(false);
+        h.runAfterDelay(110,()->{
+            try {
+                var bed=h.absolutePos(new BlockPos(4,2,1));
+                var expected=new net.minecraft.world.phys.Vec3(bed.getX()+.5,bed.getY()+.5625,bed.getZ()+.5);
+                h.assertTrue(cat.stage()==2 && cat.activity()==Activity.SLEEP && cat.distanceToSqr(expected)<=.36,
+                    "Adult cat must really climb and sleep on bed: "+cat.position()+", "+cat.activity());
+                owner.startSleeping(bed);
+            } catch(RuntimeException error) {h.getLevel().setDayTime(previous);throw error;}
+        });
+        h.runAfterDelay(135,()->{
+            try {
+                h.assertTrue(cat.homeSceneTarget()==null && cat.activity()!=Activity.SLEEP,"Actual sleeping owner must end the cat scene");
+                h.succeed();
+            } finally {owner.stopSleepInBed(true,true);owner.discard();h.getLevel().setDayTime(previous);}
+        });
+    }
+
 }

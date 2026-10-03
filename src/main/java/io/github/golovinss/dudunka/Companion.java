@@ -24,7 +24,8 @@ public class Companion extends PathfinderMob {
     private String homeDimension;
     private boolean homeIsMarker;
     private BlockPos openedChest;
-    private long chestNoticeUntil,chestNoticeNext;
+    private BlockPos homeSceneTarget;
+    private long chestNoticeUntil,chestNoticeNext,homeSceneCooldownUntil;
     private int growthTicks,trust,feedCooldown,recoveryTicks,petCooldown,pettingTicks;
     public Companion(EntityType<? extends Companion> type,Level l,Kind kind) {
         super(type,l); this.kind=kind; setPersistenceRequired(); refreshDimensions();
@@ -39,12 +40,13 @@ public class Companion extends PathfinderMob {
         goalSelector.addGoal(2,new FamilyBehaviorGoal(this));
         goalSelector.addGoal(3,new CampfireRestGoal(this));
         goalSelector.addGoal(4,new ChestCuriosityGoal(this));
-        goalSelector.addGoal(5,new FollowOwner(this));
-        goalSelector.addGoal(6,new WaterAvoidingRandomStrollGoal(this, .8) {
+        goalSelector.addGoal(5,new HomeSceneGoal(this));
+        goalSelector.addGoal(6,new FollowOwner(this));
+        goalSelector.addGoal(7,new WaterAvoidingRandomStrollGoal(this, .8) {
             @Override public boolean canUse() { return !staying()&&super.canUse(); }
         });
-        goalSelector.addGoal(7,new LookAtPlayerGoal(this,Player.class,6));
-        goalSelector.addGoal(8,new RandomLookAroundGoal(this));
+        goalSelector.addGoal(8,new LookAtPlayerGoal(this,Player.class,6));
+        goalSelector.addGoal(9,new RandomLookAroundGoal(this));
     }
     public void initialize(UUID owner,BlockPos home) { this.owner=owner; this.home=home.immutable(); this.homeDimension=level().dimension().location().toString(); setCustomName(Component.translatable("entity.dudunka."+kind.id)); }
     public int stage() { return entityData.get(STAGE); }
@@ -77,6 +79,15 @@ public class Companion extends PathfinderMob {
         return openedChest;
     }
     public void bindHome(BlockPos anchor) { home=anchor.immutable(); homeDimension=level().dimension().location().toString(); homeIsMarker=true; }
+    public boolean homeSceneReady() { return level().getGameTime()>=homeSceneCooldownUntil; }
+    public void pauseHomeScenes() { homeSceneCooldownUntil=level().getGameTime()+200; }
+    public BlockPos homeSceneTarget() { return homeSceneTarget; }
+    public void reserveHomeScene(BlockPos target) { homeSceneTarget=target; }
+    /** Scenes require a real, currently valid personal marker in this dimension. */
+    public BlockPos homeAnchor() {
+        if(!homeIsMarker || home==null || !level().dimension().location().toString().equals(homeDimension) || !level().hasChunkAt(home))return null;
+        return level().getBlockEntity(home) instanceof HomeMarkerEntity marker && marker.validFor(this)?home:null;
+    }
     public BlockPos homePosition() {
         if(home==null || !level().dimension().location().toString().equals(homeDimension) || !level().hasChunkAt(home)) return null;
         if(homeIsMarker && (!(level().getBlockEntity(home) instanceof HomeMarkerEntity marker) || !marker.validFor(this))) return null;
@@ -169,7 +180,7 @@ public class Companion extends PathfinderMob {
     @Override public void readAdditionalSaveData(CompoundTag t) {
         super.readAdditionalSaveData(t);owner=t.hasUUID("FamilyOwner")?t.getUUID("FamilyOwner"):null;home=t.contains("FamilyHome")?BlockPos.of(t.getLong("FamilyHome")):null;
         homeDimension=t.getString("HomeDimension");homeIsMarker=t.getBoolean("HomeMarker");
-        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;openedChest=null;chestNoticeUntil=0;chestNoticeNext=0;refreshTrustSpeed();updateStage();
+        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;homeSceneTarget=null;homeSceneCooldownUntil=0;openedChest=null;chestNoticeUntil=0;chestNoticeNext=0;refreshTrustSpeed();updateStage();
     }
     private static class PettingGoal extends Goal {
         private final Companion mob;

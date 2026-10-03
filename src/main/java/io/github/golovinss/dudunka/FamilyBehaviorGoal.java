@@ -65,8 +65,11 @@ public final class FamilyBehaviorGoal extends Goal {
             if (targetBlock != null) { task = Activity.SIT; return true; }
         }
         if(CampfireScenes.select(mob)!=null)return false; // Explicit family rest yields only after urgent/weather tasks.
+        if(HomeScenes.select(mob)!=null)return false;
         if (mob.level().isNight()) {
-            if (mob.kind == Kind.MARUSYA) {
+            // A marked cat uses the reserved scene; do not bypass its cooldown or occupied-bed checks.
+            if(mob.kind==Kind.MARUSYA && mob.homeAnchor()!=null)return false;
+            if (mob.kind == Kind.MARUSYA && mob.homeAnchor()==null) {
                 targetBlock = findBlock(5, p -> mob.level().getBlockState(p).is(BlockTags.BEDS)
                         || mob.level().getBlockState(p).getBlock() instanceof ChestBlock);
                 if (targetBlock != null) { targetBlock = targetBlock.above(); task = Activity.SLEEP; return true; }
