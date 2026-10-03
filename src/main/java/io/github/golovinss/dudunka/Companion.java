@@ -17,12 +17,13 @@ public class Companion extends PathfinderMob {
     private static final EntityDataAccessor<Integer> STAGE=SynchedEntityData.defineId(Companion.class,EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> STAY=SynchedEntityData.defineId(Companion.class,EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> ACTIVITY = SynchedEntityData.defineId(Companion.class, EntityDataSerializers.INT);
+    private static final UUID TRUST_SPEED_ID=UUID.fromString("c70ba864-9e01-4ae1-b6d5-d22257b79212");
     public final Kind kind;
     private UUID owner;
     private BlockPos home;
     private String homeDimension;
     private boolean homeIsMarker;
-    private int growthTicks,trust,feedCooldown,recoveryTicks;
+    private int growthTicks,trust,feedCooldown,recoveryTicks,petCooldown,pettingTicks;
     public Companion(EntityType<? extends Companion> type,Level l,Kind kind) {
         super(type,l); this.kind=kind; setPersistenceRequired();
     }
@@ -32,8 +33,9 @@ public class Companion extends PathfinderMob {
     @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(STAGE,0); entityData.define(STAY,false); entityData.define(ACTIVITY, Activity.IDLE.ordinal()); }
     @Override protected void registerGoals() {
         goalSelector.addGoal(0,new FloatGoal(this));
-        goalSelector.addGoal(1,new FamilyBehaviorGoal(this));
-        goalSelector.addGoal(2,new FollowOwner(this));
+        goalSelector.addGoal(1,new PettingGoal(this));
+        goalSelector.addGoal(2,new FamilyBehaviorGoal(this));
+        goalSelector.addGoal(3,new FollowOwner(this));
         goalSelector.addGoal(4,new WaterAvoidingRandomStrollGoal(this, .8) {
             @Override public boolean canUse() { return !staying()&&super.canUse(); }
         });
@@ -47,6 +49,15 @@ public class Companion extends PathfinderMob {
     public Player ownerPlayer() { return owner == null ? null : level().getPlayerByUUID(owner); }
     public boolean sameFamily(Companion other) { return owner != null && owner.equals(other.ownerId()); }
     public int trust() { return trust; }
+    private void changeTrust(int amount) { trust=Math.max(0,Math.min(100,trust+amount)); refreshTrustSpeed(); }
+    private void refreshTrustSpeed() {
+        if(kind!=Kind.SYUSYA) return;
+        var speed=getAttribute(Attributes.MOVEMENT_SPEED);
+        if(speed==null)return;
+        // A stable, transient modifier preserves other mods' base values and modifiers.
+        speed.removeModifier(TRUST_SPEED_ID);
+        if(trust>0)speed.addTransientModifier(new AttributeModifier(TRUST_SPEED_ID,"Syusya family trust",trust*.005,AttributeModifier.Operation.MULTIPLY_BASE));
+    }
     public void bindHome(BlockPos anchor) { home=anchor.immutable(); homeDimension=level().dimension().location().toString(); homeIsMarker=true; }
     public BlockPos homePosition() {
         if(home==null || !level().dimension().location().toString().equals(homeDimension) || !level().hasChunkAt(home)) return null;
@@ -69,6 +80,8 @@ public class Companion extends PathfinderMob {
         super.aiStep();
         if(level().isClientSide) return;
         if(feedCooldown>0)feedCooldown--;
+        if(petCooldown>0)petCooldown--;
+        if(pettingTicks>0)pettingTicks--;
         if(recoveryTicks>0)recoveryTicks--;
         if(staying())getNavigation().stop();
         if(stage()<2) { growthTicks++; updateStage(); }
@@ -94,10 +107,21 @@ public class Companion extends PathfinderMob {
             if(feedCooldown>0){player.displayClientMessage(Component.translatable("message.dudunka.full"),true);return InteractionResult.CONSUME;}
             boolean cookie = food.is(net.minecraft.world.item.Items.COOKIE);
             if(!player.getAbilities().instabuild)food.shrink(1);
-            feedCooldown=600; trust=Math.min(100,trust+5); heal(4);
+            feedCooldown=600; changeTrust(5); heal(4);
             if(kind == Kind.DUDUNKA && cookie) FamilyAchievements.award(this, "not_nonsense");
             if(stage()<2){growthTicks=Math.min(DudunkaMod.GROWTH_SECONDS.get()*40,growthTicks+600);updateStage();}
             ((net.minecraft.server.level.ServerLevel)level()).sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,getX(),getY()+getBbHeight(),getZ(),3,.2,.1,.2,0);
+        } else if(kind==Kind.MARUSYA && food.isEmpty() && !player.isShiftKeyDown()) {
+            if(petCooldown>0) {
+                player.displayClientMessage(Component.translatable("message.dudunka.pet_cooldown",(petCooldown+19)/20),true);
+                return InteractionResult.CONSUME;
+            }
+            petCooldown=600; changeTrust(2); pettingTicks=staying()?0:40;
+            var serverLevel=(net.minecraft.server.level.ServerLevel)level();
+            serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,getX(),getY()+getBbHeight(),getZ(),3,.2,.1,.2,0);
+            serverLevel.playSound(null,blockPosition(),net.minecraft.sounds.SoundEvents.CAT_PURR,net.minecraft.sounds.SoundSource.NEUTRAL,.6f,1f);
+            player.displayClientMessage(Component.translatable("message.dudunka.petted",trust),true);
+            return InteractionResult.CONSUME;
         } else if(player.isShiftKeyDown()&&food.isEmpty()) {
             entityData.set(STAY,!staying()); getNavigation().stop();
         }
@@ -121,12 +145,25 @@ public class Companion extends PathfinderMob {
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public void addAdditionalSaveData(CompoundTag t) {
         super.addAdditionalSaveData(t); if(owner!=null)t.putUUID("FamilyOwner",owner); if(home!=null)t.putLong("FamilyHome",home.asLong()); if(homeDimension!=null)t.putString("HomeDimension",homeDimension);
-        t.putBoolean("HomeMarker",homeIsMarker);t.putInt("GrowthTicks",growthTicks);t.putInt("Trust",trust);t.putInt("FeedCooldown",feedCooldown);t.putInt("RecoveryTicks",recoveryTicks);t.putBoolean("Staying",staying());
+        t.putInt("PetCooldown",petCooldown);t.putBoolean("HomeMarker",homeIsMarker);t.putInt("GrowthTicks",growthTicks);t.putInt("Trust",trust);t.putInt("FeedCooldown",feedCooldown);t.putInt("RecoveryTicks",recoveryTicks);t.putBoolean("Staying",staying());
     }
     @Override public void readAdditionalSaveData(CompoundTag t) {
         super.readAdditionalSaveData(t);owner=t.hasUUID("FamilyOwner")?t.getUUID("FamilyOwner"):null;home=t.contains("FamilyHome")?BlockPos.of(t.getLong("FamilyHome")):null;
         homeDimension=t.getString("HomeDimension");homeIsMarker=t.getBoolean("HomeMarker");
-        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));updateStage();
+        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;refreshTrustSpeed();updateStage();
+    }
+    private static class PettingGoal extends Goal {
+        private final Companion mob;
+        PettingGoal(Companion mob){this.mob=mob;setFlags(java.util.EnumSet.of(Flag.MOVE,Flag.LOOK));}
+        @Override public boolean canUse(){return mob.kind==Kind.MARUSYA && mob.pettingTicks>0 && !mob.staying();}
+        @Override public boolean canContinueToUse(){return canUse();}
+        @Override public boolean requiresUpdateEveryTick(){return true;}
+        @Override public void start(){mob.getNavigation().stop();mob.setActivity(Activity.PURR);}
+        @Override public void tick(){
+            mob.getNavigation().stop();
+            Player player=mob.ownerPlayer();if(player!=null && mob.distanceToSqr(player)<36)mob.getLookControl().setLookAt(player,15,25);
+        }
+        @Override public void stop(){mob.setActivity(Activity.IDLE);}
     }
     private static class FollowOwner extends Goal {
         private final Companion mob; private Player player;

@@ -53,5 +53,7 @@
   "message.dudunka.carrier_released": "Syusya is back beside you",
   "message.dudunka.carrier_owner": "Only Syusya’s owner can release her",
   "message.dudunka.carrier_stale": "This carrier no longer has a valid Syusya",
-  "message.dudunka.carrier_space": "Syusya needs clear space and a safe floor"
+  "message.dudunka.carrier_space": "Syusya needs clear space and a safe floor",
+  "message.dudunka.petted": "Marusya purrs. Trust: %s",
+  "message.dudunka.pet_cooldown": "Marusya is already content. Pet again in %s s"
 }

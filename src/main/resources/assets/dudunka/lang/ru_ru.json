@@ -53,5 +53,7 @@
   "message.dudunka.carrier_released": "Сюся снова рядом",
   "message.dudunka.carrier_owner": "Выпустить Сюсю может только её хозяин",
   "message.dudunka.carrier_stale": "Эта переноска больше не содержит действующую Сюсю",
-  "message.dudunka.carrier_space": "Для Сюси нужны свободное место и безопасный пол"
+  "message.dudunka.carrier_space": "Для Сюси нужны свободное место и безопасный пол",
+  "message.dudunka.petted": "Маруся мурчит. Доверие: %s",
+  "message.dudunka.pet_cooldown": "Маруся уже довольна. Погладить снова через %s с"
 }

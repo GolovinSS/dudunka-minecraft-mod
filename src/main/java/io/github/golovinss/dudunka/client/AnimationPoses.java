@@ -32,6 +32,10 @@ public final class AnimationPoses {
                 root.getChild("arm1").zRot = -.35f;
             }
         }
+        if (activity == Activity.PURR && kind == Kind.MARUSYA) {
+            root.getChild("head").zRot=Mth.sin(age*.08f)*.12f;
+            root.getChild("tail").yRot=Mth.sin(age*.08f)*.35f;
+        }
         if (activity == Activity.ALERT && kind == Kind.MARUSYA) {
             root.getChild("tail").xRot = -1.1f;
             root.getChild("head").getChild("ear0").xRot = -.15f;

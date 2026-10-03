@@ -221,6 +221,7 @@ public class FamilyTests {
         h.assertTrue(SyusyaCarrierItem.release(level,release,player,stack),"Valid release must succeed");
         var released=(Companion)level.getEntity(id);
         h.assertTrue(released!=null && released.trust()==45 && released.stage()==1 && released.staying(),"Identity, trust, growth and mode must survive transport");
+        h.assertTrue(Math.abs(released.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED)-.098)<1e-8,"Carrier release must restore the trust speed bonus once");
         h.assertTrue(!SyusyaCarrierItem.release(level,release,player,copy),"Copied filled carrier must not duplicate Syusya");
         h.assertTrue(SyusyaCarrierItem.capture(released,player,stack),"Released Syusya may be captured again");
         h.assertTrue(!SyusyaCarrierItem.release(level,release,player,copy),"Old ticket must remain invalid after recapture");
@@ -269,6 +270,71 @@ public class FamilyTests {
         goal.stop();goal.tick();
         h.assertTrue(item.getItem().getCount()==1,"Tick with no active target must be harmless");
         h.succeed();
+    }
+
+    @GameTest(template="empty", timeoutTicks=40)
+    public static void pettingRespectsOwnerCooldownAndStay(GameTestHelper h) {
+        var player=testOwner(h);var other=testOwner(h);
+        var cat=create(h,Kind.MARUSYA,player.getUUID(),new BlockPos(2,2,2));
+        player.moveTo(cat.getX(),cat.getY(),cat.getZ(),0,0);
+        cat.interact(other,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(cat.trust()==0,"Foreign player must not pet Marusya");
+        cat.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(cat.trust()==2 && !cat.staying(),"Owner empty-hand pet must add two trust without changing mode");
+        cat.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(cat.trust()==2,"Repeated pet during cooldown must not add trust");
+        var data=new CompoundTag();cat.addAdditionalSaveData(data);
+        h.assertTrue(data.getInt("PetCooldown")==600,"Pet cooldown must be saved");
+        var restored=DudunkaMod.TYPES.get(Kind.MARUSYA).get().create(h.getLevel());restored.readAdditionalSaveData(data);
+        restored.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(restored.trust()==2,"Reload must not bypass pet cooldown");
+        player.setShiftKeyDown(true);cat.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(cat.staying() && cat.trust()==2,"Shift empty hand must still toggle stay even during pet cooldown");
+        player.setShiftKeyDown(false);data.putInt("PetCooldown",0);data.putBoolean("Staying",true);cat.readAdditionalSaveData(data);
+        cat.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(cat.staying() && cat.trust()==4,"Petting a waiting cat must preserve stay");
+        data.putInt("Trust",99);data.putInt("PetCooldown",0);cat.readAdditionalSaveData(data);cat.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(cat.trust()==100,"Pet trust must cap at 100");
+        player.discard();other.discard();h.succeed();
+    }
+    @GameTest(template="empty", timeoutTicks=650)
+    public static void pettingSceneAndCooldownUseRealTicks(GameTestHelper h) {
+        var player=testOwner(h);var cat=create(h,Kind.MARUSYA,player.getUUID(),new BlockPos(2,2,2));
+        player.moveTo(cat.getX()+1,cat.getY(),cat.getZ(),0,0);
+        cat.setNoAi(false);cat.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.runAfterDelay(10,()->h.assertTrue(cat.activity()==Activity.PURR,"Petting must start a synchronized purring scene"));
+        h.runAfterDelay(50,()->{
+            h.assertTrue(cat.activity()!=Activity.PURR,"Purring scene must finish after two seconds");
+            cat.setNoAi(true);cat.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+            h.assertTrue(cat.trust()==2,"Scene ending must not end the thirty-second cooldown");
+        });
+        h.runAfterDelay(610,()->{
+            cat.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+            h.assertTrue(cat.trust()==4,"Cooldown must expire after thirty loaded seconds");
+            player.discard();h.succeed();
+        });
+    }
+    @GameTest(template="empty", timeoutTicks=40)
+    public static void snailTrustSpeedPreservesOtherModifiers(GameTestHelper h) {
+        var player=testOwner(h);var snail=create(h,Kind.SYUSYA,player.getUUID(),new BlockPos(2,2,2));
+        var speed=snail.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+        h.assertTrue(Math.abs(speed.getValue()-.08)<1e-8,"Zero trust must retain normal snail speed");
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.APPLE));
+        snail.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(snail.trust()==5 && Math.abs(speed.getValue()-.082)<1e-8,"Feeding must immediately apply the trust speed bonus");
+        UUID external=UUID.randomUUID();speed.setBaseValue(.1);
+        speed.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(external,"Other mod",.2,net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_BASE));
+        var data=new CompoundTag();snail.addAdditionalSaveData(data);data.putInt("Trust",100);
+        for(int repeat=0;repeat<5;repeat++)snail.readAdditionalSaveData(data);
+        h.assertTrue(Math.abs(speed.getValue()-.17)<1e-8 && speed.getModifiers().size()==2,"Trust bonus must not stack on repeated loading");
+        h.assertTrue(Math.abs(speed.getBaseValue()-.1)<1e-8 && speed.getModifier(external)!=null,"Other mods' base and modifiers must survive");
+        data.putInt("Trust",0);snail.readAdditionalSaveData(data);
+        h.assertTrue(Math.abs(speed.getValue()-.12)<1e-8 && speed.getModifiers().size()==1,"Zero trust must remove only the family modifier");
+        data.putInt("Trust",500);snail.readAdditionalSaveData(data);
+        h.assertTrue(snail.trust()==100 && Math.abs(speed.getValue()-.17)<1e-8,"Malformed high trust must cap the bonus");
+        var cat=create(h,Kind.MARUSYA,player.getUUID(),new BlockPos(4,2,4));cat.readAdditionalSaveData(data);
+        h.assertTrue(cat.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED).getModifiers().size()==1,"Cat must not receive the snail trust modifier");
+        player.discard();h.succeed();
     }
 
 }
