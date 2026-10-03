@@ -5,7 +5,7 @@ import java.nio.file.*;
 public class CheckModels {
  public static void main(String[] args) throws Exception {
   var exports=new StringBuilder("[");
-  for (Kind k:Kind.values()) for(int stage=0;stage<(k==Kind.DUDUNKA?3:1);stage++) {
+  for (Kind k:Kind.values()) for(int stage=0;stage<(FamilyModel.hasAgeModels(k)?3:1);stage++) {
    var root=FamilyModel.create(k,stage).bakeRoot();
    if(!root.hasChild("head"))throw new AssertionError("Missing head: "+k);
    long parts=root.getAllParts().count();if(parts<5)throw new AssertionError("Incomplete model: "+k);
@@ -21,17 +21,38 @@ public class CheckModels {
     });
    }
    if (k == Kind.DUDUNKA && !root.getChild("arm1").hasChild("ring")) throw new AssertionError("Ring must move with the hand");
-   if(k==Kind.DUDUNKA){
+   if(k==Kind.SYUSYA){
+    if(!root.getChild("head").hasChild("stalk0") || !root.getChild("head").hasChild("stalk1"))throw new AssertionError("Missing animated feelers");
+    if(stage>0 && !root.hasChild("tail_tip"))throw new AssertionError("Missing rear body tip");
+    if(stage==2 && !root.getChild("shell").hasChild("cone4"))throw new AssertionError("Missing adult Achatina apex");
+    if(stage>0){
+     var shell=root.getChild("shell");var random=net.minecraft.util.RandomSource.create(42);
+     var firstCone=shell.getChild("cone0").getRandomCube(random);boolean connected=false;
+     for(int i=0;i<(stage==2?5:4);i++)connected|=overlap(firstCone,shell.getChild("whorl"+i).getRandomCube(random));
+     if(!connected)throw new AssertionError("Rear cone disconnected from main shell");
+     for(int i=1;i<(stage==2?5:2);i++)if(!overlap(shell.getChild("cone"+(i-1)).getRandomCube(random),shell.getChild("cone"+i).getRandomCube(random)))throw new AssertionError("Gap between cone whorls");
+    }
+   }
+   if(FamilyModel.hasAgeModels(k)){
     root.getAllParts().forEach(net.minecraft.client.model.geom.ModelPart::resetPose);
     var sink=new Geometry();root.render(new PoseStack(),sink,0,0);float min=Float.MAX_VALUE,max=-Float.MAX_VALUE;
     for(double[] v:sink.vertices){min=Math.min(min,(float)v[1]);max=Math.max(max,(float)v[1]);}
-    if(Math.abs((max-min)*16-10.7f)>.002f)throw new AssertionError("Age models must share normalized height: "+stage+" "+(max-min)*16);
-    if(exports.length()>1)exports.append(',');exports.append("{\"stage\":").append(stage).append(",\"vertices\":[");
+    if(k==Kind.DUDUNKA && Math.abs((max-min)*16-10.7f)>.002f)throw new AssertionError("Age models must share normalized height: "+stage+" "+(max-min)*16);
+    if(k==Kind.SYUSYA){
+     double minZ=Double.POSITIVE_INFINITY,maxZ=Double.NEGATIVE_INFINITY;
+     for(double[] v:sink.vertices){minZ=Math.min(minZ,v[2]);maxZ=Math.max(maxZ,v[2]);}
+     double expected=8.8*(stage==0?1:stage==1?1.3:1.7);
+     if(Math.abs((maxZ-minZ)*16-expected)>.002)throw new AssertionError("Snail length ratio: "+stage+" "+(maxZ-minZ)*16);
+    }
+    if(exports.length()>1)exports.append(',');exports.append("{\"kind\":\"").append(k.id).append("\",\"stage\":").append(stage).append(",\"vertices\":[");
     boolean first=true;for(double[] v:sink.vertices){if(!first)exports.append(',');first=false;exports.append(java.util.Arrays.toString(v));}exports.append("]}");
    }
    System.out.println("PASS model bake "+k+" stage "+stage+": "+parts+" parts");
   }
   exports.append(']');Files.createDirectories(Path.of("build"));Files.writeString(Path.of("build/model-preview.json"),exports);
+ }
+ private static boolean overlap(net.minecraft.client.model.geom.ModelPart.Cube a,net.minecraft.client.model.geom.ModelPart.Cube b){
+  return a.minX<b.maxX && a.maxX>b.minX && a.minY<b.maxY && a.maxY>b.minY && a.minZ<b.maxZ && a.maxZ>b.minZ;
  }
  private static class Geometry implements VertexConsumer {
   java.util.List<double[]> vertices=new java.util.ArrayList<>();double x,y,z,u,v;

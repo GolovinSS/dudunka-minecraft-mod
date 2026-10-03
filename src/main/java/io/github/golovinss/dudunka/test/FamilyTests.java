@@ -542,4 +542,18 @@ public class FamilyTests {
         h.assertTrue(mob.stage()==2 && Math.abs(mob.growthScale()-.88f)<.001f,"Age and new dimensions must survive NBT reload");h.succeed();
     }
 
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void syusyaAgeFootprintAndCarrierPersist(GameTestHelper h) {
+        var mob=create(h,Kind.SYUSYA,UUID.randomUUID(),new BlockPos(2,2,2));
+        float baby=mob.getBbWidth();var saved=new CompoundTag();mob.addAdditionalSaveData(saved);
+        saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*20+1);mob.readAdditionalSaveData(saved);
+        h.assertTrue(mob.stage()==1 && Math.abs(mob.getBbWidth()/baby-1.3f)<.001f,"Teen footprint must grow 1.3x");
+        saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);saved.putInt("Trust",60);mob.readAdditionalSaveData(saved);
+        h.assertTrue(mob.stage()==2 && Math.abs(mob.getBbWidth()/baby-1.7f)<.001f,"Adult footprint must grow 1.7x");
+        h.assertTrue(Math.abs(mob.growthScale()-.55f)<.001f,"Render scale must not double-count age geometry");
+        var tag=new CompoundTag();mob.save(tag);var restored=net.minecraft.world.entity.EntityType.loadEntityRecursive(tag,h.getLevel(),entity->entity);
+        h.assertTrue(restored instanceof Companion,"Carrier-style full entity NBT must reconstruct companion");var copy=(Companion)restored;
+        h.assertTrue(copy.stage()==2 && copy.ownerId().equals(mob.ownerId()) && copy.trust()==60 && Math.abs(copy.getBbWidth()/baby-1.7f)<.001f,"Carrier NBT must preserve age, owner, trust and footprint");h.succeed();
+    }
+
 }

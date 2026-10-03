@@ -17,9 +17,14 @@ public class FamilyModel extends EntityModel<Companion> {
         parent.addOrReplaceChild(name,CubeListBuilder.create().texOffs((color%4)*64,(color/4)*64).addBox(x,y,z,w,h,d),pose);
     }
     public static ModelLayerLocation layer(Kind k,int stage){
-        return stage==0 || k!=Kind.DUDUNKA?layer(k):new ModelLayerLocation(new net.minecraft.resources.ResourceLocation(DudunkaMod.ID,k.id+"_"+stage),"main");
+        return stage==0 || !hasAgeModels(k)?layer(k):new ModelLayerLocation(new net.minecraft.resources.ResourceLocation(DudunkaMod.ID,k.id+"_"+stage),"main");
     }
-    public static LayerDefinition create(Kind k,int stage){return k==Kind.DUDUNKA && stage>0?DudunkaGrownModel.create(stage):create(k);}
+    public static boolean hasAgeModels(Kind k){return k==Kind.DUDUNKA || k==Kind.SYUSYA;}
+    public static LayerDefinition create(Kind k,int stage){
+        if(stage>0 && k==Kind.DUDUNKA)return DudunkaGrownModel.create(stage);
+        if(stage>0 && k==Kind.SYUSYA)return SyusyaGrownModel.create(stage);
+        return create(k);
+    }
     public static LayerDefinition create(Kind k){
         MeshDefinition mesh=new MeshDefinition();PartDefinition r=mesh.getRoot();
         if(k==Kind.DUDUNKA){
