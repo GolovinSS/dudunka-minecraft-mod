@@ -30,7 +30,10 @@ public class DudunkaMod {
     public static final Map<Kind,RegistryObject<Block>> EGGS=new EnumMap<>(Kind.class);
     public static final Map<Kind,RegistryObject<Item>> EGG_ITEMS=new EnumMap<>(Kind.class);
     public static final Map<Kind,RegistryObject<Block>> HOMES=new EnumMap<>(Kind.class);
+    public static final DeferredRegister<net.minecraft.world.level.levelgen.feature.Feature<?>> FEATURES=DeferredRegister.create(ForgeRegistries.FEATURES,ID);
+    public static final RegistryObject<SnailEggFeature> SNAIL_EGG_FEATURE=FEATURES.register("snail_egg",SnailEggFeature::new);
     public static final ForgeConfigSpec CONFIG;
+    public static final ForgeConfigSpec.BooleanValue NATURAL_EGGS;
     public static final ForgeConfigSpec.IntValue HATCH_SECONDS,GROWTH_SECONDS;
     public static final ForgeConfigSpec.DoubleValue LOOT_MULTIPLIER;
     static {
@@ -38,6 +41,7 @@ public class DudunkaMod {
         HATCH_SECONDS=b.comment("Loaded seconds in valid conditions before hatching.").defineInRange("hatchSeconds",300,1,86400);
         GROWTH_SECONDS=b.comment("Loaded seconds per growth stage; two stages to adult.").defineInRange("growthStageSeconds",1200,1,86400);
         LOOT_MULTIPLIER=b.comment("Multiplier for egg chest chance; 0 disables loot.").defineInRange("eggLootMultiplier",1.0,0.0,10.0);
+        NATURAL_EGGS=b.comment("Allow rare natural Syusya eggs in newly generated swamp and lush-cave chunks.").define("naturalEggGeneration",true);
         CONFIG=b.build();
         for (Kind k:Kind.values()) {
             TYPES.put(k,ENTITIES.register(k.id,()->EntityType.Builder.<Companion>of((t,l)->new Companion(t,l,k),MobCategory.CREATURE).sized(k==Kind.SYUSYA?.35f:.4f,k.height).clientTrackingRange(8).build(ID+":"+k.id)));
@@ -54,7 +58,7 @@ public class DudunkaMod {
     public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); }).build());
     public DudunkaMod() {
         IEventBus bus=FMLJavaModLoadingContext.get().getModEventBus();
-        ENTITIES.register(bus); BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus); TABS.register(bus); LOOT.register(bus);
+        ENTITIES.register(bus); BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus); TABS.register(bus); LOOT.register(bus); FEATURES.register(bus);
         bus.addListener(this::attributes);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER,CONFIG);
     }

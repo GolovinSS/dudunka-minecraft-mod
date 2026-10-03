@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#dudunka:snail_egg_cave",
+  "features": "dudunka:snail_egg_cave",
+  "step": "top_layer_modification"
+}

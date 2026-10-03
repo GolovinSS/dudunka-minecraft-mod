@@ -410,4 +410,67 @@ public class FamilyTests {
         });
     }
 
+    private static boolean placeNaturalEgg(GameTestHelper h,BlockPos origin) {
+        var configured=h.getLevel().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
+                .get(new net.minecraft.resources.ResourceLocation(DudunkaMod.ID,"snail_egg"));
+        h.assertTrue(configured!=null,"Configured natural egg feature must load from datapack");
+        return configured.place(h.getLevel(),h.getLevel().getChunkSource().getGenerator(),net.minecraft.util.RandomSource.create(42),origin);
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void naturalEggNeedsCareAndCanBeClaimed(GameTestHelper h) {
+        var level=h.getLevel();var pos=h.absolutePos(new BlockPos(2,2,2));
+        level.setBlock(pos.below(),Blocks.MOSS_BLOCK.defaultBlockState(),3);level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),3);
+        h.assertTrue(placeNaturalEgg(h,pos),"Moss, water and free space must permit one natural egg");
+        var egg=(EggEntity)level.getBlockEntity(pos);var saved=egg.saveWithoutMetadata();
+        h.assertTrue(egg.ownerId()==null && saved.getInt("Offerings")==0 && saved.getInt("Progress")==0,"Natural egg must be unclaimed and start with no care/progress");
+        h.assertTrue(!placeNaturalEgg(h,pos) && level.getBlockEntity(pos)==egg,"Repeated attempt must not overwrite an existing egg");
+        var player=testOwner(h);player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LEAVES));
+        egg.interact(player,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(player.getUUID().equals(egg.ownerId()) && player.getMainHandItem().isEmpty(),"First offering must claim a natural egg normally");
+        var data=egg.saveWithoutMetadata();h.assertTrue(data.getInt("Offerings")==1 && data.getInt("Progress")==0,"One offering must not start automatic hatching");
+        player.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void naturalEggRejectsUnsafeOrOccupiedSites(GameTestHelper h) {
+        var level=h.getLevel();var pos=h.absolutePos(new BlockPos(2,2,2));
+        level.setBlock(pos.below(),Blocks.GRASS_BLOCK.defaultBlockState(),3);
+        h.assertTrue(!placeNaturalEgg(h,pos),"Dry grass must not generate an egg");
+        level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),3);level.setBlock(pos.west(),Blocks.LAVA.defaultBlockState(),3);
+        h.assertTrue(!placeNaturalEgg(h,pos),"Nearby lava must reject generation even with water");
+        level.setBlock(pos.west(),Blocks.AIR.defaultBlockState(),3);level.setBlock(pos,Blocks.DIAMOND_BLOCK.defaultBlockState(),3);
+        h.assertTrue(!placeNaturalEgg(h,pos) && level.getBlockState(pos).is(Blocks.DIAMOND_BLOCK),"Generation must not replace existing blocks");
+        level.setBlock(pos,Blocks.AIR.defaultBlockState(),3);level.setBlock(pos.below(),Blocks.STONE.defaultBlockState(),3);
+        h.assertTrue(!placeNaturalEgg(h,pos),"Stone floor must not qualify");
+        level.setBlock(pos.below(),Blocks.GRASS_BLOCK.defaultBlockState(),3);level.setBlock(pos.above(),Blocks.STONE.defaultBlockState(),3);
+        h.assertTrue(!placeNaturalEgg(h,pos),"Low solid ceiling must reject an egg");
+        level.setBlock(pos.above(),Blocks.AIR.defaultBlockState(),3);
+        h.assertTrue(placeNaturalEgg(h,pos),"Safe wet grass must qualify after restoring conditions");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void naturalEggProbeIsBoundedAndCanBeDisabled(GameTestHelper h) {
+        var level=h.getLevel();var pos=h.absolutePos(new BlockPos(2,2,2));
+        level.setBlock(pos.below(),Blocks.MOSS_BLOCK.defaultBlockState(),3);level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),3);
+        for(int y=0;y<=24;y++)level.setBlock(pos.above(y),Blocks.AIR.defaultBlockState(),3);
+        h.assertTrue(!placeNaturalEgg(h,pos.above(24)),"Column probe must stop after 24 positions");
+        boolean enabled=DudunkaMod.NATURAL_EGGS.get();
+        try {
+            DudunkaMod.NATURAL_EGGS.set(false);
+            h.assertTrue(!placeNaturalEgg(h,pos),"Disabled natural generation must not place an egg");
+        } finally {DudunkaMod.NATURAL_EGGS.set(enabled);}
+        h.assertTrue(placeNaturalEgg(h,pos.above(23)),"Column probe must find a suitable floor within its bound");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void naturalEggBiomeWiringIsLimited(GameTestHelper h) {
+        var access=h.getLevel().registryAccess();var features=access.registryOrThrow(net.minecraft.core.registries.Registries.PLACED_FEATURE);
+        var surface=features.get(new net.minecraft.resources.ResourceLocation(DudunkaMod.ID,"snail_egg_surface"));
+        var cave=features.get(new net.minecraft.resources.ResourceLocation(DudunkaMod.ID,"snail_egg_cave"));
+        h.assertTrue(surface!=null && cave!=null,"Both placed features must decode from worldgen JSON");
+        var biomes=access.registryOrThrow(net.minecraft.core.registries.Registries.BIOME);
+        h.assertTrue(biomes.getHolderOrThrow(net.minecraft.world.level.biome.Biomes.SWAMP).value().getGenerationSettings().hasFeature(surface),"Swamp must include the surface feature");
+        h.assertTrue(biomes.getHolderOrThrow(net.minecraft.world.level.biome.Biomes.MANGROVE_SWAMP).value().getGenerationSettings().hasFeature(surface),"Mangrove swamp must include the surface feature");
+        h.assertTrue(biomes.getHolderOrThrow(net.minecraft.world.level.biome.Biomes.LUSH_CAVES).value().getGenerationSettings().hasFeature(cave),"Lush caves must include the cave feature");
+        h.assertTrue(!biomes.getHolderOrThrow(net.minecraft.world.level.biome.Biomes.PLAINS).value().getGenerationSettings().hasFeature(surface)
+                && !biomes.getHolderOrThrow(net.minecraft.world.level.biome.Biomes.LUSH_CAVES).value().getGenerationSettings().hasFeature(surface),"Unlisted biomes and cave/surface variants must remain separate");h.succeed();
+    }
+
 }
