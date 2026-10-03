@@ -16,6 +16,10 @@ public class FamilyModel extends EntityModel<Companion> {
     private static void cube(PartDefinition parent,String name,int color,float x,float y,float z,float w,float h,float d,PartPose pose){
         parent.addOrReplaceChild(name,CubeListBuilder.create().texOffs((color%4)*64,(color/4)*64).addBox(x,y,z,w,h,d),pose);
     }
+    public static ModelLayerLocation layer(Kind k,int stage){
+        return stage==0 || k!=Kind.DUDUNKA?layer(k):new ModelLayerLocation(new net.minecraft.resources.ResourceLocation(DudunkaMod.ID,k.id+"_"+stage),"main");
+    }
+    public static LayerDefinition create(Kind k,int stage){return k==Kind.DUDUNKA && stage>0?DudunkaGrownModel.create(stage):create(k);}
     public static LayerDefinition create(Kind k){
         MeshDefinition mesh=new MeshDefinition();PartDefinition r=mesh.getRoot();
         if(k==Kind.DUDUNKA){

@@ -1,0 +1,32 @@
+"""Orthographic geometry preview from verifyModels' actual baked vertex export.
+Run Gradle verifyModels first, then this script (Pillow, numpy, matplotlib).
+Preview samples each face's UV center; it is not an in-game screenshot.
+"""
+from pathlib import Path
+import json, numpy as np
+from PIL import Image
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.collections import PolyCollection
+r=Path(__file__).resolve().parents[1]
+data=json.loads((r/'build/model-preview.json').read_text())
+fig,axes=plt.subplots(1,9,figsize=(18,5));fig.patch.set_facecolor('#f5f1e9')
+for model in data:
+    stage=model['stage'];scale=[.55,.715,.88][stage]
+    texture=np.asarray(Image.open(r/'src/main/resources/assets/dudunka/textures/entity'/['palette.png','dudunka_teen.png','dudunka_adult.png'][stage]).convert('RGB'))/255
+    vertices=np.asarray(model['vertices']).reshape(-1,4,5)
+    for view in range(3):
+        ax=axes[stage*3+view];faces=[]
+        for face in vertices:
+            xyz=face[:,:3]*16;xyz[:,1]=24-xyz[:,1];xyz*=scale
+            uv=np.mean(face[:,3:],axis=0);color=texture[min(255,int(uv[1]*256)),min(255,int(uv[0]*256))]
+            if view==0:xy=xyz[:,[0,1]];depth=-xyz[:,2].mean()
+            elif view==1:xy=xyz[:,[2,1]];depth=xyz[:,0].mean()
+            else:xy=xyz[:,[0,1]]*np.array([-1,1]);depth=xyz[:,2].mean()
+            faces.append((depth,xy,color))
+        faces.sort(key=lambda item:item[0]);ax.add_collection(PolyCollection([x[1] for x in faces],facecolors=[x[2] for x in faces],edgecolors='none'))
+        ax.set(xlim=(-3.3,3.3),ylim=(-.2,10.2),aspect='equal');ax.axis('off')
+        ax.set_title(['Малыш','Подросток','Взрослая'][stage]+'\n'+['Спереди','Сбоку','Сзади'][view],fontsize=10)
+fig.suptitle('Дюдюнька: геометрия моделей 0.8.0-alpha • общий масштаб',fontsize=15)
+fig.tight_layout();fig.savefig(r/'docs/DUDUNKA-AGES-PREVIEW.png',dpi=120,facecolor=fig.get_facecolor());plt.close(fig)

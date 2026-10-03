@@ -27,7 +27,7 @@ public class Companion extends PathfinderMob {
     private long chestNoticeUntil,chestNoticeNext;
     private int growthTicks,trust,feedCooldown,recoveryTicks,petCooldown,pettingTicks;
     public Companion(EntityType<? extends Companion> type,Level l,Kind kind) {
-        super(type,l); this.kind=kind; setPersistenceRequired();
+        super(type,l); this.kind=kind; setPersistenceRequired(); if(kind==Kind.DUDUNKA)refreshDimensions();
     }
     public static AttributeSupplier.Builder attributes(Kind k) {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH,20).add(Attributes.MOVEMENT_SPEED,k.speed).add(Attributes.FOLLOW_RANGE,24);
@@ -91,7 +91,7 @@ public class Companion extends PathfinderMob {
         // A stable ten-second interval avoids re-rolling every AI tick.
         return kind != Kind.MARUSYA || Math.floorMod(level().getGameTime() / 200 + getUUID().hashCode(), 5) != 0;
     }
-    public float growthScale() { return stage()==0?.55f:stage()==1?.78f:1f; }
+    public float growthScale() { return kind==Kind.DUDUNKA?(stage()==0?.55f:stage()==1?.715f:.88f):(stage()==0?.55f:stage()==1?.78f:1f); }
     @Override public EntityDimensions getDimensions(Pose p) { return super.getDimensions(p).scale(growthScale()); }
     @Override public void onSyncedDataUpdated(EntityDataAccessor<?> key) { super.onSyncedDataUpdated(key); if(STAGE.equals(key))refreshDimensions(); }
     @Override public void aiStep() {

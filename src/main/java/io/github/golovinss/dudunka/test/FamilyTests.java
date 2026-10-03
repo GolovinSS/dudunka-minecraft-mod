@@ -530,4 +530,16 @@ public class FamilyTests {
         owner.discard();h.succeed();
     }
 
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void dudunkaAgeDimensionsFollowReferenceRatios(GameTestHelper h) {
+        var mob=create(h,Kind.DUDUNKA,UUID.randomUUID(),new BlockPos(2,2,2));
+        float baby=mob.getBbHeight();var saved=new CompoundTag();mob.addAdditionalSaveData(saved);
+        saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*20+1);mob.readAdditionalSaveData(saved);
+        h.assertTrue(mob.stage()==1 && Math.abs(mob.getBbHeight()/baby-1.3f)<.001f,"Teen hitbox must follow 1.3x baby height");
+        saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);mob.readAdditionalSaveData(saved);
+        h.assertTrue(mob.stage()==2 && Math.abs(mob.getBbHeight()/baby-1.6f)<.001f,"Adult hitbox must follow 1.6x baby height");
+        var roundtrip=new CompoundTag();mob.addAdditionalSaveData(roundtrip);mob.readAdditionalSaveData(roundtrip);
+        h.assertTrue(mob.stage()==2 && Math.abs(mob.growthScale()-.88f)<.001f,"Age and new dimensions must survive NBT reload");h.succeed();
+    }
+
 }
