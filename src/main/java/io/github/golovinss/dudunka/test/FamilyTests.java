@@ -473,4 +473,61 @@ public class FamilyTests {
                 && !biomes.getHolderOrThrow(net.minecraft.world.level.biome.Biomes.LUSH_CAVES).value().getGenerationSettings().hasFeature(surface),"Unlisted biomes and cave/surface variants must remain separate");h.succeed();
     }
 
+    private static BlockPos restFire(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner) {
+        interestFloor(h);var fire=h.absolutePos(new BlockPos(2,2,2));
+        h.getLevel().setBlock(fire,Blocks.CAMPFIRE.defaultBlockState(),3);
+        owner.moveTo(fire.getX()+.5,fire.getY(),fire.getZ()+1.5,0,0);owner.setShiftKeyDown(true);return fire;
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void campfireSeatsAndCancellation(GameTestHelper h) {
+        var owner=testOwner(h);var fire=restFire(h,owner);
+        var a=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(0,2,2));a.setOnGround(true);
+        var b=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));b.setOnGround(true);
+        var foreign=create(h,Kind.MARUSYA,UUID.randomUUID(),new BlockPos(4,2,4));foreign.setOnGround(true);
+        var scene=CampfireScenes.select(a);h.assertTrue(scene!=null,"Two own companions must form a scene");
+        h.assertTrue(scene==CampfireScenes.select(b) && scene.seats().size()==2 && !scene.seats().containsKey(foreign.getUUID()),"Family must share distinct reservations, excluding foreign companions");
+        h.assertTrue(!scene.seats().get(a.getUUID()).equals(scene.seats().get(b.getUUID())),"Seats must be different");
+        for(var mob:java.util.List.of(a,b)) {
+            var seat=scene.seats().get(mob.getUUID());
+            h.assertTrue(HomeRules.safeStanding(h.getLevel(),seat,mob) && CampfireScenes.safePath(mob,mob.getNavigation().createPath(seat,0)),"Seats and routes must avoid the fire");
+        }
+        var goal=new CampfireRestGoal(a);h.assertTrue(goal.canUse(),"Rest goal must be selectable");goal.start();goal.tick();
+        var seat=scene.seats().get(a.getUUID());a.moveTo(seat.getX()+.5,seat.getY(),seat.getZ()+.5,0,0);goal.tick();
+        h.assertTrue(a.activity()==Activity.CAMP_REST && !a.staying(),"Arrival must rest without setting permanent stay");
+        owner.setShiftKeyDown(false);h.assertTrue(!goal.canContinueToUse(),"Standing owner must cancel rest");goal.tick();goal.tick();goal.stop();
+        h.assertTrue(a.activity()==Activity.IDLE && a.getNavigation().isDone(),"Extra ticks must safely stop the scene");
+        h.assertTrue(CampfireScenes.select(a)==null,"Standing owner must clear reservations");
+        owner.setShiftKeyDown(true);h.getLevel().setBlock(fire,Blocks.SOUL_CAMPFIRE.defaultBlockState(),3);
+        var renewed=CampfireScenes.select(a);h.assertTrue(renewed!=null && renewed!=scene,"Soul fire must support a fresh scene");
+        h.getLevel().setBlock(fire,Blocks.SOUL_CAMPFIRE.defaultBlockState().setValue(net.minecraft.world.level.block.CampfireBlock.LIT,false),3);
+        h.assertTrue(!CampfireScenes.active(a,renewed),"Extinguishing fire must cancel the scene");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void campfireNeedsOwnFamilyAndHonorsStay(GameTestHelper h) {
+        var owner=testOwner(h);var fire=restFire(h,owner);
+        var a=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(0,2,2));a.setOnGround(true);
+        var foreign=create(h,Kind.MARUSYA,UUID.randomUUID(),new BlockPos(4,2,2));foreign.setOnGround(true);
+        h.assertTrue(CampfireScenes.select(a)==null,"Foreign companion cannot complete the family");
+        var b=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,4));b.setOnGround(true);
+        var scene=CampfireScenes.select(a);h.assertTrue(scene!=null,"Own second member must enable rest");
+        var saved=new CompoundTag();b.addAdditionalSaveData(saved);saved.putBoolean("Staying",true);b.readAdditionalSaveData(saved);
+        h.assertTrue(CampfireScenes.select(b)==null && !CampfireScenes.active(a,scene),"Stay must exclude a member and stop an undersized scene");
+        saved.putBoolean("Staying",false);b.readAdditionalSaveData(saved);scene=CampfireScenes.select(a);
+        h.assertTrue(scene!=null,"Returning member must allow replanning");
+        owner.moveTo(fire.getX()+10,fire.getY(),fire.getZ(),0,0);
+        h.assertTrue(!CampfireScenes.active(a,scene),"Leaving the fire must stop rest");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void campfireYieldsToWaitingForSnail(GameTestHelper h) {
+        var owner=testOwner(h);restFire(h,owner);
+        var a=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(0,2,2));a.setOnGround(true);
+        var b=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));b.setOnGround(true);
+        var snail=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(5,2,4));snail.setOnGround(true);
+        h.assertTrue(CampfireScenes.select(a)!=null,"Fixture must offer a campfire scene");
+        var family=new FamilyBehaviorGoal(a);h.assertTrue(family.canUse(),"Waiting must remain available");family.start();
+        h.assertTrue(a.activity()==Activity.WAIT_FOR_SYUSYA,"Waiting for own snail must precede campfire rest");family.stop();
+        snail.discard();h.assertTrue(!new FamilyBehaviorGoal(a).canUse(),"Ambient family tasks must yield to owner's campfire scene");
+        owner.discard();h.succeed();
+    }
+
 }

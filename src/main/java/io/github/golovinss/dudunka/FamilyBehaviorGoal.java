@@ -64,6 +64,7 @@ public final class FamilyBehaviorGoal extends Goal {
             targetBlock = findBlock(6, p -> safeStanding(p) && !mob.level().canSeeSky(p));
             if (targetBlock != null) { task = Activity.SIT; return true; }
         }
+        if(CampfireScenes.select(mob)!=null)return false; // Explicit family rest yields only after urgent/weather tasks.
         if (mob.level().isNight()) {
             if (mob.kind == Kind.MARUSYA) {
                 targetBlock = findBlock(5, p -> mob.level().getBlockState(p).is(BlockTags.BEDS)
@@ -133,6 +134,7 @@ public final class FamilyBehaviorGoal extends Goal {
 
     @Override public boolean canContinueToUse() {
         if (mob.staying() || mob.level().getGameTime() >= until || (targetEntity != null && (!targetEntity.isAlive() || targetEntity.level() != mob.level()))) return false;
+        if((task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE || task==Activity.ADJUST_GLASSES || task==Activity.SLEEP) && CampfireScenes.select(mob)!=null)return false;
         if(task==Activity.CAKE_RUN && (targetBlock==null || !mob.level().hasChunkAt(targetBlock)
                 || !mob.level().getBlockState(targetBlock).is(Blocks.CAKE) || approachBlock==null
                 || !HomeRules.safeStanding(mob.level(),approachBlock,mob)))return false;

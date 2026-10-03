@@ -37,13 +37,14 @@ public class Companion extends PathfinderMob {
         goalSelector.addGoal(0,new FloatGoal(this));
         goalSelector.addGoal(1,new PettingGoal(this));
         goalSelector.addGoal(2,new FamilyBehaviorGoal(this));
-        goalSelector.addGoal(3,new ChestCuriosityGoal(this));
-        goalSelector.addGoal(4,new FollowOwner(this));
-        goalSelector.addGoal(5,new WaterAvoidingRandomStrollGoal(this, .8) {
+        goalSelector.addGoal(3,new CampfireRestGoal(this));
+        goalSelector.addGoal(4,new ChestCuriosityGoal(this));
+        goalSelector.addGoal(5,new FollowOwner(this));
+        goalSelector.addGoal(6,new WaterAvoidingRandomStrollGoal(this, .8) {
             @Override public boolean canUse() { return !staying()&&super.canUse(); }
         });
-        goalSelector.addGoal(6,new LookAtPlayerGoal(this,Player.class,6));
-        goalSelector.addGoal(7,new RandomLookAroundGoal(this));
+        goalSelector.addGoal(7,new LookAtPlayerGoal(this,Player.class,6));
+        goalSelector.addGoal(8,new RandomLookAroundGoal(this));
     }
     public void initialize(UUID owner,BlockPos home) { this.owner=owner; this.home=home.immutable(); this.homeDimension=level().dimension().location().toString(); setCustomName(Component.translatable("entity.dudunka."+kind.id)); }
     public int stage() { return entityData.get(STAGE); }

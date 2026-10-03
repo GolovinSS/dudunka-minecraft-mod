@@ -14,7 +14,7 @@ public final class AnimationPoses {
             root.getChild("head").getChild("stalk1").zRot = -Mth.sin(age * .04f) * .08f;
         }
         if (activity == Activity.IDLE) root.y += Mth.sin(age * .06f) * .05f;
-        if (activity == Activity.SIT || activity == Activity.WAIT_FOR_SYUSYA || activity == Activity.SLEEP) {
+        if (activity == Activity.SIT || activity == Activity.CAMP_REST || activity == Activity.WAIT_FOR_SYUSYA || activity == Activity.SLEEP) {
             if (kind != Kind.SYUSYA) {
                 root.y += kind == Kind.DUDUNKA ? 1.5f : .8f;
                 for (int i = 0; i < (kind == Kind.MARUSYA ? 4 : 2); i++)
