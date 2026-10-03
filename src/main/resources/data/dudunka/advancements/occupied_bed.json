@@ -1,0 +1,23 @@
+{
+  "parent": "dudunka:dudunka_egg",
+  "display": {
+    "icon": {
+      "item": "dudunka:marusya_egg"
+    },
+    "title": {
+      "translate": "advancement.dudunka.occupied_bed"
+    },
+    "description": {
+      "translate": "advancement.dudunka.occupied_bed.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

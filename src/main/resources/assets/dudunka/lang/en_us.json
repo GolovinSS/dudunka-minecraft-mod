@@ -20,5 +20,20 @@
   "entity.dudunka.marusya": "Marusya",
   "block.dudunka.marusya_egg": "Marusya Egg",
   "entity.dudunka.syusya": "Syusya",
-  "block.dudunka.syusya_egg": "Syusya Egg"
+  "block.dudunka.syusya_egg": "Syusya Egg",
+  "message.dudunka.marusya_alert": "Marusya is alert: danger nearby!",
+  "advancement.dudunka.all_home": "Everyone Is Home",
+  "advancement.dudunka.all_home.desc": "Bring all three friends together",
+  "advancement.dudunka.wait_for_syusya": "Wait for Syusya!",
+  "advancement.dudunka.wait_for_syusya.desc": "Wait a few seconds for Syusya to catch up",
+  "advancement.dudunka.occupied_bed": "Who Took My Bed?!",
+  "advancement.dudunka.occupied_bed.desc": "Marusya has settled on a bed",
+  "advancement.dudunka.not_nonsense": "This Is Not Nonsense",
+  "advancement.dudunka.not_nonsense.desc": "Give Dudunka a cookie",
+  "advancement.dudunka.grown_dudunka": "Dudunka!",
+  "advancement.dudunka.grown_dudunka.desc": "Raise Dudunka to adulthood",
+  "advancement.dudunka.grown_marusya": "Black Lightning",
+  "advancement.dudunka.grown_marusya.desc": "Raise Marusya to adulthood",
+  "advancement.dudunka.grown_syusya": "Very Slow Growing Up",
+  "advancement.dudunka.grown_syusya.desc": "Raise Syusya to adulthood"
 }

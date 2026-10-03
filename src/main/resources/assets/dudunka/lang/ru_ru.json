@@ -20,5 +20,20 @@
   "entity.dudunka.marusya": "Маруся",
   "block.dudunka.marusya_egg": "Яйцо Маруси",
   "entity.dudunka.syusya": "Сюся",
-  "block.dudunka.syusya_egg": "Яйцо Сюси"
+  "block.dudunka.syusya_egg": "Яйцо Сюси",
+  "message.dudunka.marusya_alert": "Маруся насторожилась: рядом опасность!",
+  "advancement.dudunka.all_home": "Все дома",
+  "advancement.dudunka.all_home.desc": "Собрать рядом всех троих друзей",
+  "advancement.dudunka.wait_for_syusya": "Подождите Сюсю!",
+  "advancement.dudunka.wait_for_syusya.desc": "Подождать отставшую Сюсю несколько секунд",
+  "advancement.dudunka.occupied_bed": "Кто занял кровать?!",
+  "advancement.dudunka.occupied_bed.desc": "Маруся устроилась на кровати",
+  "advancement.dudunka.not_nonsense": "Это не ерунда",
+  "advancement.dudunka.not_nonsense.desc": "Угостить Дюдюньку печеньем",
+  "advancement.dudunka.grown_dudunka": "Дюдюнька",
+  "advancement.dudunka.grown_dudunka.desc": "Вырастить друга до взрослой стадии",
+  "advancement.dudunka.grown_marusya": "Черная молния",
+  "advancement.dudunka.grown_marusya.desc": "Вырастить друга до взрослой стадии",
+  "advancement.dudunka.grown_syusya": "Очень медленное взросление",
+  "advancement.dudunka.grown_syusya.desc": "Вырастить друга до взрослой стадии"
 }

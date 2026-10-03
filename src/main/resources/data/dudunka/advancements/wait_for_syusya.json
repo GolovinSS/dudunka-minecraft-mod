@@ -1,0 +1,23 @@
+{
+  "parent": "dudunka:dudunka_egg",
+  "display": {
+    "icon": {
+      "item": "dudunka:syusya_egg"
+    },
+    "title": {
+      "translate": "advancement.dudunka.wait_for_syusya"
+    },
+    "description": {
+      "translate": "advancement.dudunka.wait_for_syusya.desc"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "event": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
