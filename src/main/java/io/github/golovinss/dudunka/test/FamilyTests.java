@@ -763,4 +763,53 @@ public class FamilyTests {
         });
     }
 
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void homecomingNeedsRealExcursionAndDoesNotSpam(GameTestHelper h) {
+        var arrival=new Homecoming();arrival.observe(0,0);
+        for(int i=1;i<=9;i++)arrival.observe(i*20,400);arrival.observe(200,0);
+        h.assertTrue(!arrival.pending(200),"Short trip must not trigger welcome");
+        for(int i=1;i<=10;i++)arrival.observe(200+i*20,400);arrival.observe(420,0);
+        h.assertTrue(arrival.pending(420) && arrival.consume(420) && !arrival.consume(420),"Ten loaded seconds away and return must give one welcome");
+        for(int i=1;i<=10;i++)arrival.observe(420+i*20,400);arrival.observe(640,0);
+        h.assertTrue(!arrival.pending(640),"Second trip inside one-minute cooldown must not spam");
+        arrival.observe(1800,0);for(int i=1;i<=10;i++)arrival.observe(1800+i*20,400);arrival.observe(2020,0);
+        h.assertTrue(arrival.pending(2020) && !arrival.pending(2420),"New excursion after cooldown works, but stale welcome expires");
+        var gap=new Homecoming();gap.observe(0,0);gap.observe(20,400);gap.observe(20000,400);
+        for(int i=1;i<=10;i++)gap.observe(20000+i*20,400);gap.observe(20220,0);
+        h.assertTrue(!gap.pending(20220),"Chunk/offline gaps must never turn into a trip");
+        var doorway=new Homecoming();doorway.observe(0,0);for(int i=1;i<=10;i++)doorway.observe(i*20,100);doorway.observe(220,0);
+        h.assertTrue(!doorway.pending(220),"Eight-to-twelve-block hysteresis band must not count as leaving home");
+        var walking=new Homecoming();walking.observe(0,0);for(int i=1;i<=10;i++)walking.observe(i*20,400);
+        walking.observe(220,100);walking.observe(240,100);walking.observe(260,0);
+        h.assertTrue(walking.pending(260),"A completed excursion must survive walking back through the hysteresis band");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=330)
+    public static void returningOwnerGetsOneHomeWaveAndCanInterruptIt(GameTestHelper h) {
+        var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.DUDUNKA);
+        var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(1,2,3));mob.bindHome(anchor);
+        var data=new CompoundTag();mob.addAdditionalSaveData(data);data.putInt("Trust",25);mob.readAdditionalSaveData(data);
+        h.runAfterDelay(25,()->owner.moveTo(owner.getX()+20,owner.getY(),owner.getZ(),0,0));
+        h.runAfterDelay(250,()->{var p=h.absolutePos(new BlockPos(1,2,1));owner.moveTo(p.getX()+.5,p.getY(),p.getZ()+.5,0,0);});
+        h.runAfterDelay(275,()->{
+            h.assertTrue(mob.homeWelcomePending(),"Actual loaded AI ticks must register owner's trip and return");
+            var scene=HomeScenes.select(mob);h.assertTrue(scene!=null && scene.activity()==Activity.WAVE,"Return must prefer welcome over flowers");
+            var goal=new HomeSceneGoal(mob);h.assertTrue(goal.canUse(),"Home welcome goal must start");goal.start();goal.tick();
+            h.assertTrue(mob.activity()==Activity.WAVE && mob.homeWelcomeRunning() && !mob.homeWelcomePending(),"Welcome must wave and consume the pending return once");
+            h.assertTrue(!new FamilyBehaviorGoal(mob).canUse(),"Ambient cake/gestures must not preempt an active welcome");
+            owner.setShiftKeyDown(true);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,net.minecraft.world.item.ItemStack.EMPTY);mob.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);goal.tick();goal.tick();
+            h.assertTrue(mob.staying() && !mob.homeWelcomeRunning() && mob.homeSceneTarget()==null && mob.trust()==25,"Stay must interrupt wave without trust rewards or stale targets");
+            owner.discard();h.succeed();
+        });
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void homeWelcomeDoesNotStartOnLoadOrWithoutTrust(GameTestHelper h) {
+        var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.DUDUNKA);
+        var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(1,2,3));mob.bindHome(anchor);mob.observeHomecoming();
+        h.assertTrue(!mob.homeWelcomePending(),"Low trust and first presence must not greet");
+        var saved=new CompoundTag();mob.addAdditionalSaveData(saved);saved.putInt("Trust",25);
+        var loaded=DudunkaMod.TYPES.get(Kind.DUDUNKA).get().create(h.getLevel());loaded.readAdditionalSaveData(saved);loaded.observeHomecoming();
+        h.assertTrue(!loaded.homeWelcomePending() && !loaded.homeWelcomeRunning(),"Loading an owned home must establish a baseline, not invent a return");
+        owner.discard();h.succeed();
+    }
+
 }

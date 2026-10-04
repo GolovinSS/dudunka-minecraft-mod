@@ -65,7 +65,7 @@ public final class FamilyBehaviorGoal extends Goal {
             if (targetBlock != null) { task = Activity.SIT; return true; }
         }
         if(CampfireScenes.select(mob)!=null)return false; // Explicit family rest yields only after urgent/weather tasks.
-        if(HomeScenes.select(mob)!=null)return false;
+        if(mob.homeWelcomeRunning() || HomeScenes.select(mob)!=null)return false;
         if (mob.level().isNight()) {
             // A marked cat uses the reserved scene; do not bypass its cooldown or occupied-bed checks.
             if(mob.kind==Kind.MARUSYA && mob.homeAnchor()!=null)return false;
@@ -137,6 +137,8 @@ public final class FamilyBehaviorGoal extends Goal {
 
     @Override public boolean canContinueToUse() {
         if (mob.staying() || mob.level().getGameTime() >= until || (targetEntity != null && (!targetEntity.isAlive() || targetEntity.level() != mob.level()))) return false;
+        if(mob.homeWelcomePending() && (task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE
+                || task==Activity.ADJUST_GLASSES || task==Activity.SLEEP))return false;
         if((task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE || task==Activity.ADJUST_GLASSES || task==Activity.SLEEP) && CampfireScenes.select(mob)!=null)return false;
         if(task==Activity.CAKE_RUN && (targetBlock==null || !mob.level().hasChunkAt(targetBlock)
                 || !mob.level().getBlockState(targetBlock).is(Blocks.CAKE) || approachBlock==null

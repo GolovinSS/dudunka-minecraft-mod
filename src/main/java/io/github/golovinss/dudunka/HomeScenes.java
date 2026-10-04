@@ -26,6 +26,10 @@ public final class HomeScenes {
         if(!mob.homeSceneReady())return null;
         BlockPos anchor=mob.homeAnchor();
         if(!atHome(mob,anchor) || (mob.kind==Kind.MARUSYA && !evening(mob)))return null;
+        if(mob.kind==Kind.DUDUNKA && mob.homeWelcomePending() && mob.trust()>=25
+            && mob.distanceToSqr(mob.ownerPlayer())<=36 && mob.hasLineOfSight(mob.ownerPlayer())
+            && HomeRules.safeStanding(mob.level(),mob.blockPosition(),mob))
+            return new Scene(anchor,anchor,mob.position(),Activity.WAVE);
         var candidates=new java.util.ArrayList<BlockPos>();
         for(BlockPos p:BlockPos.betweenClosed(anchor.offset(-4,-1,-4),anchor.offset(4,3,4)))
             if(mob.level().hasChunkAt(p) && interest(mob,p))candidates.add(p.immutable());
@@ -58,8 +62,11 @@ public final class HomeScenes {
     }
     public static boolean valid(Companion mob,Scene scene) {
         if(scene==null || !scene.anchor().equals(mob.homeAnchor()) || !atHome(mob,scene.anchor())
-            || !mob.level().hasChunkAt(scene.focus()) || !interest(mob,scene.focus())
+            || !mob.level().hasChunkAt(scene.focus()) || (scene.activity()!=Activity.WAVE && !interest(mob,scene.focus()))
             || mob.level().canSeeSky(scene.focus().above()))return false;
+        if(scene.activity()==Activity.WAVE)return mob.kind==Kind.DUDUNKA && mob.trust()>=25
+            && mob.distanceToSqr(mob.ownerPlayer())<=36 && mob.hasLineOfSight(mob.ownerPlayer())
+            && HomeRules.safeStanding(mob.level(),mob.blockPosition(),mob);
         if(mob.kind==Kind.MARUSYA) {
             if(!evening(mob))return false;
             var state=mob.level().getBlockState(scene.focus());

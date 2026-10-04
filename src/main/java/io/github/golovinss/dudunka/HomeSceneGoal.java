@@ -16,7 +16,9 @@ public final class HomeSceneGoal extends Goal {
         long now=mob.level().getGameTime();if(now<nextCheck)return false;nextCheck=now+20;
         scene=HomeScenes.select(mob);return scene!=null;
     }
-    @Override public void start(){until=mob.level().getGameTime()+200;mob.reserveHomeScene(scene.focus());mob.setActivity(Activity.CURIOUS);}
+    @Override public void start(){until=mob.level().getGameTime()+(scene.activity()==Activity.WAVE?80:200);mob.reserveHomeScene(scene.focus());
+        mob.getNavigation().stop();
+        if(scene.activity()==Activity.WAVE){mob.beginHomeWelcome();mob.setActivity(Activity.WAVE);}else mob.setActivity(Activity.CURIOUS);}
     @Override public boolean canContinueToUse(){
         return mob.level().getGameTime()<until && HomeScenes.valid(mob,scene) && mob.openChestTarget()==null
             && CampfireScenes.select(mob)==null && !mob.level().isRainingAt(mob.blockPosition())
@@ -25,6 +27,7 @@ public final class HomeSceneGoal extends Goal {
     @Override public void tick(){
         // Recheck even when GoalSelector gives one final tick after invalidation.
         if(!canContinueToUse()){stop();return;}
+        if(scene.activity()==Activity.WAVE){mob.getNavigation().stop();mob.getLookControl().setLookAt(mob.ownerPlayer(),15,25);mob.setActivity(Activity.WAVE);return;}
         Vec3 look=Vec3.atCenterOf(scene.focus());mob.getLookControl().setLookAt(look.x,look.y,look.z,15,25);
         if(mob.distanceToSqr(scene.destination())<=.36){
             mob.getNavigation().stop();mob.setActivity(scene.activity());
@@ -39,5 +42,5 @@ public final class HomeSceneGoal extends Goal {
             }
         }
     }
-    @Override public void stop(){mob.pauseHomeScenes();mob.reserveHomeScene(null);scene=null;until=0;nextCheck=mob.level().getGameTime()+200;mob.getNavigation().stop();mob.setActivity(Activity.IDLE);}
+    @Override public void stop(){mob.endHomeWelcome();mob.pauseHomeScenes();mob.reserveHomeScene(null);scene=null;until=0;nextCheck=mob.level().getGameTime()+200;mob.getNavigation().stop();mob.setActivity(Activity.IDLE);}
 }

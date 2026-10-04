@@ -25,6 +25,8 @@ public class Companion extends PathfinderMob {
     private boolean homeIsMarker;
     private BlockPos openedChest;
     private BlockPos homeSceneTarget;
+    private final Homecoming homecoming=new Homecoming();
+    private boolean homeWelcomeRunning;
     private long chestNoticeUntil,chestNoticeNext,homeSceneCooldownUntil;
     private int growthTicks,trust,feedCooldown,recoveryTicks,petCooldown,pettingTicks;
     public Companion(EntityType<? extends Companion> type,Level l,Kind kind) {
@@ -78,7 +80,17 @@ public class Companion extends PathfinderMob {
                 || !ChestCuriosity.isViewing(player,openedChest) || distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(openedChest))>100){openedChest=null;return null;}
         return openedChest;
     }
-    public void bindHome(BlockPos anchor) { home=anchor.immutable(); homeDimension=level().dimension().location().toString(); homeIsMarker=true; }
+    public void bindHome(BlockPos anchor) { home=anchor.immutable(); homeDimension=level().dimension().location().toString(); homeIsMarker=true;homecoming.reset(); }
+    public boolean homeWelcomePending() { return homecoming.pending(level().getGameTime()); }
+    public boolean homeWelcomeRunning() { return homeWelcomeRunning; }
+    public void beginHomeWelcome() { homecoming.consume(level().getGameTime());homeWelcomeRunning=true; }
+    public void endHomeWelcome() { homeWelcomeRunning=false; }
+    public void observeHomecoming() {
+        if(level().isClientSide || kind!=Kind.DUDUNKA)return;
+        var anchor=homeAnchor();var player=ownerPlayer();
+        if(anchor==null || trust<25 || staying() || player==null || !player.isAlive() || player.isSpectator() || player.isSleeping()) {homecoming.reset();return;}
+        homecoming.observe(level().getGameTime(),player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(anchor)));
+    }
     public boolean homeSceneReady() { return level().getGameTime()>=homeSceneCooldownUntil; }
     public void pauseHomeScenes() { homeSceneCooldownUntil=level().getGameTime()+200; }
     public BlockPos homeSceneTarget() { return homeSceneTarget; }
@@ -108,6 +120,7 @@ public class Companion extends PathfinderMob {
     @Override public void aiStep() {
         super.aiStep();
         if(level().isClientSide) return;
+        if(tickCount%20==0)observeHomecoming();
         if(feedCooldown>0)feedCooldown--;
         if(petCooldown>0)petCooldown--;
         if(pettingTicks>0)pettingTicks--;
@@ -180,7 +193,7 @@ public class Companion extends PathfinderMob {
     @Override public void readAdditionalSaveData(CompoundTag t) {
         super.readAdditionalSaveData(t);owner=t.hasUUID("FamilyOwner")?t.getUUID("FamilyOwner"):null;home=t.contains("FamilyHome")?BlockPos.of(t.getLong("FamilyHome")):null;
         homeDimension=t.getString("HomeDimension");homeIsMarker=t.getBoolean("HomeMarker");
-        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;homeSceneTarget=null;homeSceneCooldownUntil=0;openedChest=null;chestNoticeUntil=0;chestNoticeNext=0;refreshTrustSpeed();updateStage();
+        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;homecoming.reset();homeWelcomeRunning=false;homeSceneTarget=null;homeSceneCooldownUntil=0;openedChest=null;chestNoticeUntil=0;chestNoticeNext=0;refreshTrustSpeed();updateStage();
     }
     private static class PettingGoal extends Goal {
         private final Companion mob;
