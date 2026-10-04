@@ -1225,13 +1225,16 @@ public class FamilyTests {
         owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));open=AlbumCommands.open(owner);var command=new AlbumCommands.RecoveryCommand(open.session(),mob.getUUID(),1);AlbumCommands.recover(owner,command);
         h.assertTrue(!ledger.matches(mob.getUUID(),token,owner.getUUID()),"Authenticated session must reissue carrier");var recovered=owner.getInventory().getItem(1);UUID fresh=recovered.getTag().getUUID("Ticket");AlbumCommands.recover(owner,command);h.assertTrue(ledger.matches(mob.getUUID(),fresh,owner.getUUID()),"Replay must leave new ticket unchanged");owner.discard();h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=240,batch="recovery_dimension")
+    @GameTest(template="empty",timeoutTicks=480,batch="recovery_dimension")
     public static void recoveryMovesExistingEntityAcrossDimensions(GameTestHelper h){
         var owner=recoveryOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(5,2,5));mob.commandStay(owner,true);UUID id=mob.getUUID();var originalHome=new CompoundTag();mob.addAdditionalSaveData(originalHome);
         var nether=owner.server.getLevel(net.minecraft.world.level.Level.NETHER);BlockPos p=new BlockPos(72,220,72);nether.getChunkAt(p);nether.setChunkForced(4,4,true);
         var old=new java.util.HashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();for(int x=-4;x<=4;x++)for(int z=-4;z<=4;z++)for(int y=-1;y<=2;y++){var at=p.offset(x,y,z);old.put(at,nether.getBlockState(at));nether.setBlock(at,y==-1?Blocks.STONE.defaultBlockState():Blocks.AIR.defaultBlockState(),3);}
         owner.teleportTo(nether,p.getX()+.5,p.getY(),p.getZ()+.5,0,0);
-        h.runAfterDelay(60,()->{owner.setOnGround(true);h.assertTrue(FamilyRecovery.move(owner,mob),"Existing companion must transfer into owner's other dimension");h.startSequence().thenWaitUntil(()->h.assertTrue(nether.getEntity(id) instanceof Companion,"Transferred UUID must become accessible")).thenExecute(()->{var actual=(Companion)nether.getEntity(id);var state=new CompoundTag();actual.addAdditionalSaveData(state);h.assertTrue(actual.staying() && state.getLong("FamilyHome")==originalHome.getLong("FamilyHome") && state.getString("HomeDimension").equals(originalHome.getString("HomeDimension")) && h.getLevel().getEntity(id)==null,"Cross-dimension move must preserve wait/home and remove source instance");actual.discard();owner.discard();old.forEach((pos,blockState)->nether.setBlock(pos,blockState,3));nether.setChunkForced(4,4,false);}).thenSucceed();});
+        h.startSequence().thenWaitUntil(()->h.assertTrue(nether.areEntitiesLoaded(new net.minecraft.world.level.ChunkPos(p).toLong()) && nether.isPositionEntityTicking(p),"Target fixture must load entity sections before transfer"))
+            .thenExecute(()->{owner.setOnGround(true);h.assertTrue(FamilyRecovery.move(owner,mob),"Existing companion must transfer into owner's other dimension");})
+            .thenWaitUntil(()->h.assertTrue(nether.getEntity(id) instanceof Companion,"Transferred UUID must become accessible"))
+            .thenExecute(()->{var actual=(Companion)nether.getEntity(id);var state=new CompoundTag();actual.addAdditionalSaveData(state);h.assertTrue(actual.staying() && state.getLong("FamilyHome")==originalHome.getLong("FamilyHome") && state.getString("HomeDimension").equals(originalHome.getString("HomeDimension")) && h.getLevel().getEntity(id)==null,"Cross-dimension move must preserve wait/home and remove source instance");actual.discard();owner.discard();old.forEach((pos,blockState)->nether.setBlock(pos,blockState,3));nether.setChunkForced(4,4,false);}).thenSucceed();
     }
     @GameTest(template="empty",timeoutTicks=400,batch="recovery_unload")
     public static void recoveryLoadsOnlyIndexedChunkAndReleasesTicket(GameTestHelper h){
@@ -1494,7 +1497,7 @@ public class FamilyTests {
         h.assertTrue(TrailProgress.unlocked(7)==3 && FriendStories.unlocked(7,Kind.MARUSYA)==0 && FriendStories.unlocked(7,Kind.SYUSYA)==0,"Old three-bit progress opens only original story");
         for(int page=0;page<18;page++)h.assertTrue(!EggGuide.page(page,63,511).isEmpty(),"Every guide/story page must exist");h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_registeredfriendnotes")
     public static void registeredFriendNoteLootPreservesRandomAndResources(GameTestHelper h){
         String[] tables={"minecraft:chests/village/village_plains_house","minecraft:chests/village/village_desert_house","minecraft:chests/village/village_savanna_house","minecraft:chests/village/village_snowy_house","minecraft:chests/village/village_taiga_house","minecraft:chests/abandoned_mineshaft","minecraft:chests/woodland_mansion","minecraft:chests/simple_dungeon","mvs:abandoned","mvs:swamps","betterdungeons:skeleton_dungeon/chests/common","betterdungeons:zombie_dungeon/chests/common","betterdungeons:small_dungeon/chests/loot_piles"};
         var modifier=new FriendNoteLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0]);
@@ -1531,8 +1534,101 @@ public class FamilyTests {
     }
     @GameTest(template="empty",timeoutTicks=1600,batch="isolated_livedudunkashowsallthreematchingdrawings")
     public static void liveDudunkaShowsAllThreeMatchingDrawings(GameTestHelper h){
-        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.DUDUNKA);mob.setNoAi(false);var seen=new java.util.HashSet<Integer>();
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.DUDUNKA);visitRoom(h);mob.setNoAi(false);var seen=new java.util.HashSet<Integer>();
         h.onEachTick(()->{if(mob.activity()==Activity.DRAW || mob.activity()==Activity.SHOW_DRAWING){h.assertTrue(h.getLevel().getBlockState(mob.furniturePosition()).getValue(FurnitureBlock.PICTURE)==mob.characterVariant(),"Live table must match showing hand");if(mob.activity()==Activity.SHOW_DRAWING)seen.add(mob.characterVariant());}});
         h.succeedWhen(()->{h.assertTrue(seen.size()==3,"All three drawings must be shown in successive live activities: seen="+seen+", activity="+mob.activity()+", variant="+mob.characterVariant()+", pos="+mob.position()+", ready="+FurnitureScenes.info(mob));owner.discard();});
+    }
+
+    private static Companion visitGuest(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner,Kind kind,int offset){
+        for(var monster:h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,new net.minecraft.world.phys.AABB(h.absolutePos(new BlockPos(2,2,2))).inflate(20)))monster.discard();
+        var home=h.absolutePos(new BlockPos(offset==0?4:1,2,4));h.getLevel().setBlock(home,DudunkaMod.HOMES.get(kind).get().defaultBlockState(),3);((HomeMarkerEntity)h.getLevel().getBlockEntity(home)).claim(owner.getUUID());
+        var mob=create(h,kind,owner.getUUID(),new BlockPos(offset==0?4:0,2,3));mob.bindHome(home);h.assertTrue(mob.commandHome(owner),"Visitor requires a complete owned home");
+        var data=new CompoundTag();mob.addAdditionalSaveData(data);data.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);mob.readAdditionalSaveData(data);mob.setOnGround(true);return mob;
+    }
+    private static FurnitureVisits.Scene visitScene(Companion host){
+        var furniture=FurnitureScenes.select(host);if(furniture!=null){var at=host.kind==Kind.DUDUNKA?net.minecraft.world.phys.Vec3.atBottomCenterOf(furniture.approach()):furniture.rest();host.moveTo(at.x,at.y+.003,at.z,0,0);}host.reserveHomeScene(host.furniturePosition());host.setActivity(FurnitureVisits.occasion(host.kind));
+        return FurnitureVisits.offer(host,furniture);
+    }
+    @GameTest(template="empty",timeoutTicks=60,batch="isolated_visitselection")
+    public static void visitsSelectDistinctOwnedSpotsAndRespectModes(GameTestHelper h){
+        var owner=testOwner(h);var host=furnitureFixture(h,owner,Kind.DUDUNKA);var cat=visitGuest(h,owner,Kind.MARUSYA,0);var snail=visitGuest(h,owner,Kind.SYUSYA,1);
+        var foreign=create(h,Kind.MARUSYA,UUID.randomUUID(),new BlockPos(5,2,3));var scene=visitScene(host);
+        h.assertTrue(scene!=null && scene.seats().size()==2 && scene.seats().containsKey(cat.getUUID()) && scene.seats().containsKey(snail.getUUID()) && !scene.seats().containsKey(foreign.getUUID()),"Only own different-kind friends join with separate safe spots");
+        h.assertTrue(new java.util.HashSet<>(scene.seats().values()).size()==2 && !scene.seats().containsValue(FurnitureScenes.furniture(host).getBlockPos()),"No shared spots or furniture entry occupied");
+        cat.commandStay(owner,true);h.assertTrue(!FurnitureVisits.active(cat,scene) && FurnitureVisits.active(snail,scene),"Wait immediately excludes only that visitor");
+        snail.commandStay(owner,false);h.assertTrue(!FurnitureVisits.active(snail,scene) && FurnitureVisits.hosted(host)==null,"Follow must leave the home visit; empty gathering cannot hold host");
+        FurnitureVisits.cancelHost(host);host.discard();cat.discard();snail.discard();foreign.discard();owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=60,batch="isolated_visitcancel")
+    public static void visitsCancelOnThreatFurnitureAndHostCommand(GameTestHelper h){
+        var owner=testOwner(h);var host=furnitureFixture(h,owner,Kind.MARUSYA);var guest=visitGuest(h,owner,Kind.DUDUNKA,0);var scene=visitScene(host);h.assertTrue(scene!=null,"Fixture must offer cat rest");
+        var away=h.absolutePos(new BlockPos(5,2,5));guest.moveTo(away.getX()+.5,away.getY(),away.getZ()+.5,0,0);var goal=new FurnitureVisitGoal(guest);h.assertTrue(goal.canUse(),"Guest must accept a running occasion");goal.start();goal.tick();h.assertTrue(guest.activity()==Activity.CURIOUS,"Walking is not shared rest");
+        var monster=net.minecraft.world.entity.EntityType.ZOMBIE.create(h.getLevel());monster.moveTo(host.getX(),host.getY(),host.getZ(),0,0);monster.setNoAi(true);h.getLevel().addFreshEntity(monster);
+        h.assertTrue(!FurnitureVisits.active(guest,scene),"Nearby threat cancels guest and host visit");monster.discard();
+        h.getLevel().setBlock(host.furniturePosition(),Blocks.AIR.defaultBlockState(),3);goal.tick();h.assertTrue(guest.homeSceneTarget()==null && guest.activity()==Activity.IDLE,"Destroying furniture clears guest reservation on actual running goal");
+        host.commandStay(owner,true);h.assertTrue(FurnitureVisits.hosted(host)==null,"Host wait cannot keep scene running");host.discard();guest.discard();owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=160,batch="isolated_visitblocked")
+    public static void visitsRejectOccupiedPlacesAndDoNotReplaceRunningFurniture(GameTestHelper h){
+        var owner=testOwner(h);var host=furnitureFixture(h,owner,Kind.SYUSYA);var guest=visitGuest(h,owner,Kind.DUDUNKA,0);
+        guest.reserveHomeScene(guest.homeAnchor());h.assertTrue(visitScene(host)==null,"Running personal scene cannot be taken over by a visit");
+        guest.reserveHomeScene(null);FurnitureVisits.cancelHost(host);
+        h.runAfterDelay(110,()->{
+            for(int x=0;x<=5;x++)for(int z=0;z<=3;z++){
+                var pos=h.absolutePos(new BlockPos(x,2,z));var state=h.getLevel().getBlockState(pos);
+                if(!(x==2 && z==3) && !(state.getBlock() instanceof HomeMarkerBlock) && !state.is(Blocks.TORCH) && !(state.getBlock() instanceof net.minecraft.world.level.block.BedBlock) && !state.is(Blocks.CHEST))h.getLevel().setBlock(pos,Blocks.STONE.defaultBlockState(),3);
+            }
+            h.assertTrue(FurnitureVisits.offer(host,FurnitureScenes.select(host))==null && FurnitureVisits.select(guest)==null,"Blocked seats reject a fresh invitation without taking over furniture");host.discard();guest.discard();owner.discard();h.succeed();
+        });
+    }
+    @GameTest(template="empty",timeoutTicks=110,batch="isolated_visitfriendship")
+    public static void visitsCreditOnlyArrivedVisibleFriendsWithoutDoubleSampling(GameTestHelper h){
+        var owner=testOwner(h);var host=furnitureFixture(h,owner,Kind.DUDUNKA);var guest=visitGuest(h,owner,Kind.MARUSYA,0);var scene=visitScene(host);h.assertTrue(scene!=null,"Fixture must offer drawing");
+        var ledger=FamilyFriendships.get(owner.server);var home=guest.homeAnchor();int trust=guest.trust();var familyHome=host.homeAnchor();
+        h.onEachTick(()->FurnitureVisits.tickFriendship(host,scene));
+        h.runAfterDelay(25,()->{h.assertTrue(ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID())==0,"Approaching or idle visitor earns no friendship");var seat=scene.seats().get(guest.getUUID());guest.moveTo(seat.getX()+.5,seat.getY(),seat.getZ()+.5,0,0);guest.setActivity(Activity.SIT);});
+        h.runAfterDelay(95,()->{var before=ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID());h.assertTrue(before>0 && before<=80,"Actually seated visitor earns sampled time only");FurnitureVisits.tickFriendship(host,scene);FurnitureVisits.tickFriendship(host,scene);h.assertTrue(ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID())==before,"Repeated same-tick sampling never doubles progress");h.assertTrue(guest.trust()==trust && guest.homeAnchor().equals(home) && host.homeAnchor().equals(familyHome) && guest.atHomeMode(),"Visit must not change care, home or mode");FurnitureVisits.cancelHost(host);host.discard();guest.discard();owner.discard();h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=300,batch="isolated_visittimeout")
+    public static void visitsExpireWithCooldownAndRestoreWithoutTransientScene(GameTestHelper h){
+        var owner=testOwner(h);var host=furnitureFixture(h,owner,Kind.DUDUNKA);var guest=visitGuest(h,owner,Kind.SYUSYA,0);var scene=visitScene(host);h.assertTrue(scene!=null,"Slow guest must be invited: host="+host.position()+", guest="+guest.position()+", home="+guest.homeAnchor()+", info="+FurnitureScenes.info(host));var data=new CompoundTag();guest.addAdditionalSaveData(data);var restored=DudunkaMod.TYPES.get(guest.kind).get().create(h.getLevel());restored.readAdditionalSaveData(data);
+        h.assertTrue(restored.homeSceneTarget()==null && restored.activity()==Activity.IDLE && restored.atHomeMode(),"Load restores commands but never a transient visit/reservation");
+        h.runAfterDelay(245,()->{h.assertTrue(!FurnitureVisits.active(guest,scene) && FurnitureVisits.hosted(host)==null,"Visit expires even if no guest arrived");h.assertTrue(FurnitureVisits.offer(host,FurnitureScenes.select(host))==null,"Owner cooldown prevents immediate repeat");host.discard();guest.discard();owner.discard();h.succeed();});
+    }
+    private static void visitRoom(GameTestHelper h){
+        for(int x=-1;x<=6;x++)for(int z=-1;z<=6;z++){
+            h.getLevel().setBlock(h.absolutePos(new BlockPos(x,1,z)),Blocks.STONE.defaultBlockState(),3);
+            if(x==-1 || x==6 || z==-1 || z==6)for(int y=2;y<=4;y++)h.getLevel().setBlock(h.absolutePos(new BlockPos(x,y,z)),Blocks.STONE.defaultBlockState(),3);
+        }
+    }
+    private static void liveVisit(GameTestHelper h,Kind kind){
+        var owner=testOwner(h);var host=furnitureFixture(h,owner,kind);var guest=visitGuest(h,owner,kind==Kind.MARUSYA?Kind.DUDUNKA:Kind.MARUSYA,0);
+        visitRoom(h);var saved=new CompoundTag();host.addAdditionalSaveData(saved);saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);host.readAdditionalSaveData(saved);host.setNoAi(false);
+        var observed=new boolean[2];var counts=new int[3];var start=new net.minecraft.world.phys.Vec3[]{null};
+        h.onEachTick(()->{var scene=FurnitureVisits.hosted(host);if(scene!=null){guest.setNoAi(false);counts[0]++;observed[0]=true;if(start[0]==null)start[0]=guest.position();if(FurnitureVisits.settled(guest,scene)){observed[1]=true;counts[1]++;if(guest.hasLineOfSight(host))counts[2]++;}}});
+        h.runAfterDelay(560,()->{h.assertTrue(observed[0] && observed[1],"Real AI must host and walk into shared "+kind+" occasion: seen="+java.util.Arrays.toString(observed)+", host="+host.activity()+", guest="+guest.activity()+", at="+guest.position()+", scene="+FurnitureVisits.hosted(host));var ledger=FamilyFriendships.get(owner.server);h.assertTrue(ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID())>0,"Real shared activity must credit confirmed time: active/seated/visible="+java.util.Arrays.toString(counts)+", host="+host.position()+", guest="+guest.position());h.assertTrue(host.atHomeMode() && guest.atHomeMode() && host.homeSceneTarget()==null && guest.homeSceneTarget()==null,"Solo cycle resumes and reservations clear after visit");host.commandStay(owner,true);guest.commandStay(owner,true);host.discard();guest.discard();owner.discard();h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=620,batch="isolated_liveshareddrawing")
+    public static void friendsReallyWatchDudunkasDrawing(GameTestHelper h){liveVisit(h,Kind.DUDUNKA);}
+    @GameTest(template="empty",timeoutTicks=620,batch="isolated_livesharedcatrest")
+    public static void friendsReallyRestBesideMarusya(GameTestHelper h){liveVisit(h,Kind.MARUSYA);}
+    @GameTest(template="empty",timeoutTicks=620,batch="isolated_livesharedsnailpeek")
+    public static void friendsReallyWatchSyusyaPeek(GameTestHelper h){liveVisit(h,Kind.SYUSYA);}
+
+    @GameTest(template="empty",timeoutTicks=620,batch="isolated_livesharedtwoguests")
+    public static void drawingReallyWelcomesBothCatAndSlowSnail(GameTestHelper h){
+        var owner=testOwner(h);var host=furnitureFixture(h,owner,Kind.DUDUNKA);var cat=visitGuest(h,owner,Kind.MARUSYA,0);var snail=visitGuest(h,owner,Kind.SYUSYA,1);visitRoom(h);host.setNoAi(false);
+        var seen=new java.util.HashSet<UUID>();h.onEachTick(()->{var scene=FurnitureVisits.hosted(host);if(scene!=null)for(var guest:java.util.List.of(cat,snail)){guest.setNoAi(false);if(FurnitureVisits.settled(guest,scene))seen.add(guest.getUUID());}});
+        h.runAfterDelay(560,()->{h.assertTrue(seen.contains(cat.getUUID()) && seen.contains(snail.getUUID()),"Both actual visitors, including slow Syusya, must arrive: seen="+seen+", cat="+cat.position()+", snail="+snail.position());host.discard();cat.discard();snail.discard();owner.discard();h.succeed();});
+    }
+
+    @GameTest(template="empty",timeoutTicks=60,batch="isolated_visitstagger")
+    public static void readyPersonalFurnitureWaitsForRunningFriendsOccasion(GameTestHelper h){
+        var owner=testOwner(h);var host=furnitureFixture(h,owner,Kind.DUDUNKA);var guest=visitGuest(h,owner,Kind.MARUSYA,0);var pos=h.absolutePos(new BlockPos(5,2,4));
+        h.getLevel().setBlock(pos,DudunkaMod.FURNITURE.get(Kind.MARUSYA).get().defaultBlockState(),3);var furniture=(FurnitureEntity)h.getLevel().getBlockEntity(pos);furniture.claim(owner.getUUID());h.assertTrue(furniture.assign(guest),"Guest owns usable personal furniture");guest.bindFurniture(pos);var saved=new CompoundTag();guest.addAdditionalSaveData(saved);guest.readAdditionalSaveData(saved);
+        host.reserveHomeScene(host.furniturePosition());host.setActivity(Activity.DRAW);
+        h.assertTrue(FurnitureVisits.waitForHost(guest) && !new FurnitureGoal(guest).canUse(),"Fresh solo furniture start must wait for the nearby friend already using furniture");
+        var scene=visitScene(host);h.assertTrue(scene!=null && new FurnitureVisitGoal(guest).canUse(),"Guest with assigned furniture can join when the real occasion starts");
+        FurnitureVisits.cancelHost(host);host.reserveHomeScene(null);host.setActivity(Activity.IDLE);h.assertTrue(!FurnitureVisits.waitForHost(guest) && new FurnitureGoal(guest).canUse(),"When host finishes, assigned solo activity becomes available again");host.discard();guest.discard();owner.discard();h.succeed();
     }
 }

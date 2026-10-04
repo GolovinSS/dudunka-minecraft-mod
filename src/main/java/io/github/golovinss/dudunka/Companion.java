@@ -48,18 +48,19 @@ public class Companion extends PathfinderMob {
         goalSelector.addGoal(2,new FamilyBehaviorGoal(this));
         goalSelector.addGoal(3,new CampfireRestGoal(this));
         goalSelector.addGoal(4,new ChestCuriosityGoal(this));
-        goalSelector.addGoal(5,new FurnitureGoal(this));
-        goalSelector.addGoal(6,new HomeTogetherGoal(this));
-        goalSelector.addGoal(7,new HomeSceneGoal(this));
-        goalSelector.addGoal(8,new StayHomeGoal(this));
-        goalSelector.addGoal(9,new FamilyFollowGoal(this));
-        goalSelector.addGoal(10,new WaterAvoidingRandomStrollGoal(this, .8) {
+        goalSelector.addGoal(5,new FurnitureVisitGoal(this));
+        goalSelector.addGoal(6,new FurnitureGoal(this));
+        goalSelector.addGoal(7,new HomeTogetherGoal(this));
+        goalSelector.addGoal(8,new HomeSceneGoal(this));
+        goalSelector.addGoal(9,new StayHomeGoal(this));
+        goalSelector.addGoal(10,new FamilyFollowGoal(this));
+        goalSelector.addGoal(11,new WaterAvoidingRandomStrollGoal(this, .8) {
             @Override public boolean canUse() { if(staying() || homeMode && (homeAnchor()==null || blockPosition().distSqr(homeAnchor())>36))return false;
                 if(!super.canUse())return false;
                 return !homeMode || homeAnchor()!=null && new BlockPos((int)Math.floor(wantedX),(int)Math.floor(wantedY),(int)Math.floor(wantedZ)).distSqr(homeAnchor())<=36; }
         });
-        goalSelector.addGoal(11,new LookAtPlayerGoal(this,Player.class,6));
-        goalSelector.addGoal(12,new RandomLookAroundGoal(this));
+        goalSelector.addGoal(12,new LookAtPlayerGoal(this,Player.class,6));
+        goalSelector.addGoal(13,new RandomLookAroundGoal(this));
     }
     public void initialize(UUID owner,BlockPos home) { this.owner=owner; this.home=home.immutable(); this.homeDimension=level().dimension().location().toString(); setCustomName(Component.translatable("entity.dudunka."+kind.id)); }
     public int stage() { return entityData.get(STAGE); }
