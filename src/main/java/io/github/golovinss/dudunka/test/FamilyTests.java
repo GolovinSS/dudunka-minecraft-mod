@@ -1228,7 +1228,10 @@ public class FamilyTests {
     @GameTest(template="empty",timeoutTicks=1200,batch="recovery_dimension")
     public static void recoveryMovesExistingEntityAcrossDimensions(GameTestHelper h){
         var owner=recoveryOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(5,2,5));mob.commandStay(owner,true);UUID id=mob.getUUID();var originalHome=new CompoundTag();mob.addAdditionalSaveData(originalHome);
-        var nether=owner.server.getLevel(net.minecraft.world.level.Level.NETHER);BlockPos p=new BlockPos(72,220,72);nether.getChunkAt(p);nether.setChunkForced(4,4,true);
+        var nether=owner.server.getLevel(net.minecraft.world.level.Level.NETHER);BlockPos p=new BlockPos(72,220,72);
+        // Entity ticking needs the neighboring FULL chunks as well as the forced center.
+        for(int x=3;x<=5;x++)for(int z=3;z<=5;z++)nether.getChunk(x,z);
+        nether.setChunkForced(4,4,true);
         var old=new java.util.HashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();for(int x=-4;x<=4;x++)for(int z=-4;z<=4;z++)for(int y=-1;y<=2;y++){var at=p.offset(x,y,z);old.put(at,nether.getBlockState(at));nether.setBlock(at,y==-1?Blocks.STONE.defaultBlockState():Blocks.AIR.defaultBlockState(),3);}
         owner.teleportTo(nether,p.getX()+.5,p.getY(),p.getZ()+.5,0,0);
         h.startSequence().thenWaitUntil(()->h.assertTrue(nether.areEntitiesLoaded(new net.minecraft.world.level.ChunkPos(p).toLong()) && nether.isPositionEntityTicking(p),"Target fixture must load entity sections before transfer"))
@@ -1733,11 +1736,11 @@ public class FamilyTests {
         level.setBlock(h.absolutePos(new BlockPos(4,302,1)),bed.setValue(net.minecraft.world.level.block.BedBlock.PART,net.minecraft.world.level.block.state.properties.BedPart.HEAD),3);
         level.setBlock(h.absolutePos(new BlockPos(4,302,2)),bed.setValue(net.minecraft.world.level.block.BedBlock.PART,net.minecraft.world.level.block.state.properties.BedPart.FOOT),3);
         var position=h.absolutePos(new BlockPos(1,302,1));owner.moveTo(position.getX()+.5,position.getY(),position.getZ()+.5,0,0);
-        for(var threat:level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,new net.minecraft.world.phys.AABB(home).inflate(20)))threat.discard();
+        for(var threat:h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,new net.minecraft.world.phys.AABB(home).inflate(20)))threat.discard();
         var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(1,302,3));d.bindHome(home);
         var members=new java.util.ArrayList<Companion>();members.add(d);
         for(var kind:new Kind[]{Kind.MARUSYA,Kind.SYUSYA}){
-            var anchor=h.absolutePos(new BlockPos(3,302,kind==Kind.MARUSYA?2:5));level.setBlock(anchor,DudunkaMod.HOMES.get(kind).get().defaultBlockState(),3);((HomeMarkerEntity)level.getBlockEntity(anchor)).claim(owner.getUUID());
+            var anchor=h.absolutePos(new BlockPos(3,302,kind==Kind.MARUSYA?2:5));h.getLevel().setBlock(anchor,DudunkaMod.HOMES.get(kind).get().defaultBlockState(),3);((HomeMarkerEntity)h.getLevel().getBlockEntity(anchor)).claim(owner.getUUID());
             var mob=create(h,kind,owner.getUUID(),new BlockPos(kind==Kind.MARUSYA?4:5,302,kind==Kind.MARUSYA?4:0));mob.bindHome(anchor);members.add(mob);
         }
         return members;
@@ -1746,6 +1749,7 @@ public class FamilyTests {
         // Roof validity uses skylight: wait for the real lighting worker, then refresh marker caches.
         for(var m:members){
             var data=new CompoundTag();
+            // Use the known fixture marker; homeAnchor deliberately rejects an unlit/unready home.
             var anchor=h.absolutePos(new BlockPos(m.kind==Kind.DUDUNKA?2:3,302,m.kind==Kind.SYUSYA?5:2));
             var marker=(HomeMarkerEntity)h.getLevel().getBlockEntity(anchor);
             h.assertTrue(marker.conditions(true).ready(),"Atmosphere fixture ready after lighting: "+m.kind+" "+marker.conditions(true));

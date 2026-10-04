@@ -1,9 +1,4 @@
-# Dudunka Family — 0.25.0 alpha (рабочая ветка)
-
-Эта ветка содержит приветствия после путешествия и дождливые домашние сценки. **JAR 0.25.0-alpha еще не опубликован.** Последний локальный прогон: 133/134, все десять новых тестов прошли; финальная проверка этой сохраненной ветки ожидает восстановления среды сборки.
-
-[Механики и как попробовать](docs/HOME-ATMOSPHERE.md) · [Проверки и точка продолжения](docs/VALIDATION-0.25.0-WIP.md).
-
+# Dudunka Family — 0.25.0 alpha
 
 Целевая сборка: **Better MC [FORGE] BMC4, Minecraft 1.20.1, v55.5, Forge 47.4.13**.
 Версия Forge подтверждена в manifest.json официального архива v55.5 (CurseForge file 7443284).
@@ -26,13 +21,14 @@
 
 | Версия | Что добавлено | Проверки | Скачать |
 |---|---|---|---|
-| **0.24.0-alpha** | Совместные прогулки у цветов и необязательные просьбы; памятные подарки, воспоминания и сохранение прогресса | [Проверки](docs/VALIDATION.md) · [Как попробовать](docs/WALKS-AND-REQUESTS.md) | [JAR 0.24.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.24.0-alpha.jar) |
+| **0.25.0-alpha** | Приветствия после путешествия для всех друзей, реакции по доверию и общая встреча; домашние сценки у окна и горшка в дождь | [Проверки](docs/VALIDATION.md) · [Как попробовать](docs/HOME-ATMOSPHERE.md) | [JAR 0.25.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.25.0-alpha.jar) |
+| **0.24.0-alpha** | Совместные прогулки у цветов и необязательные просьбы; памятные подарки, воспоминания и сохранение прогресса | [Проверки](docs/VALIDATION-0.24.0.md) · [Как попробовать](docs/WALKS-AND-REQUESTS.md) | [JAR 0.24.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.24.0-alpha.jar) |
 | **0.23.0-alpha** | Совместные сценки у мебели: гости смотрят рисунок, отдыхают рядом с Марусей и наблюдают за Сюсей; подтвержденное совместное время укрепляет дружбу | [Проверки и ограничения](docs/VALIDATION-0.23.0.md) | [JAR 0.23.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.23.0-alpha.jar) |
 | **0.22.1-alpha** | Кнопка «Как играть» в альбоме: пять коротких страниц для детей, прокрутка и возврат к прежней странице; русский и английский текст, протокол 7 сохранён | Сборка и проверки моделей; игровой GUI ещё не проверен | [JAR 0.22.1-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.22.1-alpha.jar) |
 | **0.22.0-alpha** | Три рисунка Дюдюньки, три позы отдыха Маруси, реакции усиков Сюси; шесть новых записок и две личные истории; исправлен повторный подход к мебели | [102/102 GameTests и проверки девяти возрастных моделей](docs/VALIDATION-0.22.1.md) | [JAR 0.22.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.22.0-alpha.jar) |
 | **0.21.0-alpha** | Новые модели и текстуры домашних мест; столик, лежанка с когтеточкой и домик с листочком; назначение мебели через альбом, режим «Дома» и занятия друзей | [95/95 GameTests](docs/VALIDATION-0.21.0.md) | [JAR 0.21.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.21.0-alpha.jar) |
 
-Для обновления используй **0.23.0-alpha**: она включает предыдущие изменения 0.21–0.22.1. Замени JAR на сервере и всех клиентах, оставив в `mods` один файл Dudunka Family. Протокол альбома изменился с **6** на **7**; старые миры, привязки и прочитанные записки сохраняются. Игровая приемка в полной BMC4 остается открыта.
+Для обновления используй **0.25.0-alpha**: она включает предыдущие изменения. Замени JAR на сервере и всех клиентах, оставив в `mods` один файл Dudunka Family. Протокол альбома — **8**, как в 0.24.0; старые миры, привязки и воспоминания сохраняются. Игровая приемка в полной BMC4 остается открыта.
 
 ## Сборка
 
@@ -51,7 +47,7 @@ Windows PowerShell:
 .\gradlew.bat build
 ```
 
-Результат: `build/libs/dudunka-0.23.0-alpha.jar`. Использовать обычный JAR, не sources и не dev.
+Результат: `build/libs/dudunka-0.25.0-alpha.jar`. Использовать обычный JAR, не sources и не dev.
 
 ## Установка
 
