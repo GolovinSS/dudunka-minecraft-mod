@@ -2,6 +2,18 @@
   "replace": false,
   "values": [
     "minecraft:swamp",
-    "minecraft:mangrove_swamp"
+    "minecraft:mangrove_swamp",
+    {
+      "id": "biomesoplenty:bayou",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:marsh",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wetland",
+      "required": false
+    }
   ]
 }

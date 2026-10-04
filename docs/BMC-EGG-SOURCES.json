@@ -1,0 +1,120 @@
+{
+  "pack": "Better MC [FORGE] BMC4 1.20.1 v55.5",
+  "pack_curseforge_file": 7443284,
+  "sources": [
+    {
+      "mod": "mvs",
+      "version": "5.0.3",
+      "curseforge_project": 656977,
+      "curseforge_file": 7311820,
+      "sha256": "c227a7ff54fc5a1371f011f13b6743c110b8c00437d47b6f764acc929bdfec6e"
+    },
+    {
+      "mod": "betterdungeons",
+      "version": "1.20-Forge-4.0.4",
+      "curseforge_project": 510089,
+      "curseforge_file": 5271360,
+      "sha256": "93c24e4075c51da0866f3fc92322bdb60e590ac2cd78dce275460839c54c36f5"
+    },
+    {
+      "mod": "biomesoplenty",
+      "version": "19.0.0.96",
+      "curseforge_project": 220318,
+      "curseforge_file": 6364065,
+      "sha256": "330f482487ac3135557b6e898d7e1ae5330321e9cfd5ba63e13a16cf2e8d8b98"
+    }
+  ],
+  "direct_loot_additions": [
+    {
+      "kind": "dudunka",
+      "loot_table": "mvs:houses_common",
+      "chance": 0.025,
+      "resource": "data/mvs/loot_tables/houses_common.json",
+      "usage_examples": [
+        "data/mvs/structures/beach_bar.nbt",
+        "data/mvs/structures/cartographer_tower/base.nbt",
+        "data/mvs/structures/houses/azelea_house.nbt"
+      ]
+    },
+    {
+      "kind": "dudunka",
+      "loot_table": "mvs:houses_desert",
+      "chance": 0.025,
+      "resource": "data/mvs/loot_tables/houses_desert.json",
+      "usage_examples": [
+        "data/mvs/structures/houses/desert_house.nbt"
+      ]
+    },
+    {
+      "kind": "dudunka",
+      "loot_table": "mvs:houses_flower",
+      "chance": 0.06,
+      "resource": "data/mvs/loot_tables/houses_flower.json",
+      "usage_examples": [
+        "data/mvs/structures/houses/deepslate_house.nbt",
+        "data/mvs/structures/houses/flower_hole.nbt"
+      ]
+    },
+    {
+      "kind": "marusya",
+      "loot_table": "betterdungeons:skeleton_dungeon/chests/common",
+      "chance": 0.035,
+      "resource": "data/betterdungeons/loot_tables/skeleton_dungeon/chests/common.json",
+      "usage_examples": [
+        "data/betterdungeons/structures/skeleton_dungeon/2x3/2x3_0.nbt",
+        "data/betterdungeons/structures/skeleton_dungeon/2x3/2x3_1.nbt",
+        "data/betterdungeons/structures/skeleton_dungeon/2x3/2x3_4.nbt"
+      ]
+    },
+    {
+      "kind": "marusya",
+      "loot_table": "betterdungeons:zombie_dungeon/chests/common",
+      "chance": 0.035,
+      "resource": "data/betterdungeons/loot_tables/zombie_dungeon/chests/common.json",
+      "usage_examples": [
+        "data/betterdungeons/structures/zombie_dungeon/cubby_prop/cubby_prop_0.nbt",
+        "data/betterdungeons/structures/zombie_dungeon/zombie_start.nbt"
+      ]
+    },
+    {
+      "kind": "marusya",
+      "loot_table": "mvs:abandoned",
+      "chance": 0.05,
+      "resource": "data/mvs/loot_tables/abandoned.json",
+      "usage_examples": [
+        "data/mvs/structures/houses/tall_house.nbt"
+      ]
+    },
+    {
+      "kind": "syusya",
+      "loot_table": "betterdungeons:small_dungeon/chests/loot_piles",
+      "chance": 0.06,
+      "resource": "data/betterdungeons/loot_tables/small_dungeon/chests/loot_piles.json",
+      "usage_examples": [
+        "data/betterdungeons/structures/small_dungeon/loot_piles/loot_pile_1.nbt",
+        "data/betterdungeons/structures/small_dungeon/loot_piles/loot_pile_3.nbt",
+        "data/betterdungeons/structures/small_dungeon/loot_piles/loot_pile_5.nbt"
+      ]
+    },
+    {
+      "kind": "syusya",
+      "loot_table": "mvs:swamps",
+      "chance": 0.06,
+      "resource": "data/mvs/loot_tables/swamps.json",
+      "usage_examples": [
+        "data/mvs/structures/houses/small_swamp_house.nbt",
+        "data/mvs/structures/ruins/log_ruin.nbt"
+      ]
+    }
+  ],
+  "optional_surface_biomes": [
+    "biomesoplenty:bayou",
+    "biomesoplenty:marsh",
+    "biomesoplenty:wetland"
+  ],
+  "notes": [
+    "Repurposed Structures 7.1.19 (file 6797349) importModdedItems=true in the pack; no extra direct RS modifiers added.",
+    "External JARs inspected only; no third-party resources copied or bundled.",
+    "This confirms identifiers and assignments; full-pack runtime and effective rarity remain manual validation."
+  ]
+}

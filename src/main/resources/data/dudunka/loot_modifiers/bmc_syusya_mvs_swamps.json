@@ -1,0 +1,11 @@
+{
+  "type": "dudunka:egg",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "mvs:swamps"
+    }
+  ],
+  "kind": "syusya",
+  "chance": 0.06
+}

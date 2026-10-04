@@ -879,6 +879,81 @@ public class FamilyTests {
         h.assertTrue(ledger.relations(owner.getUUID(),first.getUUID()).size()==13,"Reading album must not truncate persistent friendship history");owner.discard();h.succeed();
     }
 
+    private static long albums(net.minecraft.server.level.ServerPlayer player){long n=0;for(int i=0;i<player.getInventory().getContainerSize();i++)if(player.getInventory().getItem(i).is(DudunkaMod.ALBUM.get()))n+=player.getInventory().getItem(i).getCount();return n;}
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void guideGiftPersistsOncePerPlayerAndWorld(GameTestHelper h) {
+        var owner=testOwner(h);var gifts=new FamilyGuideGifts();
+        h.assertTrue(gifts.give(owner) && albums(owner)==1,"First eligible login must give one album");
+        var restored=FamilyGuideGifts.load(gifts.save(new CompoundTag()));owner.getInventory().clearContent();
+        h.assertTrue(restored.delivered(owner.getUUID()) && !restored.give(owner) && albums(owner)==0,"Saved delivery must survive item loss and not give another on rejoin");
+        var other=testOwner(h);h.assertTrue(restored.give(other) && albums(other)==1,"Each different player receives their own guide");owner.discard();other.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void guideGiftDoesNotDuplicateExistingOrLoseOnFullInventory(GameTestHelper h) {
+        var owner=testOwner(h);var gifts=new FamilyGuideGifts();owner.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));
+        h.assertTrue(!gifts.give(owner) && gifts.delivered(owner.getUUID()) && albums(owner)==1,"Existing offhand album must mark delivery without duplicate");
+        var full=testOwner(h);for(int i=0;i<36;i++)full.getInventory().setItem(i,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COBBLESTONE,64));
+        h.assertTrue(!gifts.give(full) && !gifts.delivered(full.getUUID()) && albums(full)==0,"Full inventory must leave delivery pending without dropping a book");
+        full.getInventory().setItem(10,net.minecraft.world.item.ItemStack.EMPTY);h.assertTrue(gifts.give(full) && albums(full)==1 && gifts.delivered(full.getUUID()),"Next login with space must complete delivery");
+        owner.discard();full.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void guidePagesUseServerAvailabilityAndSnapshotCodec(GameTestHelper h) {
+        var base=EggGuide.page(1,EggGuide.LOOT);var expanded=EggGuide.page(1,EggGuide.LOOT|EggGuide.MVS);
+        h.assertTrue(expanded.size()==base.size()+1 && EggGuide.page(3,31).size()>EggGuide.page(3,0).size(),"Optional locations must depend on server flags and enabled sources");
+        for(int i=0;i<EggGuide.PAGES;i++)h.assertTrue(!EggGuide.page(i,31).isEmpty(),"Every guide page must have content");
+        var original=new FamilyAlbum.Snapshot(0,java.util.List.of(),31);var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+        try{FamilyAlbum.encode(original,buf);h.assertTrue(original.equals(FamilyAlbum.decode(buf)),"Server availability must round-trip with empty family");}finally{buf.release();}
+        var owner=testOwner(h);FamilyGuideGifts.onLogin(new net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent(owner));
+        h.assertTrue(albums(owner)==1,"Actual login subscriber must deliver guide through world SavedData");owner.getInventory().clearContent();FamilyGuideGifts.onLogin(new net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent(owner));h.assertTrue(albums(owner)==0,"Repeated login event must not duplicate gift");owner.discard();h.succeed();
+    }
+    private static net.minecraft.world.level.storage.loot.LootContext eggLootContext(GameTestHelper h,String table,long seed){
+        var params=new net.minecraft.world.level.storage.loot.LootParams.Builder(h.getLevel()).withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN,net.minecraft.world.phys.Vec3.atCenterOf(h.absolutePos(new BlockPos(2,2,2)))).create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
+        return new net.minecraft.world.level.storage.loot.LootContext.Builder(params).withOptionalRandomSeed(seed).withQueriedLootTableId(new net.minecraft.resources.ResourceLocation(table)).create(null);
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void bmcEggModifiersMatchVerifiedTablesWithoutDependencies(GameTestHelper h) {
+        String[] tables={"mvs:houses_common","mvs:houses_flower","mvs:houses_desert","mvs:abandoned","betterdungeons:skeleton_dungeon/chests/common","betterdungeons:zombie_dungeon/chests/common","mvs:swamps","betterdungeons:small_dungeon/chests/loot_piles"};
+        Kind[] kinds={Kind.DUDUNKA,Kind.DUDUNKA,Kind.DUDUNKA,Kind.MARUSYA,Kind.MARUSYA,Kind.MARUSYA,Kind.SYUSYA,Kind.SYUSYA};double setting=DudunkaMod.LOOT_MULTIPLIER.get();
+        try{
+            DudunkaMod.LOOT_MULTIPLIER.set(10.0);
+            for(int i=0;i<tables.length;i++){
+                boolean found=false;
+                for(int seed=1;seed<=128;seed++){
+                    var generated=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation(tables[i]),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),eggLootContext(h,tables[i],seed*982451653L));
+                    final Kind expected=kinds[i];h.assertTrue(generated.stream().allMatch(item->item.is(DudunkaMod.EGG_ITEMS.get(expected).get())),"Table must match only assigned kind: "+tables[i]);if(!generated.isEmpty()){found=true;break;}
+                }
+                h.assertTrue(found,"Registered GLM must add an egg for verified ID "+tables[i]);
+            }
+            var unrelated=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation("mvs:empty"),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),eggLootContext(h,"mvs:empty",1));h.assertTrue(unrelated.isEmpty(),"Unlisted empty structures must not get eggs");
+        }finally{DudunkaMod.LOOT_MULTIPLIER.set(setting);}h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void savedUnopenedChestGetsEggButGeneratedChestDoesNotRefill(GameTestHelper h) {
+        var pos=h.absolutePos(new BlockPos(2,2,2));h.getLevel().setBlock(pos,Blocks.CHEST.defaultBlockState(),3);var chest=(net.minecraft.world.level.block.entity.ChestBlockEntity)h.getLevel().getBlockEntity(pos);
+        var table=new net.minecraft.resources.ResourceLocation("minecraft:chests/village/village_plains_house");double setting=DudunkaMod.LOOT_MULTIPLIER.get();boolean found=false;
+        try {
+            DudunkaMod.LOOT_MULTIPLIER.set(10.0);
+            for(int seed=1;seed<=128;seed++) {
+                chest.clearContent();chest.setLootTable(table,seed);var oldSave=chest.saveWithFullMetadata();
+                h.assertTrue(oldSave.contains("LootTable") && !oldSave.contains("Items"),"Unopened saved container must still defer loot generation");
+                chest.load(oldSave);chest.unpackLootTable(null);
+                for(int slot=0;slot<chest.getContainerSize();slot++)if(chest.getItem(slot).is(DudunkaMod.EGG_ITEMS.get(Kind.DUDUNKA).get()))found=true;
+                if(found)break;
+            }
+            h.assertTrue(found,"Existing unopened vanilla chest must receive egg through real loot generation");
+            var formed=chest.saveWithFullMetadata();h.assertTrue(!formed.contains("LootTable"),"Generated chest must consume its loot table");chest.load(formed);chest.unpackLootTable(null);
+            h.assertTrue(chest.saveWithFullMetadata().equals(formed),"Reload/reopen must retain identical inventory without another roll");
+        }finally{DudunkaMod.LOOT_MULTIPLIER.set(setting);}h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void eggLootPreservesExistingLootAndDeduplicatesImportedEgg(GameTestHelper h) {
+        var context=eggLootContext(h,"mvs:houses_common",1);var modifier=new EggLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0],"dudunka",1);
+        var loot=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();loot.add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,3));modifier.apply(loot,context);modifier.apply(loot,context);
+        h.assertTrue(loot.size()==2 && loot.get(0).getCount()==3 && loot.get(1).is(DudunkaMod.EGG_ITEMS.get(Kind.DUDUNKA).get()),"Repeated/imported loot must keep original items and at most one added egg of its kind");
+        double setting=DudunkaMod.LOOT_MULTIPLIER.get();try{DudunkaMod.LOOT_MULTIPLIER.set(0.0);var empty=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();modifier.apply(empty,context);h.assertTrue(empty.isEmpty(),"Zero loot multiplier must disable additions");}finally{DudunkaMod.LOOT_MULTIPLIER.set(setting);}h.succeed();
+    }
+
     private static long togetherPreviousTime;
     @BeforeBatch(batch="home_together")
     public static void beforeTogether(net.minecraft.server.level.ServerLevel level){togetherPreviousTime=level.getDayTime();level.setDayTime(6000);}

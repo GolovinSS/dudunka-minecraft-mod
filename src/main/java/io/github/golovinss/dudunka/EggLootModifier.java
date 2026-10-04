@@ -14,6 +14,7 @@ public class EggLootModifier extends LootModifier {
     private final Kind kind; private final double chance;
     public EggLootModifier(LootItemCondition[] conditions,String kind,double chance){super(conditions);this.kind=Kind.valueOf(kind.toUpperCase(java.util.Locale.ROOT));this.chance=chance;}
     @Override protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> loot,LootContext context) {
+        if(loot.stream().anyMatch(stack->stack.is(DudunkaMod.EGG_ITEMS.get(kind).get())))return loot;
         if(context.getRandom().nextFloat()<Math.min(1,chance*DudunkaMod.LOOT_MULTIPLIER.get()))loot.add(new ItemStack(DudunkaMod.EGG_ITEMS.get(kind).get()));
         return loot;
     }

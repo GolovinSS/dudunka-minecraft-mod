@@ -1,0 +1,11 @@
+{
+  "type": "dudunka:egg",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "betterdungeons:zombie_dungeon/chests/common"
+    }
+  ],
+  "kind": "marusya",
+  "chance": 0.035
+}

@@ -12,7 +12,9 @@ public final class FamilyAlbum {
     public record HomeInfo(HomeState state,int flags) {}
     public record Friend(Component name,int score) {}
     public record Entry(UUID id,Component name,Kind kind,int stage,int trust,boolean staying,HomeInfo home,List<Friend> friends) {}
-    public record Snapshot(int total,List<Entry> entries) {}
+    public record Snapshot(int total,List<Entry> entries,int guideFlags) {
+        public Snapshot(int total,List<Entry> entries){this(total,entries,0);}
+    }
     private FamilyAlbum() {}
     public static Snapshot collect(ServerPlayer player) {
         var level=player.serverLevel();
@@ -30,7 +32,7 @@ public final class FamilyAlbum {
             }
             entries.add(new Entry(mob.getUUID(),name(mob),mob.kind,mob.stage(),mob.trust(),mob.staying(),mob.albumHome(),List.copyOf(friends)));
         }
-        return new Snapshot(members.size(),List.copyOf(entries));
+        return new Snapshot(members.size(),List.copyOf(entries),EggGuide.flags());
     }
     private static Component name(Companion mob) {
         var custom=mob.getCustomName();
@@ -39,7 +41,7 @@ public final class FamilyAlbum {
         String text=custom.getString();return Component.literal(text.substring(0,Math.min(80,text.length())));
     }
     public static void encode(Snapshot snapshot,FriendlyByteBuf buf) {
-        buf.writeVarInt(snapshot.total());buf.writeVarInt(snapshot.entries().size());
+        buf.writeVarInt(snapshot.total());buf.writeVarInt(snapshot.entries().size());buf.writeByte(snapshot.guideFlags());
         for(var entry:snapshot.entries()) {
             buf.writeUUID(entry.id());buf.writeComponent(entry.name());buf.writeEnum(entry.kind());buf.writeVarInt(entry.stage());buf.writeVarInt(entry.trust());buf.writeBoolean(entry.staying());
             buf.writeEnum(entry.home().state());buf.writeByte(entry.home().flags());buf.writeVarInt(entry.friends().size());
@@ -49,13 +51,13 @@ public final class FamilyAlbum {
     private static int bounded(FriendlyByteBuf buf,int min,int max){int n=buf.readVarInt();if(n<min || n>max)throw new IllegalArgumentException("Invalid album value");return n;}
     public static Snapshot decode(FriendlyByteBuf buf) {
         int total=bounded(buf,0,Integer.MAX_VALUE),count=bounded(buf,0,12);if(total<count)throw new IllegalArgumentException("Invalid album count");
-        var entries=new ArrayList<Entry>();
+        int flags=buf.readUnsignedByte()&31;var entries=new ArrayList<Entry>();
         for(int i=0;i<count;i++){
             UUID id=buf.readUUID();Component name=buf.readComponent();Kind kind=buf.readEnum(Kind.class);int stage=bounded(buf,0,2),trust=bounded(buf,0,100);boolean staying=buf.readBoolean();
             var home=new HomeInfo(buf.readEnum(HomeState.class),buf.readUnsignedByte()&31);int size=bounded(buf,0,5);var friends=new ArrayList<Friend>();
             for(int j=0;j<size;j++)friends.add(new Friend(buf.readComponent(),bounded(buf,0,100)));
             entries.add(new Entry(id,name,kind,stage,trust,staying,home,List.copyOf(friends)));
         }
-        return new Snapshot(total,List.copyOf(entries));
+        return new Snapshot(total,List.copyOf(entries),flags);
     }
 }
