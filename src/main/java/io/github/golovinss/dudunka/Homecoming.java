@@ -19,5 +19,7 @@ public final class Homecoming {
         } else if(awayTicks<200){awayTicks=0;} // Preserve a completed excursion while walking back through the doorway.
     }
     public boolean pending(long now){return pendingUntil>now && now>=nextWelcome;}
+    public boolean ready(long now){return pending(now) || seenHome && awayTicks>=200 && now>=nextWelcome;}
+    public boolean consumeArrival(long now){if(!ready(now))return false;awayTicks=0;pendingUntil=0;nextWelcome=now+1200;return true;}
     public boolean consume(long now){if(!pending(now))return false;pendingUntil=0;nextWelcome=now+1200;return true;}
 }

@@ -48,20 +48,21 @@ public class Companion extends PathfinderMob {
         goalSelector.addGoal(2,new FamilyBehaviorGoal(this));
         goalSelector.addGoal(3,new CampfireRestGoal(this));
         goalSelector.addGoal(4,new ChestCuriosityGoal(this));
-        goalSelector.addGoal(5,new WalkTogetherGoal(this));
-        goalSelector.addGoal(6,new FurnitureVisitGoal(this));
-        goalSelector.addGoal(7,new FurnitureGoal(this));
-        goalSelector.addGoal(8,new HomeTogetherGoal(this));
-        goalSelector.addGoal(9,new HomeSceneGoal(this));
-        goalSelector.addGoal(10,new StayHomeGoal(this));
-        goalSelector.addGoal(11,new FamilyFollowGoal(this));
-        goalSelector.addGoal(12,new WaterAvoidingRandomStrollGoal(this, .8) {
+        goalSelector.addGoal(5,new HomeAtmosphereGoal(this));
+        goalSelector.addGoal(6,new WalkTogetherGoal(this));
+        goalSelector.addGoal(7,new FurnitureVisitGoal(this));
+        goalSelector.addGoal(8,new FurnitureGoal(this));
+        goalSelector.addGoal(9,new HomeTogetherGoal(this));
+        goalSelector.addGoal(10,new HomeSceneGoal(this));
+        goalSelector.addGoal(11,new StayHomeGoal(this));
+        goalSelector.addGoal(12,new FamilyFollowGoal(this));
+        goalSelector.addGoal(13,new WaterAvoidingRandomStrollGoal(this, .8) {
             @Override public boolean canUse() { if(staying() || homeMode && (homeAnchor()==null || blockPosition().distSqr(homeAnchor())>36))return false;
                 if(!super.canUse())return false;
                 return !homeMode || homeAnchor()!=null && new BlockPos((int)Math.floor(wantedX),(int)Math.floor(wantedY),(int)Math.floor(wantedZ)).distSqr(homeAnchor())<=36; }
         });
-        goalSelector.addGoal(13,new LookAtPlayerGoal(this,Player.class,6));
-        goalSelector.addGoal(14,new RandomLookAroundGoal(this));
+        goalSelector.addGoal(14,new LookAtPlayerGoal(this,Player.class,6));
+        goalSelector.addGoal(15,new RandomLookAroundGoal(this));
     }
     public void initialize(UUID owner,BlockPos home) { this.owner=owner; this.home=home.immutable(); this.homeDimension=level().dimension().location().toString(); setCustomName(Component.translatable("entity.dudunka."+kind.id)); }
     public int stage() { return entityData.get(STAGE); }
@@ -71,7 +72,7 @@ public class Companion extends PathfinderMob {
         if(level().isClientSide || !isAlive() || !player.isAlive() || player.isSpectator()
             || player.level()!=level() || owner==null || !owner.equals(player.getUUID()) || distanceToSqr(player)>4096)return false;
         if(staying()!=stay || homeMode) {
-            WalkScenes.cancel(this);homeMode=false;
+            WalkScenes.cancel(this);HomeAtmosphereScenes.cancel(this);homeMode=false;
             entityData.set(STAY,stay);getNavigation().stop();pettingTicks=0;openedChest=null;
             homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;setActivity(Activity.IDLE);
         }
@@ -114,14 +115,16 @@ public class Companion extends PathfinderMob {
     }
     public void bindHome(BlockPos anchor) { home=anchor.immutable(); homeDimension=level().dimension().location().toString(); homeIsMarker=true;homecoming.reset(); }
     public boolean homeWelcomePending() { return homecoming.pending(level().getGameTime()); }
+    public boolean homeWelcomeEligible(){return homecoming.ready(level().getGameTime());}
     public boolean homeWelcomeRunning() { return homeWelcomeRunning; }
-    public void beginHomeWelcome() { homecoming.consume(level().getGameTime());homeWelcomeRunning=true; }
+    public void beginHomeWelcome() { homecoming.consumeArrival(level().getGameTime());homeWelcomeRunning=true; }
     public void endHomeWelcome() { homeWelcomeRunning=false; }
     public void observeHomecoming() {
-        if(level().isClientSide || kind!=Kind.DUDUNKA)return;
+        if(level().isClientSide)return;
         var anchor=homeAnchor();var player=ownerPlayer();
-        if(anchor==null || trust<25 || staying() || player==null || !player.isAlive() || player.isSpectator() || player.isSleeping()) {homecoming.reset();return;}
-        homecoming.observe(level().getGameTime(),player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(anchor)));
+        if(player==null && owner!=null && level() instanceof ServerLevel server)player=server.getServer().getPlayerList().getPlayer(owner);
+        if(anchor==null || staying() || player==null || !player.isAlive() || player.isSpectator() || player.isSleeping()) {homecoming.reset();return;}
+        homecoming.observe(level().getGameTime(),player.level()==level()?player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(anchor)):400);
     }
     public boolean homeTogetherReady() { return homeSceneReady() && pettingTicks==0 && homeSceneTarget==null && !homeWelcomeRunning && !homeWelcomePending() && openChestTarget()==null; }
     public boolean homeSceneReady() { return level().getGameTime()>=homeSceneCooldownUntil; }
@@ -248,7 +251,7 @@ public class Companion extends PathfinderMob {
         if(p!=null){teleportTo(p.getX()+.5,p.getY(),p.getZ()+.5);fallDistance=0;}
     }
 
-    public void prepareRecovery(){WalkScenes.cancel(this);getNavigation().stop();pettingTicks=0;openedChest=null;homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;pauseHomeScenes();setActivity(Activity.IDLE);setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);fallDistance=0;}
+    public void prepareRecovery(){WalkScenes.cancel(this);HomeAtmosphereScenes.cancel(this);getNavigation().stop();pettingTicks=0;openedChest=null;homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;pauseHomeScenes();setActivity(Activity.IDLE);setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);fallDistance=0;}
     @Override public void remove(net.minecraft.world.entity.Entity.RemovalReason reason){
         if(level() instanceof ServerLevel server && owner!=null){
             var registry=FamilyRegistry.get(server.getServer());
