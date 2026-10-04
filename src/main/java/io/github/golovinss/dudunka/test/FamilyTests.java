@@ -1171,4 +1171,93 @@ public class FamilyTests {
         });
     }
 
+
+    private static net.minecraft.server.level.ServerPlayer recoveryOwner(GameTestHelper h){
+        var owner=testOwner(h);var pos=h.absolutePos(new BlockPos(2,2,2));
+        for(int x=-2;x<=6;x++)for(int z=-2;z<=6;z++)h.getLevel().setBlock(h.absolutePos(new BlockPos(x,1,z)),Blocks.STONE.defaultBlockState(),3);
+        owner.moveTo(pos.getX()+.5,pos.getY(),pos.getZ()+.5,0,0);owner.setOnGround(true);
+        owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));return owner;
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void recoveryRegistryPersistsAndFiltersOwners(GameTestHelper h){
+        var owner=recoveryOwner(h);var own=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,4));var foreign=create(h,Kind.DUDUNKA,UUID.randomUUID(),new BlockPos(1,2,4));
+        var registry=FamilyRegistry.get(h.getLevel().getServer());var loaded=FamilyRegistry.load(registry.save(new CompoundTag()));
+        h.assertTrue(loaded.owned(owner.getUUID()).size()==1 && loaded.member(own.getUUID()).pos().equals(own.blockPosition()),"Index must persist exact identity/location and filter the owner");
+        var snapshot=FamilyAlbum.collect(owner);h.assertTrue(snapshot.recovery().size()==1 && snapshot.recovery().get(0).id().equals(own.getUUID()),"Private recovery snapshot must omit foreign members");
+        var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,buf);h.assertTrue(snapshot.equals(FamilyAlbum.decode(buf)),"Recovery payload must round trip");}finally{buf.release();}
+        own.discard();h.assertTrue(registry.member(own.getUUID())==null,"Discarded live companion must be removed from the index");foreign.discard();owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void lostCarrierRotatesTicketAndRestoresCanonicalState(GameTestHelper h){
+        var owner=recoveryOwner(h);var stranger=testOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,4));var state=new CompoundTag();mob.addAdditionalSaveData(state);state.putInt("Trust",43);state.putBoolean("Staying",true);mob.readAdditionalSaveData(state);
+        UUID id=mob.getUUID();var original=new net.minecraft.world.item.ItemStack(DudunkaMod.CARRIER.get());h.assertTrue(SyusyaCarrierItem.capture(mob,owner,original),"Capture must store a server backup");
+        var ledger=CarrierLedger.get(owner.server);var saved=CarrierLedger.load(ledger.save(new CompoundTag()));h.assertTrue(saved.backup(id,owner.getUUID()).getInt("Trust")==43,"Full backup must survive SavedData reload");
+        h.assertTrue(!ledger.reissue(stranger,id),"Foreign recovery must fail");
+        h.assertTrue(ledger.reissue(owner,id),"Lost carrier must be restored into free inventory slot");var recovered=owner.getInventory().getItem(1); // selected album occupies slot 0
+        h.assertTrue(SyusyaCarrierItem.filled(recovered) && !recovered.getTag().getUUID("Ticket").equals(original.getTag().getUUID("Ticket")),"Reissue must rotate ticket");
+        h.assertTrue(!ledger.reissue(owner,id),"Already held valid carrier must not be issued twice");
+        BlockPos pos=h.absolutePos(new BlockPos(5,2,5));h.assertTrue(!SyusyaCarrierItem.release(h.getLevel(),pos,owner,original),"Old found carrier must remain invalid");
+        recovered.getTag().getCompound("Companion").putInt("Trust",99);
+        h.assertTrue(SyusyaCarrierItem.release(h.getLevel(),pos,owner,recovered),"New carrier must release exactly once");
+        var actual=(Companion)h.getLevel().getEntity(id);h.assertTrue(actual!=null && actual.trust()==43 && actual.staying(),"Canonical server backup must override edited item state and preserve waiting");
+        actual.discard();owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void carrierRecoveryFullInventoryAndLegacyHaveNoSideEffects(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,4));var stack=new net.minecraft.world.item.ItemStack(DudunkaMod.CARRIER.get());SyusyaCarrierItem.capture(mob,owner,stack);var token=stack.getTag().getUUID("Ticket");var ledger=CarrierLedger.get(owner.server);
+        for(int j=0;j<36;j++)owner.getInventory().setItem(j,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COBBLESTONE,64));
+        h.assertTrue(!ledger.reissue(owner,mob.getUUID()) && ledger.matches(mob.getUUID(),token,owner.getUUID()),"Full inventory rejection must retain old ticket");
+        owner.getInventory().setItem(1,new net.minecraft.world.item.ItemStack(DudunkaMod.CARRIER.get()));h.assertTrue(ledger.reissue(owner,mob.getUUID()),"Single empty carrier can be filled even with otherwise full inventory");
+        var legacy=new CarrierLedger();var id=UUID.randomUUID();legacy.capture(id,UUID.randomUUID(),owner.getUUID());h.assertTrue(!legacy.reissue(owner,id) && legacy.owned(owner.getUUID()).get(0).recoverable()==false,"Old lost carrier without saved data must never create a new snail");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void explicitRecoveryPreservesWaitAndRejectsUnsafeOwner(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(5,2,5));mob.commandStay(owner,true);var home=mob.homeAnchor();UUID id=mob.getUUID();
+        owner.setOnGround(false);h.assertTrue(!FamilyRecovery.move(owner,mob),"Airborne owner must reject return");owner.setOnGround(true);
+        h.assertTrue(FamilyRecovery.move(owner,mob),"Explicit owner return must allow waiting companion");h.assertTrue(mob.getUUID().equals(id) && mob.staying() && java.util.Objects.equals(mob.homeAnchor(),home),"Return must preserve UUID, home and wait command");
+        var other=testOwner(h);other.setOnGround(true);h.assertTrue(!FamilyRecovery.move(other,mob),"Foreign owner must never move family member");mob.discard();owner.discard();other.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void recoverySessionsRejectForgedAndReplayCarrierRequests(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,4));var stack=new net.minecraft.world.item.ItemStack(DudunkaMod.CARRIER.get());SyusyaCarrierItem.capture(mob,owner,stack);var open=AlbumCommands.open(owner);var ledger=CarrierLedger.get(owner.server);UUID token=stack.getTag().getUUID("Ticket");
+        AlbumCommands.recover(owner,new AlbumCommands.RecoveryCommand(UUID.randomUUID(),mob.getUUID(),1));h.assertTrue(ledger.matches(mob.getUUID(),token,owner.getUUID()),"Forged session must not rotate token");
+        owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,net.minecraft.world.item.ItemStack.EMPTY);AlbumCommands.recover(owner,new AlbumCommands.RecoveryCommand(open.session(),mob.getUUID(),1));h.assertTrue(ledger.matches(mob.getUUID(),token,owner.getUUID()),"Missing album must reject recovery");
+        owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));open=AlbumCommands.open(owner);var command=new AlbumCommands.RecoveryCommand(open.session(),mob.getUUID(),1);AlbumCommands.recover(owner,command);
+        h.assertTrue(!ledger.matches(mob.getUUID(),token,owner.getUUID()),"Authenticated session must reissue carrier");var recovered=owner.getInventory().getItem(1);UUID fresh=recovered.getTag().getUUID("Ticket");AlbumCommands.recover(owner,command);h.assertTrue(ledger.matches(mob.getUUID(),fresh,owner.getUUID()),"Replay must leave new ticket unchanged");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=240,batch="recovery_dimension")
+    public static void recoveryMovesExistingEntityAcrossDimensions(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(5,2,5));mob.commandStay(owner,true);UUID id=mob.getUUID();var originalHome=new CompoundTag();mob.addAdditionalSaveData(originalHome);
+        var nether=owner.server.getLevel(net.minecraft.world.level.Level.NETHER);BlockPos p=new BlockPos(72,220,72);nether.getChunkAt(p);nether.setChunkForced(4,4,true);
+        var old=new java.util.HashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();for(int x=-4;x<=4;x++)for(int z=-4;z<=4;z++)for(int y=-1;y<=2;y++){var at=p.offset(x,y,z);old.put(at,nether.getBlockState(at));nether.setBlock(at,y==-1?Blocks.STONE.defaultBlockState():Blocks.AIR.defaultBlockState(),3);}
+        owner.teleportTo(nether,p.getX()+.5,p.getY(),p.getZ()+.5,0,0);
+        h.runAfterDelay(60,()->{owner.setOnGround(true);h.assertTrue(FamilyRecovery.move(owner,mob),"Existing companion must transfer into owner's other dimension");h.startSequence().thenWaitUntil(()->h.assertTrue(nether.getEntity(id) instanceof Companion,"Transferred UUID must become accessible")).thenExecute(()->{var actual=(Companion)nether.getEntity(id);var state=new CompoundTag();actual.addAdditionalSaveData(state);h.assertTrue(actual.staying() && state.getLong("FamilyHome")==originalHome.getLong("FamilyHome") && state.getString("HomeDimension").equals(originalHome.getString("HomeDimension")) && h.getLevel().getEntity(id)==null,"Cross-dimension move must preserve wait/home and remove source instance");actual.discard();owner.discard();old.forEach((pos,blockState)->nether.setBlock(pos,blockState,3));nether.setChunkForced(4,4,false);}).thenSucceed();});
+    }
+    @GameTest(template="empty",timeoutTicks=400,batch="recovery_unload")
+    public static void recoveryLoadsOnlyIndexedChunkAndReleasesTicket(GameTestHelper h){
+        var owner=recoveryOwner(h);var nether=owner.server.getLevel(net.minecraft.world.level.Level.NETHER);var p=new BlockPos(328,220,328);nether.getChunkAt(p);nether.setChunkForced(20,20,true);
+        var old=nether.getBlockState(p.below());nether.setBlock(p.below(),Blocks.STONE.defaultBlockState(),3);nether.setBlock(p,Blocks.AIR.defaultBlockState(),3);
+        var mob=DudunkaMod.TYPES.get(Kind.DUDUNKA).get().create(nether);mob.moveTo(p.getX()+.5,p.getY(),p.getZ()+.5,0,0);mob.initialize(owner.getUUID(),p);mob.setNoAi(true);UUID id=mob.getUUID();nether.addFreshEntity(mob);
+        h.runAfterDelay(50,()->{nether.setChunkForced(20,20,false);h.startSequence().thenWaitUntil(()->h.assertTrue(nether.getEntity(id)==null && !nether.hasChunkAt(p),"Fixture must genuinely unload entity and chunk"))
+            .thenExecute(()->{owner.setOnGround(true);var open=AlbumCommands.open(owner);h.assertTrue(open.snapshot().recovery().stream().anyMatch(e->e.id().equals(id)),"Unloaded entity must remain in index");AlbumCommands.recover(owner,new AlbumCommands.RecoveryCommand(open.session(),id,1));h.assertTrue(FamilyRecovery.pending(owner.server,owner.getUUID()),"Return must enqueue bounded chunk search");})
+            .thenWaitUntil(()->h.assertTrue(h.getLevel().getEntity(id) instanceof Companion,"Real disk entity must return from unloaded chunk"))
+            .thenWaitUntil(()->h.assertTrue(!nether.hasChunkAt(p),"Source chunk must unload again after return ticket removal"))
+            .thenExecute(()->{h.assertTrue(!FamilyRecovery.pending(owner.server,owner.getUUID()) && !nether.getForcedChunks().contains(new net.minecraft.world.level.ChunkPos(p).toLong()),"Completed return must remove transient ticket without persistent chunk forcing");var actual=(Companion)h.getLevel().getEntity(id);actual.discard();owner.discard();nether.getChunkAt(p);nether.setBlock(p.below(),old,3);}).thenSucceed();});
+    }
+
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void recoveryRejectsBlockedLandingAndOversizedPayload(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(5,2,5));var before=mob.position();
+        for(int x=-1;x<=5;x++)for(int z=-1;z<=5;z++)if(Math.max(Math.abs(x-2),Math.abs(z-2))>=2)for(int y=2;y<=5;y++)h.getLevel().setBlock(h.absolutePos(new BlockPos(x,y,z)),Blocks.STONE.defaultBlockState(),3);
+        h.assertTrue(!FamilyRecovery.move(owner,mob) && mob.position().equals(before),"No safe landing must preserve source entity and position");
+        var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{buf.writeVarInt(0);buf.writeVarInt(0);buf.writeByte(0);buf.writeVarInt(33);buf.writeVarInt(33);boolean rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Recovery payload must reject more than 32 records");}finally{buf.release();}mob.discard();owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=180)
+    public static void missingRecoveryTimesOutWithoutRecreation(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(5,2,5));UUID id=mob.getUUID();var registry=FamilyRegistry.get(owner.server);var saved=registry.save(new CompoundTag());mob.discard();
+        // Model a stale last-position record: disk has no entity. Index alone must never resurrect one.
+        var stale=FamilyRegistry.load(saved);var marker=DudunkaMod.TYPES.get(Kind.DUDUNKA).get().create(h.getLevel());marker.setUUID(id);marker.initialize(owner.getUUID(),stale.member(id).pos());marker.moveTo(stale.member(id).pos().getX()+.5,stale.member(id).pos().getY(),stale.member(id).pos().getZ()+.5,0,0);registry.observe(marker);
+        var open=AlbumCommands.open(owner);h.assertTrue(FamilyRecovery.start(owner,id,open.session(),0),"Stale record may trigger a bounded search");
+        h.runAfterDelay(110,()->{h.assertTrue(!FamilyRecovery.pending(owner.server,owner.getUUID()) && h.getLevel().getEntity(id)==null,"Timeout must finish search without recreating a live entity");registry.forget(id);owner.discard();h.succeed();});
+    }
 }

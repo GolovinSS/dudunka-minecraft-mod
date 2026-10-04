@@ -1,6 +1,7 @@
 package io.github.golovinss.dudunka;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.*;
@@ -147,6 +148,7 @@ public class Companion extends PathfinderMob {
         super.aiStep();
         if(level().isClientSide) return;
         if(tickCount%20==0)observeHomecoming();
+        if(tickCount%100==0)FamilyRegistry.get(((ServerLevel)level()).getServer()).observe(this);
         if(feedCooldown>0)feedCooldown--;
         if(petCooldown>0)petCooldown--;
         if(pettingTicks>0)pettingTicks--;
@@ -212,6 +214,15 @@ public class Companion extends PathfinderMob {
         if(p!=null){teleportTo(p.getX()+.5,p.getY(),p.getZ()+.5);fallDistance=0;}
     }
 
+    public void prepareRecovery(){getNavigation().stop();pettingTicks=0;openedChest=null;homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;pauseHomeScenes();setActivity(Activity.IDLE);setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);fallDistance=0;}
+    @Override public void remove(net.minecraft.world.entity.Entity.RemovalReason reason){
+        if(level() instanceof ServerLevel server && owner!=null){
+            var registry=FamilyRegistry.get(server.getServer());
+            if(reason==net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK || reason==net.minecraft.world.entity.Entity.RemovalReason.CHANGED_DIMENSION)registry.observe(this);
+            else if(!CarrierLedger.get(server.getServer()).carried(getUUID()))registry.forget(getUUID());
+        }
+        super.remove(reason);
+    }
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public void addAdditionalSaveData(CompoundTag t) {
         super.addAdditionalSaveData(t); if(owner!=null)t.putUUID("FamilyOwner",owner); if(home!=null)t.putLong("FamilyHome",home.asLong()); if(homeDimension!=null)t.putString("HomeDimension",homeDimension);

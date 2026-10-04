@@ -122,5 +122,15 @@
   "guide.dudunka.care.body": "Place the egg and right-click with treats. Dudunka needs bread, apple and cookie, with a bed and light nearby. Marusya needs cod or salmon, nearby wool or carpet, and light level at most 7. Syusya needs leaves and a mushroom, grass or moss below, and nearby water. The first suitable offering claims ownership. Right-click shows readiness and time; missing conditions pause hatching.",
   "guide.dudunka.rare": "Eggs are not guaranteed. Reopening a chest whose loot was already generated does not provide another roll.",
   "guide.dudunka.loot_disabled": "Egg chest loot is disabled in this server’s settings.",
-  "guide.dudunka.natural_disabled": "Natural egg generation is disabled in this server’s settings."
+  "guide.dudunka.natural_disabled": "Natural egg generation is disabled in this server’s settings.",
+  "screen.dudunka.recovery_tab": "Recovery",
+  "screen.dudunka.recovery_return": "Return to me",
+  "screen.dudunka.recovery_carrier": "Recover carrier",
+  "screen.dudunka.recovery_scope": "Family records: %s / %s",
+  "screen.dudunka.recovery_empty": "No saved records yet. Existing companions are indexed when their chunks load.",
+  "screen.dudunka.recovery_note": "Stand on safe ground and hold the album. Only the last known chunk is loaded (up to 5 seconds). Live companions are never recreated. Carrier recovery needs a free slot and invalidates the old copy.",
+  "screen.dudunka.recovery_pos": "Last position: %s, %s, %s",
+  "screen.dudunka.recovery_state.live": "Live companion — search the last known position.",
+  "screen.dudunka.recovery_state.carried": "Syusya is carried. Server backup is available.",
+  "screen.dudunka.recovery_state.legacy_carried": "Old carrier without a backup. Release and recapture Syusya while you still have the item to enable loss recovery."
 }

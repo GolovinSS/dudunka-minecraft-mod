@@ -23,7 +23,7 @@ public final class SyusyaCarrierItem extends Item {
         }
         CompoundTag data=new CompoundTag();if(!mob.save(data))return false;
         UUID token=UUID.randomUUID();var ledger=CarrierLedger.get(((ServerLevel)mob.level()).getServer());
-        if(!ledger.capture(mob.getUUID(),token,player.getUUID()))return false;
+        if(!ledger.capture(mob.getUUID(),token,player.getUUID(),data))return false;
         stack.getOrCreateTag().put("Companion",data);stack.getOrCreateTag().putUUID("Ticket",token);
         mob.getNavigation().stop();mob.discard();player.getInventory().setChanged();
         player.displayClientMessage(Component.translatable("message.dudunka.carrier_captured"),true);return true;
@@ -36,6 +36,8 @@ public final class SyusyaCarrierItem extends Item {
         UUID entity=data.getUUID("UUID"),token=root.getUUID("Ticket");var ledger=CarrierLedger.get(level.getServer());
         if(!ledger.matches(entity,token,player.getUUID()))return fail(player,"message.dudunka.carrier_stale");
         for(ServerLevel world:level.getServer().getAllLevels())if(world.getEntity(entity)!=null)return fail(player,"message.dudunka.carrier_stale");
+        ledger.adopt(entity,token,player.getUUID(),data);
+        var backup=ledger.backup(entity,player.getUUID());if(backup!=null)data=backup;
         Companion mob=DudunkaMod.TYPES.get(Kind.SYUSYA).get().create(level);if(mob==null)return false;
         mob.load(data.copy());mob.moveTo(pos.getX()+.5,pos.getY(),pos.getZ()+.5,player.getYRot(),0);mob.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);mob.fallDistance=0;
         if(!HomeRules.safeStanding(level,pos,mob))return fail(player,"message.dudunka.carrier_space");

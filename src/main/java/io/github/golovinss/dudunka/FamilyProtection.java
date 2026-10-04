@@ -18,7 +18,13 @@ public final class FamilyProtection {
         }
     }
     @SubscribeEvent public static void onJoin(EntityJoinLevelEvent event) {
-        if(event.getLevel() instanceof ServerLevel level && event.getEntity() instanceof Companion mob
-                && mob.kind==Kind.SYUSYA && CarrierLedger.get(level.getServer()).carried(mob.getUUID())) event.setCanceled(true);
+        if(event.getLevel() instanceof ServerLevel level && event.getEntity() instanceof Companion mob){
+            if(mob.kind==Kind.SYUSYA && CarrierLedger.get(level.getServer()).carried(mob.getUUID())){event.setCanceled(true);return;}
+            for(var world:level.getServer().getAllLevels()){
+                var existing=world.getEntity(mob.getUUID());
+                if(existing!=mob && existing instanceof Companion other && other.isAlive() && !other.isRemoved()){event.setCanceled(true);return;}
+            }
+            FamilyRegistry.get(level.getServer()).observe(mob);
+        }
     }
 }
