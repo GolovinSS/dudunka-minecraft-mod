@@ -1,22 +1,62 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,picture=0": {
       "model": "dudunka:block/dudunka_furniture",
       "y": 0,
       "uvlock": false
     },
-    "facing=east": {
+    "facing=east,picture=0": {
       "model": "dudunka:block/dudunka_furniture",
       "y": 90,
       "uvlock": false
     },
-    "facing=south": {
+    "facing=south,picture=0": {
       "model": "dudunka:block/dudunka_furniture",
       "y": 180,
       "uvlock": false
     },
-    "facing=west": {
+    "facing=west,picture=0": {
       "model": "dudunka:block/dudunka_furniture",
+      "y": 270,
+      "uvlock": false
+    },
+    "facing=north,picture=1": {
+      "model": "dudunka:block/dudunka_furniture_picture_1",
+      "y": 0,
+      "uvlock": false
+    },
+    "facing=east,picture=1": {
+      "model": "dudunka:block/dudunka_furniture_picture_1",
+      "y": 90,
+      "uvlock": false
+    },
+    "facing=south,picture=1": {
+      "model": "dudunka:block/dudunka_furniture_picture_1",
+      "y": 180,
+      "uvlock": false
+    },
+    "facing=west,picture=1": {
+      "model": "dudunka:block/dudunka_furniture_picture_1",
+      "y": 270,
+      "uvlock": false
+    },
+    "facing=north,picture=2": {
+      "model": "dudunka:block/dudunka_furniture_picture_2",
+      "y": 0,
+      "uvlock": false
+    },
+    "facing=east,picture=2": {
+      "model": "dudunka:block/dudunka_furniture_picture_2",
+      "y": 90,
+      "uvlock": false
+    },
+    "facing=south,picture=2": {
+      "model": "dudunka:block/dudunka_furniture_picture_2",
+      "y": 180,
+      "uvlock": false
+    },
+    "facing=west,picture=2": {
+      "model": "dudunka:block/dudunka_furniture_picture_2",
       "y": 270,
       "uvlock": false
     }

@@ -18,6 +18,9 @@ public class Companion extends PathfinderMob {
     private static final EntityDataAccessor<Integer> STAGE=SynchedEntityData.defineId(Companion.class,EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> STAY=SynchedEntityData.defineId(Companion.class,EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> ACTIVITY = SynchedEntityData.defineId(Companion.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> CHARACTER_VARIANT=SynchedEntityData.defineId(Companion.class,EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> FEELERS=SynchedEntityData.defineId(Companion.class,EntityDataSerializers.INT);
+    private int nextCharacterVariant;
     private static final UUID TRUST_SPEED_ID=UUID.fromString("c70ba864-9e01-4ae1-b6d5-d22257b79212");
     public final Kind kind;
     private UUID owner;
@@ -38,7 +41,7 @@ public class Companion extends PathfinderMob {
     public static AttributeSupplier.Builder attributes(Kind k) {
         return Mob.createMobAttributes().add(Attributes.MAX_HEALTH,20).add(Attributes.MOVEMENT_SPEED,k.speed).add(Attributes.FOLLOW_RANGE,24);
     }
-    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(STAGE,0); entityData.define(STAY,false); entityData.define(ACTIVITY, Activity.IDLE.ordinal()); }
+    @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(STAGE,0); entityData.define(STAY,false); entityData.define(ACTIVITY, Activity.IDLE.ordinal());entityData.define(CHARACTER_VARIANT,0);entityData.define(FEELERS,CharacterMoments.Feelers.CALM.ordinal()); }
     @Override protected void registerGoals() {
         goalSelector.addGoal(0,new FloatGoal(this));
         goalSelector.addGoal(1,new PettingGoal(this));
@@ -151,6 +154,10 @@ public class Companion extends PathfinderMob {
         if (staying()) return Activity.SIT;
         return Activity.values()[Math.max(0, Math.min(Activity.values().length - 1, entityData.get(ACTIVITY)))];
     }
+    public int characterVariant(){return CharacterMoments.bounded(entityData.get(CHARACTER_VARIANT));}
+    public int beginFurnitureVariant(){int next=nextCharacterVariant;entityData.set(CHARACTER_VARIANT,next);nextCharacterVariant=(next+1)%CharacterMoments.VARIANTS;return next;}
+    public CharacterMoments.Feelers feelers(){return CharacterMoments.Feelers.values()[CharacterMoments.bounded(entityData.get(FEELERS))];}
+    public void updateFeelers(){if(!level().isClientSide)entityData.set(FEELERS,CharacterMoments.feelers(this).ordinal());}
     public void setActivity(Activity activity) { entityData.set(ACTIVITY, activity.ordinal()); }
     public boolean willingToFollow() {
         // A stable ten-second interval avoids re-rolling every AI tick.
@@ -162,6 +169,7 @@ public class Companion extends PathfinderMob {
     @Override public void aiStep() {
         super.aiStep();
         if(level().isClientSide) return;
+        if(kind==Kind.SYUSYA && tickCount%10==0)updateFeelers();
         if(tickCount%20==0)observeHomecoming();
         if(tickCount%100==0)FamilyRegistry.get(((ServerLevel)level()).getServer()).observe(this);
         if(feedCooldown>0)feedCooldown--;
@@ -241,12 +249,14 @@ public class Companion extends PathfinderMob {
     @Override public boolean removeWhenFarAway(double d) { return false; }
     @Override public void addAdditionalSaveData(CompoundTag t) {
         super.addAdditionalSaveData(t); if(owner!=null)t.putUUID("FamilyOwner",owner); if(home!=null)t.putLong("FamilyHome",home.asLong()); if(homeDimension!=null)t.putString("HomeDimension",homeDimension);
+        t.putInt("CharacterVariant",characterVariant());t.putInt("NextCharacterVariant",nextCharacterVariant);
         t.putBoolean("HomeMode",homeMode);if(furniture!=null){t.putLong("Furniture",furniture.asLong());if(furnitureDimension!=null)t.putString("FurnitureDimension",furnitureDimension);}
         t.putInt("PetCooldown",petCooldown);t.putBoolean("HomeMarker",homeIsMarker);t.putInt("GrowthTicks",growthTicks);t.putInt("Trust",trust);t.putInt("FeedCooldown",feedCooldown);t.putInt("RecoveryTicks",recoveryTicks);t.putBoolean("Staying",staying());
     }
     @Override public void readAdditionalSaveData(CompoundTag t) {
         super.readAdditionalSaveData(t);owner=t.hasUUID("FamilyOwner")?t.getUUID("FamilyOwner"):null;home=t.contains("FamilyHome")?BlockPos.of(t.getLong("FamilyHome")):null;
         homeDimension=t.getString("HomeDimension");homeIsMarker=t.getBoolean("HomeMarker");
+        entityData.set(CHARACTER_VARIANT,CharacterMoments.bounded(t.getInt("CharacterVariant")));nextCharacterVariant=CharacterMoments.bounded(t.getInt("NextCharacterVariant"));entityData.set(FEELERS,CharacterMoments.Feelers.CALM.ordinal());
         homeMode=t.getBoolean("HomeMode") && !t.getBoolean("Staying");furniture=t.contains("Furniture")?BlockPos.of(t.getLong("Furniture")):null;furnitureDimension=t.getString("FurnitureDimension");
         growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;homecoming.reset();homeWelcomeRunning=false;homeSceneTarget=null;homeSceneCooldownUntil=0;openedChest=null;chestNoticeUntil=0;chestNoticeNext=0;refreshTrustSpeed();updateStage();
     }

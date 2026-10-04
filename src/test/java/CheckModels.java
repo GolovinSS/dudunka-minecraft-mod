@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.*;
 import java.nio.file.*;
 public class CheckModels {
  public static void main(String[] args) throws Exception {
-  var exports=new StringBuilder("[");
+  var exports=new StringBuilder("[");var moments=new StringBuilder("[");
   for (Kind k:Kind.values()) for(int stage=0;stage<(FamilyModel.hasAgeModels(k)?3:1);stage++) {
    var root=FamilyModel.create(k,stage).bakeRoot();
    if(!root.hasChild("head"))throw new AssertionError("Missing head: "+k);
@@ -13,12 +13,32 @@ public class CheckModels {
     if(!root.getChild("head").hasChild("bun") || !root.getChild("head").hasChild("hair_flower_center") || !root.hasChild("pendant_center"))throw new AssertionError("Missing reference details");
     if(root.getChild("backpack").hasChild("side_pocket0")!=(stage==2))throw new AssertionError("Backpack age detail");
    }
-   for (io.github.golovinss.dudunka.Activity activity : io.github.golovinss.dudunka.Activity.values()) {
+   for (io.github.golovinss.dudunka.Activity activity : io.github.golovinss.dudunka.Activity.values()) for(int variant=0;variant<3;variant++) for(var feelers:io.github.golovinss.dudunka.CharacterMoments.Feelers.values()) {
     root.getAllParts().forEach(net.minecraft.client.model.geom.ModelPart::resetPose);
-    io.github.golovinss.dudunka.client.AnimationPoses.apply(root, k, activity, 100);
+    io.github.golovinss.dudunka.client.AnimationPoses.apply(root,k,activity,100,variant,feelers);
     root.getAllParts().forEach(part -> {
-     if (!Float.isFinite(part.xRot) || !Float.isFinite(part.yRot) || !Float.isFinite(part.zRot) || !Float.isFinite(part.y)) throw new AssertionError("Invalid animation transform: " + activity);
+     if (!Float.isFinite(part.xRot) || !Float.isFinite(part.yRot) || !Float.isFinite(part.zRot) || !Float.isFinite(part.x) || !Float.isFinite(part.y) || !Float.isFinite(part.z) || !Float.isFinite(part.yScale)) throw new AssertionError("Invalid animation transform: " + activity);
     });
+    if(k==Kind.DUDUNKA){
+     var sheet=root.getChild("arm1").getChild("drawing_sheet");
+     if(sheet.visible!=(activity==io.github.golovinss.dudunka.Activity.SHOW_DRAWING))throw new AssertionError("Paper leaked outside showing");
+     for(int i=0;i<3;i++)if(sheet.getChild("motif"+i).visible!=(i==variant))throw new AssertionError("Drawing variant mismatch");
+    }
+    if(k==Kind.MARUSYA && activity==io.github.golovinss.dudunka.Activity.CURL){
+     float expected=variant==0?.6f:variant==1?0:-.3f;
+     if(Math.abs(root.getChild("head").yRot-expected)>.001)throw new AssertionError("Rest variants must be visibly distinct");
+    }
+    if(k==Kind.SYUSYA && Math.abs(root.getChild("head").getChild("stalk0").yScale-(feelers==io.github.golovinss.dudunka.CharacterMoments.Feelers.RETRACTED?.45f:1f))>.001)throw new AssertionError("Feelers length must retract and reset");
+    if(k==Kind.SYUSYA && feelers==io.github.golovinss.dudunka.CharacterMoments.Feelers.RETRACTED && Math.abs(root.getChild("head").getChild("stalk0").xRot-.95f)>.001)throw new AssertionError("Feelers must retract");
+   }
+   // Actual transformed geometry, UVs and atlas for the adult personality preview.
+   if(stage==2)for(int variant=0;variant<3;variant++){
+    root.getAllParts().forEach(net.minecraft.client.model.geom.ModelPart::resetPose);
+    var activity=k==Kind.DUDUNKA?io.github.golovinss.dudunka.Activity.SHOW_DRAWING:k==Kind.MARUSYA?io.github.golovinss.dudunka.Activity.CURL:variant==0?io.github.golovinss.dudunka.Activity.IDLE:variant==1?io.github.golovinss.dudunka.Activity.PEEK:io.github.golovinss.dudunka.Activity.RETREAT;
+    var feelers=k==Kind.SYUSYA?io.github.golovinss.dudunka.CharacterMoments.Feelers.values()[variant]:io.github.golovinss.dudunka.CharacterMoments.Feelers.CALM;
+    io.github.golovinss.dudunka.client.AnimationPoses.apply(root,k,activity,100,variant,feelers);var sink=new Geometry();root.render(new PoseStack(),sink,0,0);
+    if(moments.length()>1)moments.append(',');moments.append("{\"kind\":\"").append(k.id).append("\",\"variant\":").append(variant).append(",\"vertices\":[");
+    boolean first=true;for(double[] v:sink.vertices){if(!first)moments.append(',');first=false;moments.append(java.util.Arrays.toString(v));}moments.append("]}");
    }
    if (k == Kind.DUDUNKA && !root.getChild("arm1").hasChild("ring")) throw new AssertionError("Ring must move with the hand");
    if(k==Kind.MARUSYA){
@@ -50,6 +70,7 @@ public class CheckModels {
    }
    if(FamilyModel.hasAgeModels(k)){
     root.getAllParts().forEach(net.minecraft.client.model.geom.ModelPart::resetPose);
+    io.github.golovinss.dudunka.client.AnimationPoses.apply(root,k,io.github.golovinss.dudunka.Activity.IDLE,0);
     var sink=new Geometry();root.render(new PoseStack(),sink,0,0);float min=Float.MAX_VALUE,max=-Float.MAX_VALUE;
     for(double[] v:sink.vertices){min=Math.min(min,(float)v[1]);max=Math.max(max,(float)v[1]);}
     if(k==Kind.DUDUNKA && Math.abs((max-min)*16-10.7f)>.002f)throw new AssertionError("Age models must share normalized height: "+stage+" "+(max-min)*16);
@@ -64,6 +85,7 @@ public class CheckModels {
    }
    System.out.println("PASS model bake "+k+" stage "+stage+": "+parts+" parts");
   }
+  moments.append(']');Files.createDirectories(Path.of("build"));Files.writeString(Path.of("build/character-moments-preview.json"),moments);
   exports.append(']');Files.createDirectories(Path.of("build"));Files.writeString(Path.of("build/model-preview.json"),exports);
  }
  private static boolean overlap(net.minecraft.client.model.geom.ModelPart.Cube a,net.minecraft.client.model.geom.ModelPart.Cube b){

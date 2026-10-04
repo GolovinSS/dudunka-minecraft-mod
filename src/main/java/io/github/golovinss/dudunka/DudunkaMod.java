@@ -47,7 +47,7 @@ public class DudunkaMod {
         FAMILY_CATCH_UP=b.comment("Allow safe same-dimension catch-up after six stalled following seconds, within 64 loaded blocks.").define("familyCatchUp",true);
         TRAIL_NOTES=b.comment("Add reusable exploration notes to supported, not-yet-generated chest loot.").define("trailNotes",true);
         CONFIG=b.build();
-        for(int page=1;page<=3;page++){final int n=page;TRAIL_ITEMS.put(n,ITEMS.register("trail_note_"+n,()->new TrailNoteItem(n,new Item.Properties().stacksTo(1))));}
+        for(int page=1;page<=FriendStories.NOTES;page++){final int n=page;String id=page<=3?"trail_note_"+page:FriendStories.kind(page).id+"_note_"+FriendStories.page(page);TRAIL_ITEMS.put(n,ITEMS.register(id,()->new TrailNoteItem(n,new Item.Properties().stacksTo(1))));}
         for (Kind k:Kind.values()) {
             TYPES.put(k,ENTITIES.register(k.id,()->EntityType.Builder.<Companion>of((t,l)->new Companion(t,l,k),MobCategory.CREATURE).sized(k==Kind.SYUSYA?.35f:.4f,k.height).clientTrackingRange(8).build(ID+":"+k.id)));
             EGGS.put(k,BLOCKS.register(k.id+"_egg",()->new EggBlock(k,BlockBehaviour.Properties.of().strength(.3f,3600000f).pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK).noOcclusion().lightLevel(s->k==Kind.DUDUNKA?5:0))));
@@ -63,6 +63,7 @@ public class DudunkaMod {
     public static final RegistryObject<BlockEntityType<HomeMarkerEntity>> HOME_BE=BLOCK_ENTITIES.register("home",()->BlockEntityType.Builder.of(HomeMarkerEntity::new,HOMES.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
     public static final RegistryObject<Item> ALBUM=ITEMS.register("family_album",()->new FamilyAlbumItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CARRIER=ITEMS.register("syusya_carrier",()->new SyusyaCarrierItem(new Item.Properties().stacksTo(1).fireResistant()));
+    public static final RegistryObject<Codec<FriendNoteLootModifier>> FRIEND_LOOT=LOOT.register("friend_notes",()->FriendNoteLootModifier.CODEC);
     public static final RegistryObject<Codec<TrailLootModifier>> TRAIL_LOOT=LOOT.register("trail_note",()->TrailLootModifier.CODEC);
     public static final RegistryObject<Codec<EggLootModifier>> EGG_LOOT=LOOT.register("egg",()->EggLootModifier.CODEC);
     public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); FURNITURE.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); out.accept(ALBUM.get()); TRAIL_ITEMS.values().forEach(v->out.accept(v.get())); }).build());

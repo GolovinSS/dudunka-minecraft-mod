@@ -16,9 +16,10 @@ import net.minecraft.world.phys.shapes.*;
 /** One-block furniture, with a persisted owner and a single assigned companion. */
 public final class FurnitureBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING=HorizontalDirectionalBlock.FACING;
+    public static final net.minecraft.world.level.block.state.properties.IntegerProperty PICTURE=net.minecraft.world.level.block.state.properties.IntegerProperty.create("picture",0,2);
     public final Kind kind;
-    public FurnitureBlock(Kind kind,Properties properties){super(properties);this.kind=kind;registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH));}
-    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b){b.add(FACING);}
+    public FurnitureBlock(Kind kind,Properties properties){super(properties);this.kind=kind;registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH).setValue(PICTURE,0));}
+    @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b){b.add(FACING,PICTURE);}
     @Override public BlockState getStateForPlacement(BlockPlaceContext c){return defaultBlockState().setValue(FACING,c.getHorizontalDirection().getOpposite());}
     @Override public BlockState rotate(BlockState s,Rotation r){return s.setValue(FACING,r.rotate(s.getValue(FACING)));}
     @Override public BlockState mirror(BlockState s,Mirror m){return s.rotate(m.getRotation(s.getValue(FACING)));}

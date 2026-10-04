@@ -6,7 +6,7 @@ import net.minecraftforge.fml.ModList;
 
 /** Localized pages with optional places enabled by the SERVER's mod/config snapshot. */
 public final class EggGuide {
-    public static final int MVS=1,DUNGEONS=2,BOP=4,NATURAL=8,LOOT=16,NOTES=32,PAGES=10;
+    public static final int MVS=1,DUNGEONS=2,BOP=4,NATURAL=8,LOOT=16,NOTES=32,PAGES=18;
     private EggGuide() {}
     private static List<Component> trailPage(int step,int flags,int mask){
         if(step<0 || step>3)throw new IllegalArgumentException("Invalid trail step");
@@ -24,6 +24,9 @@ public final class EggGuide {
     }
     public static List<Component> page(int index,int flags){return page(index,flags,0);}
     public static List<Component> page(int index,int flags,int trailMask){
+        if(index<0 || index>=PAGES)throw new IllegalArgumentException("Invalid guide page");
+        if(index>=14)return FriendStories.page(Kind.SYUSYA,index-14,flags,trailMask);
+        if(index>=10)return FriendStories.page(Kind.MARUSYA,index-10,flags,trailMask);
         if(index>=6)return trailPage(index-6,flags,trailMask);
         var lines=new ArrayList<Component>();String id=switch(index){case 1->"dudunka";case 2->"marusya";case 3->"syusya";case 4->"old_world";case 5->"care";default->"intro";};
         lines.add(Component.translatable("guide.dudunka."+id+".title"));lines.add(Component.empty());

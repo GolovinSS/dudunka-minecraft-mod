@@ -10,14 +10,25 @@ public final class FurnitureGoal extends Goal {
     public FurnitureGoal(Companion mob){this.mob=mob;setFlags(EnumSet.of(Flag.MOVE,Flag.LOOK));}
     @Override public boolean requiresUpdateEveryTick(){return true;}
     @Override public boolean canUse(){long now=mob.level().getGameTime();if(now<nextCheck)return false;nextCheck=now+20;scene=FurnitureScenes.select(mob);return scene!=null;}
-    @Override public void start(){acted=elapsed=0;approached=false;mob.reserveHomeScene(scene.furniture());mob.getNavigation().stop();mob.setActivity(Activity.CURIOUS);}
+    @Override public void start(){int variant=mob.beginFurnitureVariant();
+        if(mob.kind==Kind.DUDUNKA){var state=mob.level().getBlockState(scene.furniture());mob.level().setBlock(scene.furniture(),state.setValue(FurnitureBlock.PICTURE,variant),3);}
+        acted=elapsed=0;approached=false;mob.reserveHomeScene(scene.furniture());mob.getNavigation().stop();mob.setActivity(Activity.CURIOUS);}
     @Override public boolean canContinueToUse(){return elapsed<600 && acted<240 && FurnitureScenes.valid(mob,scene)
         && (mob.kind!=Kind.MARUSYA || mob.level().getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,mob.getBoundingBox().inflate(10),e->e.isAlive()).isEmpty());}
     @Override public void tick(){
         if(!canContinueToUse()){stop();return;}elapsed++;
         Vec3 front=Vec3.atBottomCenterOf(scene.approach());
         if(!approached){
-            if(mob.distanceToSqr(front)>.09){walk(scene.approach());return;}
+            if(mob.distanceToSqr(front)>.09){
+                // Navigation can finish within its waypoint tolerance before the activity threshold.
+                // Complete only a nearby, collision-checked approach; never move through obstacles.
+                if(mob.distanceToSqr(front)<=1 && mob.getNavigation().isDone()){
+                    Vec3 delta=front.subtract(mob.position());
+                    Vec3 step=delta.scale(Math.min(.04,delta.length())/delta.length());
+                    if(FurnitureScenes.safeRest(mob,mob.position().add(step))){mob.setActivity(Activity.CURIOUS);mob.setDeltaMovement(Vec3.ZERO);mob.move(net.minecraft.world.entity.MoverType.SELF,step);return;}
+                }
+                walk(scene.approach());return;
+            }
             approached=true;mob.getNavigation().stop();
         }
         Activity activity=FurnitureScenes.activity(mob.kind,acted);

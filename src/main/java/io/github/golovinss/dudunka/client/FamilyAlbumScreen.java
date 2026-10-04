@@ -87,6 +87,9 @@ public final class FamilyAlbumScreen extends Screen {
             text.add(Component.translatable("screen.dudunka.album_furniture",Component.translatable("furniture.dudunka."+e.furniture().state().name().toLowerCase(Locale.ROOT))));
             if(e.furniture().state()!=FurnitureScenes.State.NONE){var pos=e.furniture().pos();text.add(Component.translatable("screen.dudunka.recovery_pos",pos.getX(),pos.getY(),pos.getZ()));}
             text.add(Component.translatable("screen.dudunka.album_activity",Component.translatable("activity.dudunka."+e.activity().name().toLowerCase(Locale.ROOT))));
+            if(e.kind()==Kind.DUDUNKA && (e.activity()==Activity.DRAW || e.activity()==Activity.SHOW_DRAWING))text.add(Component.translatable("screen.dudunka.drawing",Component.translatable("drawing.dudunka."+e.variant())));
+            if(e.kind()==Kind.MARUSYA && e.activity()==Activity.CURL)text.add(Component.translatable("screen.dudunka.rest_pose",Component.translatable("rest.dudunka."+e.variant())));
+            if(e.kind()==Kind.SYUSYA)text.add(Component.translatable("screen.dudunka.feelers",Component.translatable("feelers.dudunka."+e.feelers().name().toLowerCase(Locale.ROOT))));
             text.add(Component.translatable("screen.dudunka.furniture_help"));
             text.add(Component.empty());text.add(Component.translatable("screen.dudunka.album_friends"));
             if(e.friends().isEmpty())text.add(Component.translatable("message.dudunka.friendship_empty"));

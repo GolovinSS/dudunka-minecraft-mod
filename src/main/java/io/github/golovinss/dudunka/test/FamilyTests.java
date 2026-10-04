@@ -453,7 +453,7 @@ public class FamilyTests {
         level.setBlock(pos.above(),Blocks.AIR.defaultBlockState(),3);
         h.assertTrue(placeNaturalEgg(h,pos),"Safe wet grass must qualify after restoring conditions");h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_naturaleggprobeisboundedandcanbedisabled")
     public static void naturalEggProbeIsBoundedAndCanBeDisabled(GameTestHelper h) {
         var level=h.getLevel();var pos=h.absolutePos(new BlockPos(2,2,2));
         level.setBlock(pos.below(),Blocks.MOSS_BLOCK.defaultBlockState(),3);level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),3);
@@ -682,7 +682,7 @@ public class FamilyTests {
         var position=h.absolutePos(new BlockPos(1,2,1));owner.moveTo(position.getX()+.5,position.getY(),position.getZ()+.5,0,0);
         h.assertTrue(((HomeMarkerEntity)level.getBlockEntity(anchor)).conditions(true).ready(),"Fixture must be a complete marked house");return anchor;
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_homecatreservesbedandyieldstoplayer")
     public static void homeCatReservesBedAndYieldsToPlayer(GameTestHelper h) {
         var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.MARUSYA);long previous=h.getLevel().getDayTime();
         h.getLevel().setDayTime(12500);
@@ -911,7 +911,7 @@ public class FamilyTests {
         var params=new net.minecraft.world.level.storage.loot.LootParams.Builder(h.getLevel()).withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN,net.minecraft.world.phys.Vec3.atCenterOf(h.absolutePos(new BlockPos(2,2,2)))).create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
         return new net.minecraft.world.level.storage.loot.LootContext.Builder(params).withOptionalRandomSeed(seed).withQueriedLootTableId(new net.minecraft.resources.ResourceLocation(table)).create(null);
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_bmceggmodifiersmatchverifiedtableswithoutdependencies")
     public static void bmcEggModifiersMatchVerifiedTablesWithoutDependencies(GameTestHelper h) {
         String[] tables={"mvs:houses_common","mvs:houses_flower","mvs:houses_desert","mvs:abandoned","betterdungeons:skeleton_dungeon/chests/common","betterdungeons:zombie_dungeon/chests/common","mvs:swamps","betterdungeons:small_dungeon/chests/loot_piles"};
         Kind[] kinds={Kind.DUDUNKA,Kind.DUDUNKA,Kind.DUDUNKA,Kind.MARUSYA,Kind.MARUSYA,Kind.MARUSYA,Kind.SYUSYA,Kind.SYUSYA};double setting=DudunkaMod.LOOT_MULTIPLIER.get();
@@ -928,7 +928,7 @@ public class FamilyTests {
             var unrelated=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation("mvs:empty"),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),eggLootContext(h,"mvs:empty",1));h.assertTrue(unrelated.isEmpty(),"Unlisted empty structures must not get eggs");
         }finally{DudunkaMod.LOOT_MULTIPLIER.set(setting);}h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_savedunopenedchestgetseggbutgeneratedchestdoesnotrefill")
     public static void savedUnopenedChestGetsEggButGeneratedChestDoesNotRefill(GameTestHelper h) {
         var pos=h.absolutePos(new BlockPos(2,2,2));h.getLevel().setBlock(pos,Blocks.CHEST.defaultBlockState(),3);var chest=(net.minecraft.world.level.block.entity.ChestBlockEntity)h.getLevel().getBlockEntity(pos);
         var table=new net.minecraft.resources.ResourceLocation("minecraft:chests/village/village_plains_house");double setting=DudunkaMod.LOOT_MULTIPLIER.get();boolean found=false;
@@ -946,7 +946,7 @@ public class FamilyTests {
             h.assertTrue(chest.saveWithFullMetadata().equals(formed),"Reload/reopen must retain identical inventory without another roll");
         }finally{DudunkaMod.LOOT_MULTIPLIER.set(setting);}h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_egglootpreservesexistinglootanddeduplicatesimportedegg")
     public static void eggLootPreservesExistingLootAndDeduplicatesImportedEgg(GameTestHelper h) {
         var context=eggLootContext(h,"mvs:houses_common",1);var modifier=new EggLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0],"dudunka",1);
         var loot=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();loot.add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,3));modifier.apply(loot,context);modifier.apply(loot,context);
@@ -1128,7 +1128,7 @@ public class FamilyTests {
         h.assertTrue(mob.getUUID().equals(id) && after.equals(before) && mob.distanceToSqr(owner)<36 && mob.fallDistance==0,"Catch-up must preserve identity/home/care/mode and reset fall distance");
         occupant.discard();owner.discard();h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_catchuprejectscommandsvehiclesforeignownersandunsafeground")
     public static void catchUpRejectsCommandsVehiclesForeignOwnersAndUnsafeGround(GameTestHelper h) {
         var owner=testOwner(h);var mob=travelFixture(h,owner);var stranger=testOwner(h);
         h.assertTrue(!FamilyTravel.teleportNearOwner(mob,stranger),"Foreign player must not move a companion");
@@ -1296,7 +1296,7 @@ public class FamilyTests {
             var original=new AlbumCommands.Reply(UUID.randomUUID(),7,new RecoveryResult(code,code==RecoveryResult.Code.COOLDOWN?7:0),snapshot);var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
             try{AlbumNetwork.encodeReply(original,buf);h.assertTrue(original.equals(AlbumNetwork.decodeReply(buf)) && buf.readableBytes()==0,"Every reason, retry delay and private trail mask must round-trip");}finally{buf.release();}
         }
-        var invalid=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,invalid);invalid.setByte(invalid.writerIndex()-1,255);boolean rejected=false;try{FamilyAlbum.decode(invalid);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Invalid trail mask must be rejected");}finally{invalid.release();}
+        var invalid=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,invalid);invalid.writerIndex(invalid.writerIndex()-1);invalid.writeVarInt(FriendStories.MASK+1);boolean rejected=false;try{FamilyAlbum.decode(invalid);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Invalid trail mask must be rejected");}finally{invalid.release();}
         boolean bad=false;try{new RecoveryResult(RecoveryResult.Code.COOLDOWN,11);}catch(IllegalArgumentException e){bad=true;}h.assertTrue(bad,"Retry payload must be bounded");h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=40)
@@ -1310,7 +1310,7 @@ public class FamilyTests {
         stranger.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,note.copy());DudunkaMod.TRAIL_ITEMS.get(3).get().use(h.getLevel(),stranger,net.minecraft.world.InteractionHand.MAIN_HAND);h.assertTrue(progress.mask(stranger.getUUID())==4 && progress.mask(owner.getUUID())==7,"Shared note changes only authenticated reader");
         owner.discard();stranger.discard();h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_trailpageshidelockedstoryanduseservermodflags")
     public static void trailPagesHideLockedStoryAndUseServerModFlags(GameTestHelper h){
         var locked=EggGuide.page(8,63,4);h.assertTrue(locked.stream().noneMatch(c->c instanceof net.minecraft.network.chat.MutableComponent m && m.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals("trail.dudunka.step.2")),"Out-of-order notes must not reveal locked narrative");
         var mvs=EggGuide.page(8,63,7);var vanilla=EggGuide.page(8,62,7);h.assertTrue(mvs.stream().anyMatch(c->c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith(".mvs")) && vanilla.stream().anyMatch(c->c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith(".vanilla")),"Server MVS flag must select truthful search route");
@@ -1320,7 +1320,7 @@ public class FamilyTests {
         var params=new net.minecraft.world.level.storage.loot.LootParams.Builder(h.getLevel()).withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN,new net.minecraft.world.phys.Vec3(coordinate*37,70,coordinate*101)).create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
         return new net.minecraft.world.level.storage.loot.LootContext.Builder(params).withOptionalRandomSeed(seed).withQueriedLootTableId(new net.minecraft.resources.ResourceLocation(table)).create(null);
     }
-    @GameTest(template="empty",timeoutTicks=40)
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_notelootroutespreserveeggrollsandexistingitems")
     public static void noteLootRoutesPreserveEggRollsAndExistingItems(GameTestHelper h){
         String[] tables={"minecraft:chests/village/village_plains_house","minecraft:chests/village/village_desert_house","minecraft:chests/village/village_savanna_house","minecraft:chests/village/village_snowy_house","minecraft:chests/village/village_taiga_house","mvs:houses_common","mvs:houses_flower"};
         boolean setting=DudunkaMod.TRAIL_NOTES.get();
@@ -1335,6 +1335,7 @@ public class FamilyTests {
         var unrelated=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation("mvs:empty"),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),trailContext(h,"mvs:empty",1,1));h.assertTrue(unrelated.isEmpty(),"Unsupported table must not receive notes");
         var modifier=new TrailLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0],1,1,false);var list=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();list.add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,3));modifier.apply(list,trailContext(h,tables[0],1,1));modifier.apply(list,trailContext(h,tables[0],1,1));h.assertTrue(list.size()==2 && list.get(0).getCount()==3,"Repeated note modifier preserves loot and deduplicates its own note");
         DudunkaMod.TRAIL_NOTES.set(false);var disabled=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();modifier.apply(disabled,trailContext(h,tables[0],1,1));h.assertTrue(disabled.isEmpty(),"Disabled notes must not be added");
+        var friends=new FriendNoteLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0]);friends.apply(disabled,trailContext(h,tables[0],1,1));h.assertTrue(disabled.isEmpty(),"Same setting disables friend notes as well");
         }finally{DudunkaMod.TRAIL_NOTES.set(setting);}h.succeed();
     }
 
@@ -1468,5 +1469,70 @@ public class FamilyTests {
         var allowed=new net.minecraftforge.event.level.BlockEvent.BreakEvent(h.getLevel(),p,h.getLevel().getBlockState(p),owner);FamilyProtection.onBreak(allowed);h.assertTrue(!allowed.isCanceled(),"Furniture owner may break it");
         var flower=h.absolutePos(new BlockPos(4,2,3));var old=new HomeScenes.Scene(mob.homeAnchor(),flower,mob.position(),Activity.SIT);
         h.assertTrue(!HomeScenes.valid(mob,old) && HomeTogetherScenes.select(mob)==null && CampfireScenes.select(mob)==null,"Explicit furniture mode must preempt former home/camp scenes");owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void friendsNotesRemainIndependentAndPrivate(GameTestHelper h){
+        var owner=testOwner(h);var stranger=testOwner(h);var progress=TrailProgress.get(owner.server);
+        for(int note:new int[]{6,9,3}){owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.TRAIL_ITEMS.get(note).get()));DudunkaMod.TRAIL_ITEMS.get(note).get().use(h.getLevel(),owner,net.minecraft.world.InteractionHand.MAIN_HAND);}
+        h.assertTrue(progress.mask(owner.getUUID())==292 && FriendStories.unlocked(292,Kind.MARUSYA)==0 && FriendStories.unlocked(292,Kind.SYUSYA)==0,"Out-of-order last pages remain saved and independently locked");
+        for(int note:new int[]{4,5,7,8,1,2})TrailNoteItem.read(owner,note);
+        h.assertTrue(progress.mask(owner.getUUID())==511 && !TrailNoteItem.read(owner,6) && progress.mask(stranger.getUUID())==0,"All nine notes are private and repeat reading is idempotent");
+        stranger.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.TRAIL_ITEMS.get(6).get()));DudunkaMod.TRAIL_ITEMS.get(6).get().use(h.getLevel(),stranger,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(progress.mask(stranger.getUUID())==32 && FamilyAlbum.collect(owner).trailMask()==511 && FamilyAlbum.collect(stranger).trailMask()==32,"Sharing a note only changes the authenticated reader");
+        var restored=TrailProgress.load(progress.save(new CompoundTag()));h.assertTrue(restored.mask(owner.getUUID())==511 && restored.mask(stranger.getUUID())==32,"Nine-bit progress survives NBT save/load");owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void friendStoriesHideTailsAndKeepOriginalTrail(GameTestHelper h){
+        h.assertTrue(EggGuide.PAGES==18,"Six guide pages plus three four-page stories");
+        for(Kind kind:new Kind[]{Kind.MARUSYA,Kind.SYUSYA}){
+            int first=kind==Kind.MARUSYA?10:14,lastBit=1<<(FriendStories.offset(kind)+2);
+            var locked=EggGuide.page(first+3,63,lastBit);
+            h.assertTrue(locked.stream().noneMatch(c->c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().contains(".step.3")),"Found last note cannot reveal locked story: "+kind);
+            var full=EggGuide.page(first+3,63,511);var vanilla=EggGuide.page(first+3,62,511);
+            h.assertTrue(full.stream().anyMatch(c->c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith(".mvs")) && vanilla.stream().noneMatch(c->c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith(".mvs")),"Server flags gate optional places");
+        }
+        h.assertTrue(TrailProgress.unlocked(7)==3 && FriendStories.unlocked(7,Kind.MARUSYA)==0 && FriendStories.unlocked(7,Kind.SYUSYA)==0,"Old three-bit progress opens only original story");
+        for(int page=0;page<18;page++)h.assertTrue(!EggGuide.page(page,63,511).isEmpty(),"Every guide/story page must exist");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void registeredFriendNoteLootPreservesRandomAndResources(GameTestHelper h){
+        String[] tables={"minecraft:chests/village/village_plains_house","minecraft:chests/village/village_desert_house","minecraft:chests/village/village_savanna_house","minecraft:chests/village/village_snowy_house","minecraft:chests/village/village_taiga_house","minecraft:chests/abandoned_mineshaft","minecraft:chests/woodland_mansion","minecraft:chests/simple_dungeon","mvs:abandoned","mvs:swamps","betterdungeons:skeleton_dungeon/chests/common","betterdungeons:zombie_dungeon/chests/common","betterdungeons:small_dungeon/chests/loot_piles"};
+        var modifier=new FriendNoteLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0]);
+        for(String table:tables){var found=new java.util.HashSet<Integer>();for(int i=1;i<=128;i++){
+            var baseline=trailContext(h,table,i,i);var ctx=trailContext(h,table,i,i);var loot=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();loot.add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,3));modifier.apply(loot,ctx);
+            h.assertTrue(baseline.getRandom().nextLong()==ctx.getRandom().nextLong() && loot.get(0).getCount()==3,"Stories preserve vanilla/egg RNG and existing loot");int size=loot.size();modifier.apply(loot,ctx);h.assertTrue(loot.size()==size,"Repeated modifier never duplicates its notes");
+            var actual=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation(table),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),trailContext(h,table,i,i));
+            for(int note=4;note<=9;note++){final int n=note;if(actual.stream().anyMatch(s->s.is(DudunkaMod.TRAIL_ITEMS.get(n).get()))){h.assertTrue(FriendNoteLootModifier.supports(table,n),"No crossed friend route");found.add(n);}}
+        }for(int note=4;note<=9;note++)if(FriendNoteLootModifier.supports(table,note))h.assertTrue(found.contains(note),"Registered table must produce every supported new page: "+table+" "+note);}
+        var unrelated=modifier.apply(new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),trailContext(h,"mvs:empty",1,1));h.assertTrue(unrelated.isEmpty(),"Unsupported tables remain unchanged");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void characterVariantsCyclePersistAndMatchTable(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.DUDUNKA);var goal=new FurnitureGoal(mob);h.assertTrue(goal.canUse(),"Fixture must select table");goal.start();
+        h.assertTrue(mob.characterVariant()==0 && h.getLevel().getBlockState(mob.furniturePosition()).getValue(FurnitureBlock.PICTURE)==0,"First drawing matches table");goal.stop();
+        h.assertTrue(mob.beginFurnitureVariant()==1 && mob.beginFurnitureVariant()==2 && mob.beginFurnitureVariant()==0,"Variants change only per start and wrap after three");var data=new CompoundTag();mob.addAdditionalSaveData(data);var loaded=DudunkaMod.TYPES.get(mob.kind).get().create(h.getLevel());loaded.readAdditionalSaveData(data);
+        h.assertTrue(loaded.characterVariant()==0 && loaded.beginFurnitureVariant()==1 && loaded.trust()==mob.trust(),"Variant and next turn survive serialization without care changes");data.putInt("CharacterVariant",999);data.putInt("NextCharacterVariant",-20);loaded.readAdditionalSaveData(data);h.assertTrue(loaded.characterVariant()==2 && loaded.beginFurnitureVariant()==0,"Invalid saved indices are bounded");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void syusyaFeelersReactWithoutEatingOrChangingMode(GameTestHelper h){
+        var owner=testOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX()+1,mob.getY(),mob.getZ(),0,0);
+        owner.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LEAVES,3));int trust=mob.trust();mob.updateFeelers();
+        h.assertTrue(mob.feelers()==CharacterMoments.Feelers.INTERESTED && owner.getOffhandItem().getCount()==3 && mob.trust()==trust && mob.activity()==Activity.IDLE,"Offhand food interests feelers without consuming food or changing care/activity");
+        owner.moveTo(mob.getX()+10,mob.getY(),mob.getZ(),0,0);mob.updateFeelers();h.assertTrue(mob.feelers()==CharacterMoments.Feelers.CALM,"Distant owner's food must not trigger reaction");
+        for(Activity activity:new Activity[]{Activity.RETREAT,Activity.SLEEP}){mob.setActivity(activity);mob.updateFeelers();h.assertTrue(mob.feelers()==CharacterMoments.Feelers.RETRACTED,"Rest/hiding retracts feelers");}
+        mob.setActivity(Activity.PEEK);mob.updateFeelers();h.assertTrue(mob.feelers()==CharacterMoments.Feelers.INTERESTED,"Peeking explores with feelers");
+        var saved=new CompoundTag();mob.addAdditionalSaveData(saved);mob.readAdditionalSaveData(saved);h.assertTrue(mob.feelers()==CharacterMoments.Feelers.CALM,"Transient mood must not invent a saved reaction");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void characterSnapshotAndNineNotesCodec(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.SYUSYA);mob.beginFurnitureVariant();mob.beginFurnitureVariant();mob.setActivity(Activity.NIBBLE);mob.updateFeelers();for(int n=1;n<=9;n++)TrailNoteItem.read(owner,n);
+        var snapshot=FamilyAlbum.collect(owner);var entry=snapshot.entries().get(0);h.assertTrue(entry.variant()==1 && entry.feelers()==CharacterMoments.Feelers.INTERESTED && snapshot.trailMask()==511,"Private snapshot reflects actual character and nine pages");
+        var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,buf);h.assertTrue(snapshot.equals(FamilyAlbum.decode(buf)) && buf.readableBytes()==0,"Nine-bit progress, mood and variant round-trip");buf.clear();FamilyAlbum.encode(snapshot,buf);buf.writerIndex(buf.writerIndex()-2);buf.writeVarInt(512);boolean rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"More than nine bits rejected");}finally{buf.release();}owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=1600,batch="isolated_livedudunkashowsallthreematchingdrawings")
+    public static void liveDudunkaShowsAllThreeMatchingDrawings(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.DUDUNKA);mob.setNoAi(false);var seen=new java.util.HashSet<Integer>();
+        h.onEachTick(()->{if(mob.activity()==Activity.DRAW || mob.activity()==Activity.SHOW_DRAWING){h.assertTrue(h.getLevel().getBlockState(mob.furniturePosition()).getValue(FurnitureBlock.PICTURE)==mob.characterVariant(),"Live table must match showing hand");if(mob.activity()==Activity.SHOW_DRAWING)seen.add(mob.characterVariant());}});
+        h.succeedWhen(()->{h.assertTrue(seen.size()==3,"All three drawings must be shown in successive live activities: seen="+seen+", activity="+mob.activity()+", variant="+mob.characterVariant()+", pos="+mob.position()+", ready="+FurnitureScenes.info(mob));owner.discard();});
     }
 }

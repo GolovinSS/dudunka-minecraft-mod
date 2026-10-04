@@ -10,7 +10,7 @@ names=['dudunka_home','marusya_home','syusya_home','dudunka_furniture','marusya_
 labels=['Кровать Дюдюньки','Подушка Маруси','Домик Сюси','Столик Дюдюньки','Лежанка с когтеточкой','Домик с листочком']
 canvas=Image.new('RGB',(1500,1080),'#f5f0e7');draw=ImageDraw.Draw(canvas)
 fontpath='/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';font=ImageFont.truetype(fontpath,23);title=ImageFont.truetype(fontpath,30);small=ImageFont.truetype(fontpath,17)
-draw.text((750,35),'Уютный дом · реальные модели 0.21.0',font=title,fill='#493225',anchor='mm')
+draw.text((750,35),'Уютный дом · реальные модели 0.22.0',font=title,fill='#493225',anchor='mm')
 textures={}
 for i,name in enumerate(names):
  draw=ImageDraw.Draw(canvas)
@@ -47,8 +47,8 @@ for i,name in enumerate(names):
  # Texture tiles are the exact PNG assets.
  mats=['wood','pink','cream'] if i==0 else ['plum','paw','cream'] if i==1 else ['wood','moss'] if i==2 else ['wood','drawing','pencil'] if i==3 else ['plum','sisal','wood'] if i==4 else ['wood','leaf','water']
  for j,mat in enumerate(mats):canvas.paste(Image.open(a/f'textures/block/cozy_{mat}.png').resize((64,64),Image.Resampling.NEAREST),(cx-len(mats)*40+j*80,cy+100))
- state=json.loads((a/f'blockstates/{name}.json').read_text());assert len(state['variants'])==4
- assert all(v['model']=='dudunka:block/'+name for v in state['variants'].values())
+ state=json.loads((a/f'blockstates/{name}.json').read_text());assert len(state['variants'])==(12 if name=='dudunka_furniture' else 4)
+ assert all((a/('models/'+v['model'].split(':')[1]+'.json')).exists() for v in state['variants'].values())
  if name.endswith('furniture'):
   recipe=json.loads((root/f'src/main/resources/data/dudunka/recipes/{name}.json').read_text());assert recipe['result']['item']=='dudunka:'+name
 out=root/'docs/FURNITURE-PREVIEW.png';canvas.save(out)
