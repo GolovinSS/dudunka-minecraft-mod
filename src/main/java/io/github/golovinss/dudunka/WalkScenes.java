@@ -17,7 +17,7 @@ public final class WalkScenes {
     private WalkScenes(){}
     private static boolean calm(Companion mob){
         var p=mob.ownerPlayer();
-        return !mob.level().isClientSide && mob.isAlive() && !mob.staying() && !mob.atHomeMode() && mob.onGround()
+        return !mob.level().isClientSide && mob.isAlive() && !mob.staying() && !mob.atHomeMode() && mob.getDeltaMovement().y>=-.1
             && !mob.isInWaterOrBubble() && !mob.isOnFire() && !mob.isPassenger() && !mob.isLeashed() && Math.floorMod(mob.level().getDayTime(),24000)<12000 && !mob.level().isRaining()
             && p!=null && p.isAlive() && !p.isSpectator() && !p.isSleeping() && p.onGround() && !p.isPassenger()
             && !p.isInWaterOrBubble() && mob.distanceToSqr(p)<=100
@@ -40,7 +40,7 @@ public final class WalkScenes {
     }
     public static Scene select(Companion mob){
         var current=current(mob);if(current!=null)return current;
-        if(mob.kind!=Kind.DUDUNKA || !calm(mob))return null;
+        if(mob.kind!=Kind.DUDUNKA || !mob.onGround() || !calm(mob))return null;
         long now=mob.level().getGameTime();var map=STATES.computeIfAbsent(mob.level(),l->new HashMap<>());
         if(map.size()>=128 && !map.containsKey(mob.ownerId()))map.entrySet().removeIf(e->e.getValue().scene==null || now>=e.getValue().scene.until());
         if(map.size()>=128 && !map.containsKey(mob.ownerId()))return null;
@@ -52,7 +52,7 @@ public final class WalkScenes {
         if(now<state.next)return null;state.next=now+20;
         if(state.ownerPos==null || state.ownerPos.distanceToSqr(owner.position())>.0625){state.ownerPos=owner.position();state.stillSince=now;return null;}
         if(now-state.stillSince<60 || mob.distanceToSqr(owner)>36 || mob.openChestTarget()!=null || mob.homeWelcomePending())return null;
-        var members=mob.level().getEntitiesOfClass(Companion.class,mob.getBoundingBox().inflate(8),c->c!=mob && c.kind!=Kind.DUDUNKA && mob.sameFamily(c) && calm(c));
+        var members=mob.level().getEntitiesOfClass(Companion.class,mob.getBoundingBox().inflate(8),c->c!=mob && c.kind!=Kind.DUDUNKA && mob.sameFamily(c) && c.onGround() && calm(c));
         members.sort(Comparator.comparing((Companion c)->c.kind.ordinal()).thenComparingDouble(mob::distanceToSqr));
         var chosen=new ArrayList<Companion>();chosen.add(mob);var kinds=EnumSet.of(Kind.DUDUNKA);
         for(var other:members)if(kinds.add(other.kind))chosen.add(other);

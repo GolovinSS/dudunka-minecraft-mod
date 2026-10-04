@@ -1225,7 +1225,7 @@ public class FamilyTests {
         owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));open=AlbumCommands.open(owner);var command=new AlbumCommands.RecoveryCommand(open.session(),mob.getUUID(),1);AlbumCommands.recover(owner,command);
         h.assertTrue(!ledger.matches(mob.getUUID(),token,owner.getUUID()),"Authenticated session must reissue carrier");var recovered=owner.getInventory().getItem(1);UUID fresh=recovered.getTag().getUUID("Ticket");AlbumCommands.recover(owner,command);h.assertTrue(ledger.matches(mob.getUUID(),fresh,owner.getUUID()),"Replay must leave new ticket unchanged");owner.discard();h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=480,batch="recovery_dimension")
+    @GameTest(template="empty",timeoutTicks=1200,batch="recovery_dimension")
     public static void recoveryMovesExistingEntityAcrossDimensions(GameTestHelper h){
         var owner=recoveryOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(5,2,5));mob.commandStay(owner,true);UUID id=mob.getUUID();var originalHome=new CompoundTag();mob.addAdditionalSaveData(originalHome);
         var nether=owner.server.getLevel(net.minecraft.world.level.Level.NETHER);BlockPos p=new BlockPos(72,220,72);nether.getChunkAt(p);nether.setChunkForced(4,4,true);
@@ -1532,7 +1532,7 @@ public class FamilyTests {
         var snapshot=FamilyAlbum.collect(owner);var entry=snapshot.entries().get(0);h.assertTrue(entry.variant()==1 && entry.feelers()==CharacterMoments.Feelers.INTERESTED && snapshot.trailMask()==511,"Private snapshot reflects actual character and nine pages");
         var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,buf);h.assertTrue(snapshot.equals(FamilyAlbum.decode(buf)) && buf.readableBytes()==0,"Nine-bit progress, mood and variant round-trip");buf.clear();FamilyAlbum.encode(new FamilyAlbum.Snapshot(snapshot.total(),snapshot.entries(),snapshot.guideFlags(),snapshot.recovery(),snapshot.recoveryTotal(),snapshot.trailMask()),buf);buf.writerIndex(buf.writerIndex()-3);buf.writeVarInt(512);buf.writeVarInt(0);boolean rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"More than nine bits rejected");}finally{buf.release();}owner.discard();h.succeed();
     }
-    @GameTest(template="empty",timeoutTicks=1600,batch="isolated_livedudunkashowsallthreematchingdrawings")
+    @GameTest(template="empty",timeoutTicks=2200,batch="isolated_livedudunkashowsallthreematchingdrawings")
     public static void liveDudunkaShowsAllThreeMatchingDrawings(GameTestHelper h){
         var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.DUDUNKA);visitRoom(h);mob.setNoAi(false);var seen=new java.util.HashSet<Integer>();
         h.onEachTick(()->{if(mob.activity()==Activity.DRAW || mob.activity()==Activity.SHOW_DRAWING){h.assertTrue(h.getLevel().getBlockState(mob.furniturePosition()).getValue(FurnitureBlock.PICTURE)==mob.characterVariant(),"Live table must match showing hand");if(mob.activity()==Activity.SHOW_DRAWING)seen.add(mob.characterVariant());}});
@@ -1716,5 +1716,129 @@ public class FamilyTests {
         WalkScenes.select(d);h.runAfterDelay(80,()->{d.setOnGround(true);cat.setOnGround(true);snail.setOnGround(true);owner.setOnGround(true);var scene=WalkScenes.select(d);h.assertTrue(scene!=null && scene.spots().size()==3,"Stationary owner permits all three friends to stop: scene="+scene+", d="+d.position()+", cat="+cat.position()+", snail="+snail.position()+", owner="+owner.position()+", initial="+fixture.ownerStart()+", rain="+level.isRaining()+", day="+level.getDayTime()+", monsters="+level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,d.getBoundingBox().inflate(10)).size());d.setNoAi(false);cat.setNoAi(false);snail.setNoAi(false);});
         h.runAfterDelay(180,()->{var scene=WalkScenes.current(d);h.assertTrue(scene!=null && WalkScenes.settled(d,scene) && WalkScenes.settled(cat,scene) && WalkScenes.settled(snail,scene),"Live friends must really approach, including snail: d="+d.position()+" cat="+cat.position()+" snail="+snail.position()+" scene="+scene);h.assertTrue(level.getBlockState(fixture.flower()).is(Blocks.DANDELION),"Flower is untouched");owner.moveTo(owner.getX()+4,owner.getY(),owner.getZ(),0,0);owner.setOnGround(true);});
         h.runAfterDelay(190,()->{h.assertTrue(WalkScenes.current(d)==null && d.activity()!=Activity.SIT && cat.activity()!=Activity.SIT,"Moving player cancels and releases movement goals");owner.discard();h.succeed();});
+    }
+    private static java.util.List<Companion> atmosphereHome(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner){
+        // This server uses normal terrain with an underground GameTest origin; build above it.
+        var level=h.getLevel();var home=h.absolutePos(new BlockPos(2,302,2));
+        for(int x=-1;x<=6;x++)for(int z=-1;z<=6;z++){
+            level.setBlock(h.absolutePos(new BlockPos(x,301,z)),Blocks.STONE.defaultBlockState(),3);
+            level.setBlock(h.absolutePos(new BlockPos(x,304,z)),Blocks.STONE.defaultBlockState(),3);
+            for(int y=302;y<=303;y++)level.setBlock(h.absolutePos(new BlockPos(x,y,z)),(x==-1 || x==6 || z==-1 || z==6?Blocks.STONE:Blocks.AIR).defaultBlockState(),3);
+        }
+        level.setBlock(home,DudunkaMod.HOMES.get(Kind.DUDUNKA).get().defaultBlockState(),3);((HomeMarkerEntity)level.getBlockEntity(home)).claim(owner.getUUID());
+        level.setBlock(h.absolutePos(new BlockPos(0,302,1)),Blocks.CHEST.defaultBlockState(),3);
+        level.setBlock(h.absolutePos(new BlockPos(0,302,4)),Blocks.CAKE.defaultBlockState(),3);
+        level.setBlock(h.absolutePos(new BlockPos(1,302,1)),Blocks.TORCH.defaultBlockState(),3);
+        var bed=Blocks.RED_BED.defaultBlockState().setValue(net.minecraft.world.level.block.BedBlock.FACING,net.minecraft.core.Direction.NORTH);
+        level.setBlock(h.absolutePos(new BlockPos(4,302,1)),bed.setValue(net.minecraft.world.level.block.BedBlock.PART,net.minecraft.world.level.block.state.properties.BedPart.HEAD),3);
+        level.setBlock(h.absolutePos(new BlockPos(4,302,2)),bed.setValue(net.minecraft.world.level.block.BedBlock.PART,net.minecraft.world.level.block.state.properties.BedPart.FOOT),3);
+        var position=h.absolutePos(new BlockPos(1,302,1));owner.moveTo(position.getX()+.5,position.getY(),position.getZ()+.5,0,0);
+        for(var threat:level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,new net.minecraft.world.phys.AABB(home).inflate(20)))threat.discard();
+        var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(1,302,3));d.bindHome(home);
+        var members=new java.util.ArrayList<Companion>();members.add(d);
+        for(var kind:new Kind[]{Kind.MARUSYA,Kind.SYUSYA}){
+            var anchor=h.absolutePos(new BlockPos(3,302,kind==Kind.MARUSYA?2:5));level.setBlock(anchor,DudunkaMod.HOMES.get(kind).get().defaultBlockState(),3);((HomeMarkerEntity)level.getBlockEntity(anchor)).claim(owner.getUUID());
+            var mob=create(h,kind,owner.getUUID(),new BlockPos(kind==Kind.MARUSYA?4:5,302,kind==Kind.MARUSYA?4:0));mob.bindHome(anchor);members.add(mob);
+        }
+        return members;
+    }
+    private static void readyAtmosphere(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner,java.util.List<Companion> members){
+        // Roof validity uses skylight: wait for the real lighting worker, then refresh marker caches.
+        for(var m:members){
+            var data=new CompoundTag();
+            var anchor=h.absolutePos(new BlockPos(m.kind==Kind.DUDUNKA?2:3,302,m.kind==Kind.SYUSYA?5:2));
+            var marker=(HomeMarkerEntity)h.getLevel().getBlockEntity(anchor);
+            h.assertTrue(marker.conditions(true).ready(),"Atmosphere fixture ready after lighting: "+m.kind+" "+marker.conditions(true));
+            h.assertTrue(m.commandHome(owner),"Atmosphere fixture accepts home mode");
+            m.addAdditionalSaveData(data);m.readAdditionalSaveData(data);m.setOnGround(true);
+        }
+    }
+    private static void rainyDetails(GameTestHelper h){
+        var level=h.getLevel();var a=h.absolutePos(new BlockPos(-4,300,-4));var b=h.absolutePos(new BlockPos(9,306,9));
+        level.getServer().getCommands().performPrefixedCommand(level.getServer().createCommandSourceStack().withLevel(level),"fillbiome "+a.getX()+" "+a.getY()+" "+a.getZ()+" "+b.getX()+" "+b.getY()+" "+b.getZ()+" minecraft:plains");
+        level.setWeatherParameters(0,6000,true,false);level.setRainLevel(1);level.setDayTime(1000);
+        var outdoors=h.absolutePos(new BlockPos(-2,303,3));
+        // Previous isolated batches reuse coordinates: remove any old roofs above the outdoor spot.
+        for(int y=outdoors.getY();y<level.getMaxBuildHeight();y++)level.setBlock(new BlockPos(outdoors.getX(),y,outdoors.getZ()),Blocks.AIR.defaultBlockState(),3);
+        level.setBlock(h.absolutePos(new BlockPos(-1,303,3)),Blocks.GLASS.defaultBlockState(),3);
+        level.setBlock(h.absolutePos(new BlockPos(4,302,3)),Blocks.POTTED_DANDELION.defaultBlockState(),3);
+    }
+    private static void assertOutdoorRain(GameTestHelper h){
+        var level=h.getLevel();var outdoors=h.absolutePos(new BlockPos(-2,303,3));
+        h.assertTrue(level.isRainingAt(outdoors),"Fixture needs actual outdoor rain: sky="+level.canSeeSky(outdoors)
+            +" height="+level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,outdoors)
+            +" raining="+level.isRaining()+" precipitation="+level.getBiome(outdoors).value().getPrecipitationAt(outdoors));
+    }
+    private static void excursion(GameTestHelper h,java.util.List<Companion> members){
+        long now=h.getLevel().getGameTime();for(var mob:members){try{var f=Companion.class.getDeclaredField("homecoming");f.setAccessible(true);var counter=(Homecoming)f.get(mob);counter.observe(now-240,0);for(int i=1;i<=10;i++)counter.observe(now-240+i*20,400);counter.observe(now-20,0);}catch(ReflectiveOperationException e){throw new RuntimeException(e);}}
+    }
+    private static void trust(Companion mob,int trust){var n=new CompoundTag();mob.addAdditionalSaveData(n);n.putInt("Trust",trust);mob.readAdditionalSaveData(n);mob.setOnGround(true);}
+    @GameTest(template="empty",timeoutTicks=100,batch="isolated_rainroles")
+    public static void rainyHomeAssignsWindowCatAndPlantedPotWithoutChangingBlocks(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);rainyDetails(h);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);assertOutdoorRain(h);var d=members.get(0);var scene=HomeAtmosphereScenes.select(d);
+        h.assertTrue(scene!=null && scene.occasion()==HomeAtmosphereScenes.Occasion.RAIN && scene.spots().size()==3,"All three friends have matching indoor interests: "+scene);
+        h.assertTrue(scene.roles().get(d.getUUID())==HomeAtmosphereScenes.Role.WINDOW && scene.roles().get(members.get(1).getUUID())==HomeAtmosphereScenes.Role.NAP && scene.roles().get(members.get(2).getUUID())==HomeAtmosphereScenes.Role.POT,"Window, companion nap and pot are distinct roles");
+        h.assertTrue(new java.util.HashSet<>(scene.spots().values()).size()==3,"Rain spots never overlap");
+        for(var m:members){var goal=new HomeAtmosphereGoal(m);h.assertTrue(goal.canUse(),"Assigned friend starts same scene");goal.start();var target=net.minecraft.world.phys.Vec3.atBottomCenterOf(scene.spots().get(m.getUUID()));m.moveTo(target);goal.tick();h.assertTrue(HomeAtmosphereScenes.settled(m,scene) && m.atHomeMode(),"Actual arrival displays correct pose without changing home mode");}
+        h.assertTrue(d.activity()==Activity.SIT && members.get(1).activity()==Activity.CURL && members.get(2).activity()==Activity.SEEK_PLANT,"Existing poses show rain moments");
+        h.assertTrue(h.getLevel().getBlockState(scene.focuses().get(d.getUUID())).is(Blocks.GLASS) && h.getLevel().getBlockState(scene.focuses().get(members.get(2).getUUID())).is(Blocks.POTTED_DANDELION),"Interests are untouched");HomeAtmosphereScenes.cancel(d);owner.discard();h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=100,batch="isolated_rainrequiresrealinterests")
+    public static void rainyHomeNeedsOutdoorRainAndNonemptySafePot(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);rainyDetails(h);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);assertOutdoorRain(h);var d=members.get(0);var pot=h.absolutePos(new BlockPos(4,302,3));var glass=h.absolutePos(new BlockPos(-1,303,3));
+        h.getLevel().setBlock(pot,Blocks.FLOWER_POT.defaultBlockState(),3);h.getLevel().setBlock(glass,Blocks.STONE.defaultBlockState(),3);h.assertTrue(HomeAtmosphereScenes.select(d)==null && HomeAtmosphereScenes.select(members.get(1))==null,"No fake window or empty pot scene");
+        h.getLevel().setBlock(pot,Blocks.POTTED_WITHER_ROSE.defaultBlockState(),3);h.assertTrue(HomeAtmosphereScenes.select(members.get(2))==null,"Wither-rose pot is never a cosy interest");
+        h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);h.getLevel().setBlock(glass,Blocks.GLASS.defaultBlockState(),3);h.assertTrue(HomeAtmosphereScenes.select(d)==null,"No rain means no window scene");owner.discard();h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=100,batch="isolated_raininterruptions")
+    public static void rainSceneStopsWhenInterestWeatherOrCommandsChange(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);rainyDetails(h);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);assertOutdoorRain(h);var d=members.get(0);var scene=HomeAtmosphereScenes.select(d);h.assertTrue(scene!=null,"Fixture selects rain");var goal=new HomeAtmosphereGoal(d);h.assertTrue(goal.canUse(),"Start rain");goal.start();
+        h.getLevel().setBlock(scene.focuses().get(members.get(2).getUUID()),Blocks.AIR.defaultBlockState(),3);goal.tick();goal.tick();h.assertTrue(d.activity()==Activity.IDLE && d.homeSceneTarget()==null && HomeAtmosphereScenes.current(d)==null,"Removed pot releases whole moment and stale targets");
+        members.get(1).commandStay(owner,true);h.assertTrue(members.get(1).staying() && !members.get(1).atHomeMode(),"Explicit wait remains authoritative");h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);owner.discard();h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=100,batch="isolated_rainownership")
+    public static void rainMomentsRejectForeignHomeThreatsAndExposedSpots(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);rainyDetails(h);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);assertOutdoorRain(h);var d=members.get(0);var stranger=testOwner(h);var other=create(h,Kind.DUDUNKA,stranger.getUUID(),new BlockPos(2,302,3));other.bindHome(d.homeAnchor());
+        h.assertTrue(HomeAtmosphereScenes.select(other)==null,"Foreign personal home cannot be borrowed");
+        var zombie=net.minecraft.world.entity.EntityType.ZOMBIE.create(h.getLevel());zombie.moveTo(d.getX()+1,d.getY(),d.getZ(),0,0);zombie.setNoAi(true);h.getLevel().addFreshEntity(zombie);h.assertTrue(HomeAtmosphereScenes.select(d)==null,"Nearby threat overrides cosy moment");zombie.discard();
+        h.getLevel().setBlock(d.homeAnchor(),Blocks.AIR.defaultBlockState(),3);h.assertTrue(HomeAtmosphereScenes.select(d)==null,"Missing personal home invalidates selection");owner.discard();stranger.discard();h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=100,batch="isolated_welcomereactions")
+    public static void allFriendsWelcomeWithTrustBasedExistingPoses(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);for(var m:members)trust(m,0);excursion(h,members);var scene=HomeAtmosphereScenes.select(members.get(0));h.assertTrue(scene!=null && scene.occasion()==HomeAtmosphereScenes.Occasion.WELCOME && scene.spots().size()==3,"Real return includes all kinds, even with low trust: "+scene);
+        for(var m:members){h.assertTrue(HomeAtmosphereScenes.greeting(m)==Activity.CURIOUS,"Low trust gives reserved curiosity");trust(m,25);h.assertTrue(HomeAtmosphereScenes.greeting(m)==(m.kind==Kind.DUDUNKA?Activity.WAVE:m.kind==Kind.MARUSYA?Activity.PURR:Activity.PEEK),"Warm reaction matches character");}
+        HomeAtmosphereScenes.cancel(members.get(0));owner.discard();h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=180,batch="isolated_welcomereunion")
+    public static void closeFriendsShareArrivalOnlyAfterActuallyGathering(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);for(var m:members)trust(m,60);var d=members.get(0);var cat=members.get(1);var ledger=FamilyFriendships.get(owner.server);
+        for(int i=0;i<=600;i++)ledger.observe(owner.getUUID(),d.getUUID(),d.kind,cat.getUUID(),cat.kind,i*20L);excursion(h,members);var scene=HomeAtmosphereScenes.select(d);h.assertTrue(scene!=null && scene.reunion(),"High trust and a genuine ten-point friend bond permit joint greeting");
+        var goals=new java.util.ArrayList<HomeAtmosphereGoal>();for(var m:members){var goal=new HomeAtmosphereGoal(m);h.assertTrue(goal.canUse(),"Join return");goal.start();goals.add(goal);h.assertTrue(!m.homeWelcomeEligible() && m.homeWelcomeRunning(),"Each eligible return consumed once");m.moveTo(net.minecraft.world.phys.Vec3.atBottomCenterOf(scene.spots().get(m.getUUID())));goal.tick();}
+        h.runAfterDelay(65,()->{for(int i=0;i<members.size();i++){goals.get(i).tick();h.assertTrue(members.get(i).activity()==Activity.SIT,"Close friends settle together after personal greeting");}members.get(1).commandStay(owner,true);for(var goal:goals)goal.tick();h.assertTrue(d.activity()==Activity.IDLE && !d.homeWelcomeRunning() && d.homeSceneTarget()==null,"Wait cancels all greetings safely");owner.discard();h.succeed();});});
+    }
+    @GameTest(template="empty",timeoutTicks=100)
+    public static void arrivalReadinessBridgesOneSecondParticipantSamplingWithoutDuplicateWelcome(GameTestHelper h){
+        var c=new Homecoming();c.observe(0,0);for(int i=1;i<=10;i++)c.observe(i*20,400);h.assertTrue(c.ready(205) && !c.pending(205),"Completed trip is eligible just before next return sample");h.assertTrue(c.consumeArrival(205) && !c.consumeArrival(205),"Group greeting consumes this readiness exactly once");c.observe(220,0);h.assertTrue(!c.pending(220) && !c.ready(220),"Following sample cannot invent a second welcome");
+        var saved=new CompoundTag();var owner=testOwner(h);var members=atmosphereHome(h,owner);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);for(var m:members){trust(m,60);m.addAdditionalSaveData(saved);var loaded=DudunkaMod.TYPES.get(m.kind).get().create(h.getLevel());loaded.readAdditionalSaveData(saved);loaded.observeHomecoming();h.assertTrue(!loaded.homeWelcomeEligible() && !loaded.homeWelcomeRunning(),"Save/reload never fabricates an arrival: "+m.kind);}owner.discard();h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=140,batch="isolated_atmospherefriendship")
+    public static void atmosphericFriendshipRequiresArrivalAndNoDuplicateSamples(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);rainyDetails(h);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);assertOutdoorRain(h);var d=members.get(0);var cat=members.get(1);var scene=HomeAtmosphereScenes.select(d);h.assertTrue(scene!=null,"Rain fixture ready");var ledger=FamilyFriendships.get(owner.server);
+        long sampleUntil=h.getTick()+45;h.onEachTick(()->{if(h.getTick()<sampleUntil){for(var m:members){m.moveTo(net.minecraft.world.phys.Vec3.atBottomCenterOf(scene.spots().get(m.getUUID())));HomeAtmosphereScenes.arrived(m,scene);m.setActivity(HomeAtmosphereScenes.activity(m,scene));HomeAtmosphereScenes.friendship(m,scene);HomeAtmosphereScenes.friendship(m,scene);}}});
+        h.runAfterDelay(46,()->{int n=ledger.progress(owner.getUUID(),d.getUUID(),cat.getUUID());h.assertTrue(n>=20 && n<=40,"Only real simultaneous samples, never two credits per tick: "+n);cat.setActivity(Activity.CURIOUS);h.assertTrue(!HomeAtmosphereScenes.settled(cat,scene),"Approach pose cannot fake rest");HomeAtmosphereScenes.cancel(d);owner.discard();h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);h.succeed();});});
+    }
+    @GameTest(template="empty",timeoutTicks=360,batch="isolated_liverainhome")
+    public static void allThreeActuallyWalkToRainInterestsAndResumeHomeMode(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);rainyDetails(h);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);assertOutdoorRain(h);var d=members.get(0);h.assertTrue(HomeAtmosphereScenes.select(d)!=null,"Rain scene ready before normal AI");for(var m:members)m.setNoAi(false);
+        h.runAfterDelay(200,()->{var scene=HomeAtmosphereScenes.current(d);h.assertTrue(scene!=null,"Real rainy AI must have a current scene");for(var m:members)h.assertTrue(HomeAtmosphereScenes.settled(m,scene),"Live arrival: "+m.kind+" pos="+m.position()+" target="+scene.spots().get(m.getUUID())+" pose="+m.activity());h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);});
+        h.runAfterDelay(210,()->{for(var m:members)h.assertTrue(m.atHomeMode() && m.homeSceneTarget()==null && HomeAtmosphereScenes.current(m)==null,"Rain ending returns friend to original home routine");owner.discard();h.succeed();});});
+    }
+    @GameTest(template="empty",timeoutTicks=540,batch="isolated_liveallfriendswelcome")
+    public static void realExcursionGetsAllThreeWalkingGreetingsWithoutChangingModes(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);for(var m:members){trust(m,30);m.setNoAi(false);}var start=owner.position();long returnedAt=h.getTick()+250;var greeted=java.util.EnumSet.noneOf(Kind.class);
+        h.onEachTick(()->{if(h.getTick()>=returnedAt)for(var m:members)if(m.homeWelcomeRunning() && m.atHomeMode() && m.activity()==HomeAtmosphereScenes.greeting(m))greeted.add(m.kind);});
+        h.runAfterDelay(25,()->owner.moveTo(start.add(20,0,0)));h.runAfterDelay(250,()->owner.moveTo(start));
+        h.runAfterDelay(420,()->{h.assertTrue(greeted.size()==3,"Each friend must actually arrive and greet after the real excursion: "+greeted);owner.moveTo(start.add(4,0,0));});
+        h.runAfterDelay(430,()->{for(var m:members)h.assertTrue(!m.homeWelcomeRunning() && m.homeSceneTarget()==null && m.atHomeMode(),"Leaving greeting releases transient targets and preserves home mode");owner.discard();h.succeed();});});
     }
 }

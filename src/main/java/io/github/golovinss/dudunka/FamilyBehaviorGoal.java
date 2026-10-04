@@ -48,6 +48,7 @@ public final class FamilyBehaviorGoal extends Goal {
                 return true;
             }
         }
+        if(HomeAtmosphereScenes.select(mob)!=null)return false;
         if(mob.atHomeMode())return false;
         boolean walking=WalkScenes.current(mob)!=null;
         if (!walking && mob.kind != Kind.SYUSYA) {
@@ -150,6 +151,7 @@ public final class FamilyBehaviorGoal extends Goal {
         if(mob.openChestTarget()!=null && (task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE || task==Activity.ADJUST_GLASSES))return false;
         if (mob.kind == Kind.MARUSYA && task != Activity.ALERT && mob.tickCount % 20 == 0
                 && !mob.level().getEntitiesOfClass(Monster.class, mob.getBoundingBox().inflate(10), Entity::isAlive).isEmpty()) return false;
+        if(task!=Activity.ALERT && HomeAtmosphereScenes.current(mob)!=null)return false;
         if(task!=Activity.ALERT && task!=Activity.SIT && WalkScenes.current(mob)!=null)return false;
         if (task == Activity.WAIT_FOR_SYUSYA) return targetEntity instanceof Companion snail && mob.sameFamily(snail)
                 && !snail.staying() && mob.distanceToSqr(snail) > 6.25 && mob.distanceToSqr(snail) < 225;
