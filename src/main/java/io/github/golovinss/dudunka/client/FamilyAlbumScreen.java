@@ -16,9 +16,9 @@ public final class FamilyAlbumScreen extends Screen {
     private int request,pending,pendingTicks,retryTicks;
     private Component status=Component.translatable("screen.dudunka.album_commands");
     private int page,guidePage,recoveryPage,scroll;
-    private boolean guide,recovery;
+    private boolean guide,recovery,requests;
     private List<FormattedCharSequence> lines=List.of();
-    private Button previous,next,stay,follow,homeMode,assignFurniture,clearFurniture,returnMember,help;
+    private Button previous,next,stay,follow,homeMode,assignFurniture,clearFurniture,returnMember,help,requestTab,acceptRequest,deliverRequest,skipRequest;
     private int left,panelWidth,top,bottom;
     public FamilyAlbumScreen(AlbumCommands.Open message){super(Component.translatable("screen.dudunka.album"));session=message.session();snapshot=message.snapshot();guide=snapshot.entries().isEmpty();}
     public static void open(AlbumCommands.Open message){var mc=Minecraft.getInstance();if(mc.player!=null && mc.level!=null)mc.setScreen(new FamilyAlbumScreen(message));}
@@ -37,6 +37,8 @@ public final class FamilyAlbumScreen extends Screen {
         AlbumNetwork.command(new AlbumCommands.Command(session,snapshot.entries().get(page).id(),waiting,pending,atHome));
     }
     private void furniture(boolean clear){if(pending!=0 || snapshot.entries().isEmpty())return;pending=++request;pendingTicks=0;status=Component.translatable("screen.dudunka.album_pending");rebuild();AlbumNetwork.furniture(new AlbumCommands.FurnitureCommand(session,snapshot.entries().get(page).id(),clear,pending));}
+    private FriendRequests.Info requestInfo(){if(snapshot.entries().isEmpty())return null;var kind=snapshot.entries().get(page).kind();return snapshot.requests().stream().filter(r->r.kind()==kind).findFirst().orElse(null);}
+    private void request(FriendRequests.Action action){if(pending!=0 || snapshot.entries().isEmpty())return;pending=++request;pendingTicks=0;status=Component.translatable("screen.dudunka.album_pending");rebuild();AlbumNetwork.request(new AlbumCommands.RequestCommand(session,snapshot.entries().get(page).id(),action,pending));}
     private void recover(){if(pending!=0 || retryTicks>0 || snapshot.recovery().isEmpty())return;pending=++request;pendingTicks=0;var target=snapshot.recovery().get(recoveryPage);status=Component.translatable(target.state()==FamilyAlbum.RecoveryState.LIVE?"screen.dudunka.searching":"screen.dudunka.album_pending",target.name());rebuild();AlbumNetwork.recover(new AlbumCommands.RecoveryCommand(session,snapshot.recovery().get(recoveryPage).id(),pending));}
     @Override public void tick(){
         if(retryTicks>0 && --retryTicks%20==0){status=Component.translatable(retryTicks==0?"screen.dudunka.retry_ready":"screen.dudunka.result.cooldown",(retryTicks+19)/20);rebuild();}
@@ -55,14 +57,18 @@ public final class FamilyAlbumScreen extends Screen {
         returnMember=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.recovery_return"),b->recover()).bounds(left,height-60,panelWidth,20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.guide_tab"),b->tab(true)).bounds(left,31,panelWidth/3-3,20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.family_tab"),b->tab(false)).bounds(left+panelWidth/3+2,31,panelWidth/3-3,20).build());
-        addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.recovery_tab"),b->{guide=false;recovery=true;scroll=0;rebuild();}).bounds(left+2*panelWidth/3+4,31,panelWidth/3-4,20).build());
-        help=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.help"),b->minecraft.setScreen(new QuickStartScreen(this))).bounds(width/2-65,55,130,20).build());
+        addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.recovery_tab"),b->{guide=false;recovery=true;requests=false;scroll=0;rebuild();}).bounds(left+2*panelWidth/3+4,31,panelWidth/3-4,20).build());
+        help=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.help"),b->minecraft.setScreen(new QuickStartScreen(this))).bounds(left,55,panelWidth/2-4,20).build());
+        requestTab=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.tab"),b->{guide=false;recovery=false;requests=!requests;scroll=0;status=Component.translatable("request.dudunka.commands");rebuild();}).bounds(left+panelWidth/2+4,55,panelWidth/2-4,20).build());
+        acceptRequest=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.accept"),b->request(FriendRequests.Action.ACCEPT)).bounds(left,height-60,panelWidth/3-3,20).build());
+        deliverRequest=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.deliver"),b->request(FriendRequests.Action.DELIVER)).bounds(left+panelWidth/3+2,height-60,panelWidth/3-3,20).build());
+        skipRequest=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.skip"),b->request(FriendRequests.Action.SKIP)).bounds(left+2*panelWidth/3+4,height-60,panelWidth/3-4,20).build());
         rebuild();
     }
-    private void tab(boolean guide){this.guide=guide;recovery=false;scroll=0;rebuild();}
+    private void tab(boolean guide){this.guide=guide;recovery=false;requests=false;scroll=0;rebuild();}
     private void change(int delta){if(recovery){recoveryPage=Math.max(0,Math.min(snapshot.recovery().size()-1,recoveryPage+delta));scroll=0;rebuild();return;}if(guide){guidePage=Math.max(0,Math.min(EggGuide.PAGES-1,guidePage+delta));scroll=0;rebuild();return;}page=Math.max(0,Math.min(snapshot.entries().size()-1,page+delta));scroll=0;rebuild();}
     private void rebuild(){
-        top=93+font.split(scope(),panelWidth-16).size()*10;bottom=guide?height-54:height-(recovery?75:99)-Math.max(2,font.split(status,panelWidth-16).size())*10;stay.visible=follow.visible=homeMode.visible=assignFurniture.visible=clearFurniture.visible=!guide && !recovery;returnMember.visible=recovery;
+        top=93+font.split(scope(),panelWidth-16).size()*10;bottom=guide?height-54:height-(recovery?75:99)-Math.max(2,font.split(status,panelWidth-16).size())*10;stay.visible=follow.visible=homeMode.visible=assignFurniture.visible=clearFurniture.visible=!guide && !recovery && !requests;returnMember.visible=recovery;acceptRequest.visible=deliverRequest.visible=skipRequest.visible=requests;
         var text=new ArrayList<Component>();
         if(guide){text.addAll(EggGuide.page(guidePage,snapshot.guideFlags(),snapshot.trailMask()));}
         else if(recovery){
@@ -71,6 +77,18 @@ public final class FamilyAlbumScreen extends Screen {
             else{var e=snapshot.recovery().get(recoveryPage);text.add(e.name());text.add(Component.translatable("screen.dudunka.recovery_state."+e.state().name().toLowerCase(Locale.ROOT)));if(e.state()==FamilyAlbum.RecoveryState.LIVE){text.add(Component.literal(e.dimension()));text.add(Component.translatable("screen.dudunka.recovery_pos",e.pos().getX(),e.pos().getY(),e.pos().getZ()));}returnMember.setMessage(Component.translatable(e.state()==FamilyAlbum.RecoveryState.LIVE?"screen.dudunka.recovery_return":"screen.dudunka.recovery_carrier"));}
         }
         else if(snapshot.entries().isEmpty())text.add(Component.translatable("screen.dudunka.album_empty"));
+        else if(requests){
+            var e=snapshot.entries().get(page);var r=requestInfo();text.add(e.name());text.add(Component.empty());
+            if(r!=null){
+                text.add(Component.translatable("request.dudunka.description."+e.kind().id+"."+r.task().name().toLowerCase(Locale.ROOT)));
+                text.add(Component.empty());text.add(Component.translatable(r.accepted()?"request.dudunka.active":"request.dudunka.offer"));
+                if(r.retrySeconds()>0)text.add(Component.translatable("request.dudunka.cooldown",r.retrySeconds()));
+                text.add(Component.translatable("request.dudunka.how."+r.task().name().toLowerCase(Locale.ROOT)));
+                text.add(Component.empty());text.add(Component.translatable("request.dudunka.completed",r.completed()));
+                for(var task:FriendRequests.Task.values())if((r.memories()&(1<<task.ordinal()))!=0)text.add(Component.translatable("keepsake.dudunka."+e.kind().id+"."+task.name().toLowerCase(Locale.ROOT)));
+            }
+            text.add(Component.empty());text.add(Component.translatable("request.dudunka.optional"));
+        }
         else {
             var e=snapshot.entries().get(page);
             text.add(e.name());
@@ -101,7 +119,10 @@ public final class FamilyAlbumScreen extends Screen {
         }
         if(!guide){text.add(Component.empty());text.add(Component.translatable("screen.dudunka.album_snapshot"));}
         var wrapped=new ArrayList<FormattedCharSequence>();for(var line:text)wrapped.addAll(font.split(line,Math.max(40,panelWidth-24)));
-        help.active=pending==0;
+        help.active=requestTab.active=pending==0;var r=requestInfo();
+        acceptRequest.active=pending==0 && r!=null && !r.accepted() && r.retrySeconds()==0;
+        deliverRequest.active=pending==0 && r!=null && r.accepted();
+        skipRequest.active=pending==0 && r!=null && r.retrySeconds()==0;
         returnMember.active=pending==0 && retryTicks==0 && !snapshot.recovery().isEmpty();
         lines=List.copyOf(wrapped);previous.active=guide?guidePage>0:recovery?pending==0 && recoveryPage>0:pending==0 && page>0;next.active=guide?guidePage+1<EggGuide.PAGES:recovery?pending==0 && recoveryPage+1<snapshot.recovery().size():pending==0 && page+1<snapshot.entries().size();scroll=Math.min(scroll,maxScroll());
         stay.active=pending==0 && !snapshot.entries().isEmpty() && !snapshot.entries().get(page).staying();
@@ -109,7 +130,7 @@ public final class FamilyAlbumScreen extends Screen {
         homeMode.active=pending==0 && !snapshot.entries().isEmpty() && !snapshot.entries().get(page).homeMode() && snapshot.entries().get(page).home().state()==FamilyAlbum.HomeState.READY;
         assignFurniture.active=pending==0 && !snapshot.entries().isEmpty();clearFurniture.active=assignFurniture.active && snapshot.entries().get(page).furniture().state()!=FurnitureScenes.State.NONE;
     }
-    private Component scope(){if(recovery)return Component.translatable("screen.dudunka.recovery_scope",snapshot.recovery().size(),snapshot.recoveryTotal());if(guide)return Component.translatable("screen.dudunka.guide_scope");return Component.translatable("screen.dudunka.album_scope",snapshot.entries().size(),snapshot.total());}
+    private Component scope(){if(requests)return Component.translatable("request.dudunka.scope");if(recovery)return Component.translatable("screen.dudunka.recovery_scope",snapshot.recovery().size(),snapshot.recoveryTotal());if(guide)return Component.translatable("screen.dudunka.guide_scope");return Component.translatable("screen.dudunka.album_scope",snapshot.entries().size(),snapshot.total());}
     private int maxScroll(){return Math.max(0,lines.size()*12-(bottom-top));}
     @Override public boolean mouseScrolled(double x,double y,double amount){scroll=Math.max(0,Math.min(maxScroll(),scroll-(int)(amount*24)));return true;}
     @Override public boolean isPauseScreen(){return false;}

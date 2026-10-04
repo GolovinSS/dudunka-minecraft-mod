@@ -48,19 +48,20 @@ public class Companion extends PathfinderMob {
         goalSelector.addGoal(2,new FamilyBehaviorGoal(this));
         goalSelector.addGoal(3,new CampfireRestGoal(this));
         goalSelector.addGoal(4,new ChestCuriosityGoal(this));
-        goalSelector.addGoal(5,new FurnitureVisitGoal(this));
-        goalSelector.addGoal(6,new FurnitureGoal(this));
-        goalSelector.addGoal(7,new HomeTogetherGoal(this));
-        goalSelector.addGoal(8,new HomeSceneGoal(this));
-        goalSelector.addGoal(9,new StayHomeGoal(this));
-        goalSelector.addGoal(10,new FamilyFollowGoal(this));
-        goalSelector.addGoal(11,new WaterAvoidingRandomStrollGoal(this, .8) {
+        goalSelector.addGoal(5,new WalkTogetherGoal(this));
+        goalSelector.addGoal(6,new FurnitureVisitGoal(this));
+        goalSelector.addGoal(7,new FurnitureGoal(this));
+        goalSelector.addGoal(8,new HomeTogetherGoal(this));
+        goalSelector.addGoal(9,new HomeSceneGoal(this));
+        goalSelector.addGoal(10,new StayHomeGoal(this));
+        goalSelector.addGoal(11,new FamilyFollowGoal(this));
+        goalSelector.addGoal(12,new WaterAvoidingRandomStrollGoal(this, .8) {
             @Override public boolean canUse() { if(staying() || homeMode && (homeAnchor()==null || blockPosition().distSqr(homeAnchor())>36))return false;
                 if(!super.canUse())return false;
                 return !homeMode || homeAnchor()!=null && new BlockPos((int)Math.floor(wantedX),(int)Math.floor(wantedY),(int)Math.floor(wantedZ)).distSqr(homeAnchor())<=36; }
         });
-        goalSelector.addGoal(12,new LookAtPlayerGoal(this,Player.class,6));
-        goalSelector.addGoal(13,new RandomLookAroundGoal(this));
+        goalSelector.addGoal(13,new LookAtPlayerGoal(this,Player.class,6));
+        goalSelector.addGoal(14,new RandomLookAroundGoal(this));
     }
     public void initialize(UUID owner,BlockPos home) { this.owner=owner; this.home=home.immutable(); this.homeDimension=level().dimension().location().toString(); setCustomName(Component.translatable("entity.dudunka."+kind.id)); }
     public int stage() { return entityData.get(STAGE); }
@@ -70,7 +71,7 @@ public class Companion extends PathfinderMob {
         if(level().isClientSide || !isAlive() || !player.isAlive() || player.isSpectator()
             || player.level()!=level() || owner==null || !owner.equals(player.getUUID()) || distanceToSqr(player)>4096)return false;
         if(staying()!=stay || homeMode) {
-            homeMode=false;
+            WalkScenes.cancel(this);homeMode=false;
             entityData.set(STAY,stay);getNavigation().stop();pettingTicks=0;openedChest=null;
             homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;setActivity(Activity.IDLE);
         }
@@ -200,13 +201,7 @@ public class Companion extends PathfinderMob {
         if(food.is(net.minecraft.world.item.Items.BOOK)){FamilyFriendships.show(player,this);return InteractionResult.CONSUME;}
         if(food.is(DudunkaMod.CARRIER.get())) { SyusyaCarrierItem.capture(this,player,food); return InteractionResult.CONSUME; }
         if(kind.likes(food)) {
-            if(feedCooldown>0){player.displayClientMessage(Component.translatable("message.dudunka.full"),true);return InteractionResult.CONSUME;}
-            boolean cookie = food.is(net.minecraft.world.item.Items.COOKIE);
-            if(!player.getAbilities().instabuild)food.shrink(1);
-            feedCooldown=600; changeTrust(5); heal(4);
-            if(kind == Kind.DUDUNKA && cookie) FamilyAchievements.award(this, "not_nonsense");
-            if(stage()<2){growthTicks=Math.min(DudunkaMod.GROWTH_SECONDS.get()*40,growthTicks+600);updateStage();}
-            ((net.minecraft.server.level.ServerLevel)level()).sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,getX(),getY()+getBbHeight(),getZ(),3,.2,.1,.2,0);
+            feed(player,food);
         } else if(kind==Kind.MARUSYA && food.isEmpty() && !player.isShiftKeyDown()) {
             if(petCooldown>0) {
                 player.displayClientMessage(Component.translatable("message.dudunka.pet_cooldown",(petCooldown+19)/20),true);
@@ -224,6 +219,21 @@ public class Companion extends PathfinderMob {
         player.displayClientMessage(Component.translatable("message.dudunka.companion_status",Component.translatable("stage.dudunka."+stage()),trust,Component.translatable(staying()?"mode.dudunka.stay":"mode.dudunka.follow")),true);
         return InteractionResult.CONSUME;
     }
+    /** The single feeding path serves direct interaction and accepted treat requests. */
+    public boolean feed(Player player,net.minecraft.world.item.ItemStack food){
+        if(level().isClientSide || !isAlive() || !player.isAlive() || player.isSpectator() || player.level()!=level()
+            || owner==null || !owner.equals(player.getUUID()) || distanceToSqr(player)>64 || !kind.likes(food))return false;
+        if(feedCooldown>0){player.displayClientMessage(Component.translatable("message.dudunka.full"),true);return false;}
+        boolean cookie=food.is(net.minecraft.world.item.Items.COOKIE);
+        if(!player.getAbilities().instabuild)food.shrink(1);
+        feedCooldown=600;changeTrust(5);heal(4);
+        if(kind==Kind.DUDUNKA && cookie)FamilyAchievements.award(this,"not_nonsense");
+        if(stage()<2){growthTicks=Math.min(DudunkaMod.GROWTH_SECONDS.get()*40,growthTicks+600);updateStage();}
+        var server=(ServerLevel)level();server.sendParticles(net.minecraft.core.particles.ParticleTypes.HEART,getX(),getY()+getBbHeight(),getZ(),3,.2,.1,.2,0);
+        if(player instanceof net.minecraft.server.level.ServerPlayer p)FriendRequests.get(server.getServer()).fed(p,this);
+        return true;
+    }
+    void rewardRequest(){if(!level().isClientSide)changeTrust(2);}
     @Override public boolean hurt(DamageSource source,float amount) {
         if(level().isClientSide)return false;
         if(source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL))return super.hurt(source,amount); // /kill remains administrative.
@@ -238,7 +248,7 @@ public class Companion extends PathfinderMob {
         if(p!=null){teleportTo(p.getX()+.5,p.getY(),p.getZ()+.5);fallDistance=0;}
     }
 
-    public void prepareRecovery(){getNavigation().stop();pettingTicks=0;openedChest=null;homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;pauseHomeScenes();setActivity(Activity.IDLE);setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);fallDistance=0;}
+    public void prepareRecovery(){WalkScenes.cancel(this);getNavigation().stop();pettingTicks=0;openedChest=null;homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;pauseHomeScenes();setActivity(Activity.IDLE);setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);fallDistance=0;}
     @Override public void remove(net.minecraft.world.entity.Entity.RemovalReason reason){
         if(level() instanceof ServerLevel server && owner!=null){
             var registry=FamilyRegistry.get(server.getServer());

@@ -11,7 +11,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 /** Direction-checked messages; all mutations run on the authenticated sender's server thread. */
 public final class AlbumNetwork {
-    private static final String VERSION="7";
+    private static final String VERSION="8";
     private static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(new ResourceLocation(DudunkaMod.ID,"album"),()->VERSION,VERSION::equals,VERSION::equals);
     private AlbumNetwork() {}
     public static void register(){
@@ -29,7 +29,11 @@ public final class AlbumNetwork {
             },Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(3,AlbumCommands.RecoveryCommand.class,(m,b)->{b.writeUUID(m.session());b.writeUUID(m.member());b.writeVarInt(m.request());},b->new AlbumCommands.RecoveryCommand(b.readUUID(),b.readUUID(),b.readVarInt()),(m,c)->{var ctx=c.get();ctx.enqueueWork(()->AlbumCommands.recover(ctx.getSender(),m));ctx.setPacketHandled(true);},Optional.of(NetworkDirection.PLAY_TO_SERVER));
         CHANNEL.registerMessage(4,AlbumCommands.FurnitureCommand.class,AlbumNetwork::encodeFurniture,AlbumNetwork::decodeFurniture,(m,c)->{var ctx=c.get();ctx.enqueueWork(()->handleFurniture(ctx.getSender(),m));ctx.setPacketHandled(true);},Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(5,AlbumCommands.RequestCommand.class,AlbumNetwork::encodeRequest,AlbumNetwork::decodeRequest,(m,c)->{var ctx=c.get();ctx.enqueueWork(()->{var reply=AlbumCommands.executeRequest(ctx.getSender(),m);if(reply!=null)reply(ctx.getSender(),reply);});ctx.setPacketHandled(true);},Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
+    public static void request(AlbumCommands.RequestCommand m){CHANNEL.sendToServer(m);}
+    public static void encodeRequest(AlbumCommands.RequestCommand m,FriendlyByteBuf b){b.writeUUID(m.session());b.writeUUID(m.member());b.writeEnum(m.action());b.writeVarInt(m.request());}
+    public static AlbumCommands.RequestCommand decodeRequest(FriendlyByteBuf b){return new AlbumCommands.RequestCommand(b.readUUID(),b.readUUID(),b.readEnum(FriendRequests.Action.class),b.readVarInt());}
     public static void furniture(AlbumCommands.FurnitureCommand message){CHANNEL.sendToServer(message);}
     public static void handleFurniture(ServerPlayer player,AlbumCommands.FurnitureCommand message){var reply=AlbumCommands.executeFurniture(player,message);if(reply!=null)reply(player,reply);}
     public static void encodeFurniture(AlbumCommands.FurnitureCommand m,FriendlyByteBuf b){b.writeUUID(m.session());b.writeUUID(m.member());b.writeBoolean(m.clear());b.writeVarInt(m.request());}

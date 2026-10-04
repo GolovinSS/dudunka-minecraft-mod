@@ -62,6 +62,7 @@ public class DudunkaMod {
     public static final RegistryObject<BlockEntityType<FurnitureEntity>> FURNITURE_BE=BLOCK_ENTITIES.register("furniture",()->BlockEntityType.Builder.of(FurnitureEntity::new,FURNITURE.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
     public static final RegistryObject<BlockEntityType<HomeMarkerEntity>> HOME_BE=BLOCK_ENTITIES.register("home",()->BlockEntityType.Builder.of(HomeMarkerEntity::new,HOMES.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
     public static final RegistryObject<Item> ALBUM=ITEMS.register("family_album",()->new FamilyAlbumItem(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> KEEPSAKE=ITEMS.register("friend_keepsake",()->new FriendKeepsakeItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CARRIER=ITEMS.register("syusya_carrier",()->new SyusyaCarrierItem(new Item.Properties().stacksTo(1).fireResistant()));
     public static final RegistryObject<Codec<FriendNoteLootModifier>> FRIEND_LOOT=LOOT.register("friend_notes",()->FriendNoteLootModifier.CODEC);
     public static final RegistryObject<Codec<TrailLootModifier>> TRAIL_LOOT=LOOT.register("trail_note",()->TrailLootModifier.CODEC);

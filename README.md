@@ -1,4 +1,4 @@
-# Dudunka Family — 0.23.0 alpha
+# Dudunka Family — 0.24.0 alpha
 
 Целевая сборка: **Better MC [FORGE] BMC4, Minecraft 1.20.1, v55.5, Forge 47.4.13**.
 Версия Forge подтверждена в manifest.json официального архива v55.5 (CurseForge file 7443284).
@@ -21,7 +21,8 @@
 
 | Версия | Что добавлено | Проверки | Скачать |
 |---|---|---|---|
-| **0.23.0-alpha** | Совместные сценки у мебели: гости смотрят рисунок, отдыхают рядом с Марусей и наблюдают за Сюсей; подтвержденное совместное время укрепляет дружбу | [Проверки и ограничения](docs/VALIDATION.md) | [JAR 0.23.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.23.0-alpha.jar) |
+| **0.24.0-alpha** | Совместные прогулки у цветов и необязательные просьбы; памятные подарки, воспоминания и сохранение прогресса | [Проверки](docs/VALIDATION.md) · [Как попробовать](docs/WALKS-AND-REQUESTS.md) | [JAR 0.24.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.24.0-alpha.jar) |
+| **0.23.0-alpha** | Совместные сценки у мебели: гости смотрят рисунок, отдыхают рядом с Марусей и наблюдают за Сюсей; подтвержденное совместное время укрепляет дружбу | [Проверки и ограничения](docs/VALIDATION-0.23.0.md) | [JAR 0.23.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.23.0-alpha.jar) |
 | **0.22.1-alpha** | Кнопка «Как играть» в альбоме: пять коротких страниц для детей, прокрутка и возврат к прежней странице; русский и английский текст, протокол 7 сохранён | Сборка и проверки моделей; игровой GUI ещё не проверен | [JAR 0.22.1-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.22.1-alpha.jar) |
 | **0.22.0-alpha** | Три рисунка Дюдюньки, три позы отдыха Маруси, реакции усиков Сюси; шесть новых записок и две личные истории; исправлен повторный подход к мебели | [102/102 GameTests и проверки девяти возрастных моделей](docs/VALIDATION-0.22.1.md) | [JAR 0.22.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.22.0-alpha.jar) |
 | **0.21.0-alpha** | Новые модели и текстуры домашних мест; столик, лежанка с когтеточкой и домик с листочком; назначение мебели через альбом, режим «Дома» и занятия друзей | [95/95 GameTests](docs/VALIDATION-0.21.0.md) | [JAR 0.21.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.21.0-alpha.jar) |

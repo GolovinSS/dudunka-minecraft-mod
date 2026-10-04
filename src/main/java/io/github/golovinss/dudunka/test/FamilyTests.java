@@ -323,7 +323,7 @@ public class FamilyTests {
     }
     @GameTest(template="empty", timeoutTicks=40)
     public static void snailTrustSpeedPreservesOtherModifiers(GameTestHelper h) {
-        var player=testOwner(h);var snail=create(h,Kind.SYUSYA,player.getUUID(),new BlockPos(2,2,2));
+        var player=testOwner(h);var snail=create(h,Kind.SYUSYA,player.getUUID(),new BlockPos(2,2,2));player.moveTo(snail.getX()+1,snail.getY(),snail.getZ(),0,0);
         var speed=snail.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
         h.assertTrue(Math.abs(speed.getValue()-.08)<1e-8,"Zero trust must retain normal snail speed");
         player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.APPLE));
@@ -1530,7 +1530,7 @@ public class FamilyTests {
     public static void characterSnapshotAndNineNotesCodec(GameTestHelper h){
         var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.SYUSYA);mob.beginFurnitureVariant();mob.beginFurnitureVariant();mob.setActivity(Activity.NIBBLE);mob.updateFeelers();for(int n=1;n<=9;n++)TrailNoteItem.read(owner,n);
         var snapshot=FamilyAlbum.collect(owner);var entry=snapshot.entries().get(0);h.assertTrue(entry.variant()==1 && entry.feelers()==CharacterMoments.Feelers.INTERESTED && snapshot.trailMask()==511,"Private snapshot reflects actual character and nine pages");
-        var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,buf);h.assertTrue(snapshot.equals(FamilyAlbum.decode(buf)) && buf.readableBytes()==0,"Nine-bit progress, mood and variant round-trip");buf.clear();FamilyAlbum.encode(snapshot,buf);buf.writerIndex(buf.writerIndex()-2);buf.writeVarInt(512);boolean rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"More than nine bits rejected");}finally{buf.release();}owner.discard();h.succeed();
+        var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,buf);h.assertTrue(snapshot.equals(FamilyAlbum.decode(buf)) && buf.readableBytes()==0,"Nine-bit progress, mood and variant round-trip");buf.clear();FamilyAlbum.encode(new FamilyAlbum.Snapshot(snapshot.total(),snapshot.entries(),snapshot.guideFlags(),snapshot.recovery(),snapshot.recoveryTotal(),snapshot.trailMask()),buf);buf.writerIndex(buf.writerIndex()-3);buf.writeVarInt(512);buf.writeVarInt(0);boolean rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"More than nine bits rejected");}finally{buf.release();}owner.discard();h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=1600,batch="isolated_livedudunkashowsallthreematchingdrawings")
     public static void liveDudunkaShowsAllThreeMatchingDrawings(GameTestHelper h){
@@ -1630,5 +1630,91 @@ public class FamilyTests {
         h.assertTrue(FurnitureVisits.waitForHost(guest) && !new FurnitureGoal(guest).canUse(),"Fresh solo furniture start must wait for the nearby friend already using furniture");
         var scene=visitScene(host);h.assertTrue(scene!=null && new FurnitureVisitGoal(guest).canUse(),"Guest with assigned furniture can join when the real occasion starts");
         FurnitureVisits.cancelHost(host);host.reserveHomeScene(null);host.setActivity(Activity.IDLE);h.assertTrue(!FurnitureVisits.waitForHost(guest) && new FurnitureGoal(guest).canUse(),"When host finishes, assigned solo activity becomes available again");host.discard();guest.discard();owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=60)
+    public static void optionalFlowerRequestConsumesOnceAndSavesMemory(GameTestHelper h){
+        var owner=testOwner(h);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX()+1,mob.getY(),mob.getZ(),0,0);
+        var data=FriendRequests.get(owner.server);var flower=new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DANDELION,3);owner.getInventory().setItem(2,flower);
+        h.assertTrue(!data.apply(owner,mob,FriendRequests.Action.DELIVER) && flower.getCount()==3,"Unaccepted request must never consume items");
+        h.assertTrue(data.apply(owner,mob,FriendRequests.Action.ACCEPT) && !data.apply(owner,mob,FriendRequests.Action.ACCEPT),"Accept is explicit and idempotent");
+        h.assertTrue(data.apply(owner,mob,FriendRequests.Action.DELIVER) && flower.getCount()==2 && mob.trust()==2,"Flower consumes one and grants a little trust");
+        h.assertTrue(!data.apply(owner,mob,FriendRequests.Action.DELIVER) && !data.apply(owner,mob,FriendRequests.Action.ACCEPT) && flower.getCount()==2,"Replay and cooldown cannot duplicate the reward");
+        var info=data.info(owner.getUUID(),mob.kind,owner.server.overworld().getGameTime());h.assertTrue(info.memories()==1 && info.completed()==1 && !info.accepted() && info.retrySeconds()==600,"Completion must leave durable private memory and cooldown");
+        var restored=FriendRequests.load(data.save(new CompoundTag()));h.assertTrue(restored.info(owner.getUUID(),mob.kind,owner.server.overworld().getGameTime()).equals(info),"Request state survives restart");
+        int gifts=0;for(var stack:owner.getInventory().items)if(stack.is(DudunkaMod.KEEPSAKE.get()))gifts+=stack.getCount();h.assertTrue(gifts==1 && TrailProgress.get(owner.server).mask(owner.getUUID())==0,"Exactly one keepsake; no exploration-note spoilers");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void requestsRespectOwnershipDistanceAndMissingItems(GameTestHelper h){
+        var owner=testOwner(h);var foreign=testOwner(h);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX()+1,mob.getY(),mob.getZ(),0,0);foreign.moveTo(owner.position());var data=FriendRequests.get(owner.server);
+        h.assertTrue(!data.apply(foreign,mob,FriendRequests.Action.ACCEPT),"Foreign player cannot accept another family's request");owner.moveTo(mob.getX()+9,mob.getY(),mob.getZ(),0,0);h.assertTrue(!data.apply(owner,mob,FriendRequests.Action.ACCEPT),"Request interaction is local");owner.moveTo(mob.getX()+1,mob.getY(),mob.getZ(),0,0);
+        h.assertTrue(data.apply(owner,mob,FriendRequests.Action.ACCEPT) && !data.apply(owner,mob,FriendRequests.Action.DELIVER),"Missing flower leaves request accepted");owner.getInventory().setItem(1,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WITHER_ROSE));
+        h.assertTrue(!data.apply(owner,mob,FriendRequests.Action.DELIVER) && data.info(owner.getUUID(),mob.kind,0).accepted(),"Hazardous wither rose is not a small flower gift");owner.discard();foreign.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void skipRequestHasNoPenaltyAndAcceptedTaskNeverExpires(GameTestHelper h){
+        var owner=testOwner(h);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX()+1,mob.getY(),mob.getZ(),0,0);var data=FriendRequests.get(owner.server);
+        h.assertTrue(data.apply(owner,mob,FriendRequests.Action.ACCEPT),"Accept fixture");var saved=data.save(new CompoundTag());var restored=FriendRequests.load(saved);h.assertTrue(restored.info(owner.getUUID(),mob.kind,Long.MAX_VALUE/2).accepted(),"Accepted request has no deadline");
+        h.assertTrue(data.apply(owner,mob,FriendRequests.Action.SKIP) && mob.trust()==0,"Skipping has no trust penalty");var r=data.info(owner.getUUID(),mob.kind,owner.server.overworld().getGameTime());h.assertTrue(!r.accepted() && r.completed()==0 && r.memories()==0 && r.task()==FriendRequests.Task.TREAT,"Skip only advances request, without fake memories or rewards");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void acceptedSnailTreatUsesActualFeedingAndCooldown(GameTestHelper h){
+        var owner=testOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX()+1,mob.getY(),mob.getZ(),0,0);var data=FriendRequests.get(owner.server);var apples=new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.APPLE,3);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,apples);
+        h.assertTrue(data.apply(owner,mob,FriendRequests.Action.ACCEPT),"Accept snail treat");mob.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(apples.getCount()==2 && mob.trust()==7 && data.info(owner.getUUID(),mob.kind,owner.server.overworld().getGameTime()).completed()==1,"Direct feeding completes accepted request once, using one ordinary feed");
+        h.assertTrue(!mob.feed(owner,apples) && apples.getCount()==2 && !data.apply(owner,mob,FriendRequests.Action.DELIVER),"Fullness and completed request prevent double consumption");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumTreatUsesInventoryAndDoesNotBypassFullness(GameTestHelper h){
+        var owner=testOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX()+1,mob.getY(),mob.getZ(),0,0);var food=new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BROWN_MUSHROOM,2);owner.getInventory().setItem(3,food);var data=FriendRequests.get(owner.server);
+        mob.feed(owner,food);h.assertTrue(data.apply(owner,mob,FriendRequests.Action.ACCEPT) && !data.apply(owner,mob,FriendRequests.Action.DELIVER) && food.getCount()==1,"A full snail must wait; the album cannot bypass feed cooldown");
+        var nbt=new CompoundTag();mob.addAdditionalSaveData(nbt);nbt.putInt("FeedCooldown",0);mob.readAdditionalSaveData(nbt);
+        h.assertTrue(data.apply(owner,mob,FriendRequests.Action.DELIVER) && food.isEmpty() && data.info(owner.getUUID(),mob.kind,owner.server.overworld().getGameTime()).completed()==1,"Album feeds one inventory portion through same checked path");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void cosyRequestNeedsOwnedReadyHomeAndMatchingFurniture(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.MARUSYA);var data=FriendRequests.get(owner.server);h.assertTrue(data.apply(owner,mob,FriendRequests.Action.ACCEPT),"Accept home request");var furniture=mob.furniturePosition();mob.clearFurniture();
+        h.assertTrue(!data.apply(owner,mob,FriendRequests.Action.DELIVER),"Ready house without personal furniture is incomplete for request");var f=(FurnitureEntity)h.getLevel().getBlockEntity(furniture);h.assertTrue(f.assign(mob),"Reassign fixture");mob.bindFurniture(furniture);
+        h.assertTrue(data.apply(owner,mob,FriendRequests.Action.DELIVER) && data.info(owner.getUUID(),mob.kind,owner.server.overworld().getGameTime()).memories()==2,"Existing ready owned house and furniture count without rebuilding");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void requestPacketsRequireHeldAlbumSessionAndRejectReplays(GameTestHelper h){
+        var owner=testOwner(h);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX()+1,mob.getY(),mob.getZ(),0,0);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));
+        var open=AlbumCommands.open(owner);var command=new AlbumCommands.RequestCommand(open.session(),mob.getUUID(),FriendRequests.Action.ACCEPT,1);var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());AlbumNetwork.encodeRequest(command,buf);h.assertTrue(AlbumNetwork.decodeRequest(buf).equals(command),"Request packet round trip");buf.release();
+        var reply=AlbumCommands.executeRequest(owner,command);h.assertTrue(reply!=null && reply.result().code()==RecoveryResult.Code.REQUEST_ACCEPTED && reply.snapshot().requests().size()==1,"Authenticated request updates private snapshot");h.assertTrue(AlbumCommands.executeRequest(owner,command)==null,"Sequence replay dropped");
+        var foreign=testOwner(h);h.assertTrue(AlbumCommands.executeRequest(foreign,command)==null,"Foreign session rejected");owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,net.minecraft.world.item.ItemStack.EMPTY);var newOpen=AlbumCommands.open(owner);var reject=AlbumCommands.executeRequest(owner,new AlbumCommands.RequestCommand(newOpen.session(),mob.getUUID(),FriendRequests.Action.SKIP,1));h.assertTrue(reject!=null && !reject.accepted(),"Album must still be held");owner.discard();foreign.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void requestSnapshotsAndMalformedSaveAreBounded(GameTestHelper h){
+        var info=new FriendRequests.Info(Kind.SYUSYA,FriendRequests.Task.TREAT,true,4,15,600);var snapshot=new FamilyAlbum.Snapshot(0,java.util.List.of(),0,java.util.List.of(),0,0,java.util.List.of(info));var b=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());FamilyAlbum.encode(snapshot,b);h.assertTrue(FamilyAlbum.decode(b).equals(snapshot),"Request snapshot codec round trip");b.release();
+        var tag=new CompoundTag();var row=new CompoundTag();var rows=new net.minecraft.nbt.ListTag();var id=UUID.randomUUID();row.putUUID("Owner",id);row.putString("Kind","dudunka");row.putInt("Next",-99);row.putInt("Memories",255);row.putInt("Completed",Integer.MAX_VALUE);row.putLong("ReadyAt",-1);rows.add(row);tag.put("Requests",rows);var r=FriendRequests.load(tag).info(id,Kind.DUDUNKA,0);h.assertTrue(r.memories()==7 && r.completed()==1000000 && r.retrySeconds()==0 && r.task()==FriendRequests.Task.TREAT,"Malformed save values safely bounded");h.succeed();
+    }
+    private static WalkScenes.Scene walkFixture(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner,Companion dudunka,Companion cat){
+        for(var threat:h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,new net.minecraft.world.phys.AABB(h.absolutePos(new BlockPos(3,2,3))).inflate(20)))threat.discard();
+        interestFloor(h);var flower=h.absolutePos(new BlockPos(3,2,3));h.getLevel().setBlock(flower,Blocks.DANDELION.defaultBlockState(),3);owner.moveTo(dudunka.getX()+1,dudunka.getY(),dudunka.getZ(),0,0);owner.setOnGround(true);dudunka.setOnGround(true);cat.setOnGround(true);
+        return new WalkScenes.Scene(owner.getUUID(),dudunka.getUUID(),flower,owner.position(),java.util.Map.of(dudunka.getUUID(),dudunka.blockPosition(),cat.getUUID(),cat.blockPosition()),h.getLevel().getGameTime()+200);
+    }
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_walkinterruptions")
+    public static void flowerWalkCancelsForOwnerMovementCommandsAndRemovedFlower(GameTestHelper h){
+        var level=h.getLevel();level.setDayTime(1000);level.setWeatherParameters(6000,0,false,false);level.setRainLevel(0);var owner=testOwner(h);var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));var scene=walkFixture(h,owner,d,cat);
+        h.assertTrue(WalkScenes.active(d,scene) && WalkScenes.active(cat,scene),"Both friends can participate");owner.moveTo(owner.getX()+2,owner.getY(),owner.getZ(),0,0);h.assertTrue(!WalkScenes.active(d,scene),"Moving owner immediately interrupts flower stop");owner.moveTo(scene.ownerStart());owner.setOnGround(true);d.commandStay(owner,true);h.assertTrue(!WalkScenes.active(cat,scene),"One member's stay command interrupts group");d.commandStay(owner,false);level.setBlock(scene.flower(),Blocks.AIR.defaultBlockState(),3);h.assertTrue(!WalkScenes.active(d,scene),"Missing flower cannot leave stale targets");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_walksafety")
+    public static void flowerWalkRejectsHazardsForeignMembersAndWeather(GameTestHelper h){
+        var level=h.getLevel();level.setDayTime(1000);level.setWeatherParameters(6000,0,false,false);level.setRainLevel(0);var owner=testOwner(h);var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));var scene=walkFixture(h,owner,d,cat);
+        level.setBlock(cat.blockPosition().below(),Blocks.MAGMA_BLOCK.defaultBlockState(),3);h.assertTrue(!WalkScenes.active(d,scene),"Hazard under any participant cancels");level.setBlock(cat.blockPosition().below(),Blocks.STONE.defaultBlockState(),3);
+        level.setWeatherParameters(0,6000,true,false);level.setRainLevel(1);h.assertTrue(!WalkScenes.active(d,scene),"Rain cancels walk");level.setWeatherParameters(6000,0,false,false);level.setRainLevel(0);level.setDayTime(13000);h.assertTrue(!WalkScenes.active(d,scene),"Night yields to existing safety/home behaviour");level.setDayTime(1000);cat.discard();h.assertTrue(!WalkScenes.active(d,scene),"Unloaded or removed member cannot keep a group alive");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_walkfriendship")
+    public static void walkFriendshipCreditsOnlyActuallySettledVisiblePair(GameTestHelper h){
+        var level=h.getLevel();level.setDayTime(1000);level.setWeatherParameters(6000,0,false,false);level.setRainLevel(0);var owner=testOwner(h);var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));var scene=walkFixture(h,owner,d,cat);d.setActivity(Activity.CURIOUS);cat.setActivity(Activity.CURIOUS);
+        h.assertTrue(!WalkScenes.settled(cat,scene),"Walking cat earns no friendship");cat.setActivity(Activity.SIT);h.assertTrue(WalkScenes.settled(d,scene) && WalkScenes.settled(cat,scene),"Only arrived proper poses count");cat.moveTo(cat.getX()+1,cat.getY(),cat.getZ(),0,0);cat.setOnGround(true);h.assertTrue(!WalkScenes.settled(cat,scene),"Pose alone cannot fake arrival");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=350,batch="isolated_liveflowerwalk")
+    public static void liveFlowerWalkStartsAndReturnsToFollowing(GameTestHelper h){
+        var level=h.getLevel();level.setDayTime(1000);level.setWeatherParameters(6000,0,false,false);level.setRainLevel(0);interestFloor(h);var owner=testOwner(h);var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));var snail=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,4));var fixture=walkFixture(h,owner,d,cat);snail.setOnGround(true);
+        // Keep the owner still while ordinary AI approaches the flower. Initiator has a throttled scan.
+        WalkScenes.select(d);h.runAfterDelay(80,()->{d.setOnGround(true);cat.setOnGround(true);snail.setOnGround(true);owner.setOnGround(true);var scene=WalkScenes.select(d);h.assertTrue(scene!=null && scene.spots().size()==3,"Stationary owner permits all three friends to stop: scene="+scene+", d="+d.position()+", cat="+cat.position()+", snail="+snail.position()+", owner="+owner.position()+", initial="+fixture.ownerStart()+", rain="+level.isRaining()+", day="+level.getDayTime()+", monsters="+level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,d.getBoundingBox().inflate(10)).size());d.setNoAi(false);cat.setNoAi(false);snail.setNoAi(false);});
+        h.runAfterDelay(180,()->{var scene=WalkScenes.current(d);h.assertTrue(scene!=null && WalkScenes.settled(d,scene) && WalkScenes.settled(cat,scene) && WalkScenes.settled(snail,scene),"Live friends must really approach, including snail: d="+d.position()+" cat="+cat.position()+" snail="+snail.position()+" scene="+scene);h.assertTrue(level.getBlockState(fixture.flower()).is(Blocks.DANDELION),"Flower is untouched");owner.moveTo(owner.getX()+4,owner.getY(),owner.getZ(),0,0);owner.setOnGround(true);});
+        h.runAfterDelay(190,()->{h.assertTrue(WalkScenes.current(d)==null && d.activity()!=Activity.SIT && cat.activity()!=Activity.SIT,"Moving player cancels and releases movement goals");owner.discard();h.succeed();});
     }
 }

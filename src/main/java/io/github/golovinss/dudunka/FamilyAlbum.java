@@ -16,7 +16,8 @@ public final class FamilyAlbum {
     }
     public enum RecoveryState { LIVE, CARRIED, LEGACY_CARRIED }
     public record RecoveryEntry(UUID id,Component name,Kind kind,String dimension,net.minecraft.core.BlockPos pos,RecoveryState state) {}
-    public record Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask) {
+    public record Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask,List<FriendRequests.Info> requests) {
+        public Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask){this(total,entries,guideFlags,recovery,recoveryTotal,trailMask,List.of());}
         public Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal){this(total,entries,guideFlags,recovery,recoveryTotal,0);}
         public Snapshot(int total,List<Entry> entries,int guideFlags){this(total,entries,guideFlags,List.of(),0);}
         public Snapshot(int total,List<Entry> entries){this(total,entries,0);}
@@ -43,7 +44,9 @@ public final class FamilyAlbum {
         for(var carried:CarrierLedger.get(level.getServer()).owned(player.getUUID())){
             var old=recovery.get(carried.id());recovery.put(carried.id(),new RecoveryEntry(carried.id(),old==null?Component.translatable("entity.dudunka.syusya"):old.name(),Kind.SYUSYA,old==null?"":old.dimension(),old==null?net.minecraft.core.BlockPos.ZERO:old.pos(),carried.recoverable()?RecoveryState.CARRIED:RecoveryState.LEGACY_CARRIED));
         }
-        return new Snapshot(members.size(),List.copyOf(entries),EggGuide.flags(),recovery.values().stream().limit(32).toList(),recovery.size(),TrailProgress.get(player.server).mask(player.getUUID()));
+        var requests=new ArrayList<FriendRequests.Info>();var errands=FriendRequests.get(player.server);
+        for(var kind:Kind.values())if(members.stream().anyMatch(m->m.kind==kind))requests.add(errands.info(player.getUUID(),kind,player.server.overworld().getGameTime()));
+        return new Snapshot(members.size(),List.copyOf(entries),EggGuide.flags(),recovery.values().stream().limit(32).toList(),recovery.size(),TrailProgress.get(player.server).mask(player.getUUID()),List.copyOf(requests));
     }
     private static Component name(Companion mob) {
         var custom=mob.getCustomName();
@@ -60,6 +63,7 @@ public final class FamilyAlbum {
             buf.writeBoolean(entry.homeMode());buf.writeEnum(entry.furniture().state());buf.writeBlockPos(entry.furniture().pos());buf.writeEnum(entry.activity());buf.writeVarInt(entry.variant());buf.writeEnum(entry.feelers());
         }
         encodeRecovery(snapshot,buf);buf.writeVarInt(snapshot.trailMask());
+        buf.writeVarInt(snapshot.requests().size());for(var r:snapshot.requests()){buf.writeEnum(r.kind());buf.writeEnum(r.task());buf.writeBoolean(r.accepted());buf.writeByte(r.memories());buf.writeVarInt(r.completed());buf.writeVarInt(r.retrySeconds());}
     }
     private static void encodeRecovery(Snapshot snapshot,FriendlyByteBuf buf){buf.writeVarInt(snapshot.recoveryTotal());buf.writeVarInt(snapshot.recovery().size());for(var e:snapshot.recovery()){buf.writeUUID(e.id());buf.writeComponent(e.name());buf.writeEnum(e.kind());buf.writeUtf(e.dimension(),256);buf.writeBlockPos(e.pos());buf.writeEnum(e.state());}}
     private static int bounded(FriendlyByteBuf buf,int min,int max){int n=buf.readVarInt();if(n<min || n>max)throw new IllegalArgumentException("Invalid album value");return n;}
@@ -77,6 +81,8 @@ public final class FamilyAlbum {
         int recoveryTotal=bounded(buf,0,Integer.MAX_VALUE),size=bounded(buf,0,32);if(recoveryTotal<size)throw new IllegalArgumentException("Invalid recovery count");var recovery=new ArrayList<RecoveryEntry>();
         for(int i=0;i<size;i++)recovery.add(new RecoveryEntry(buf.readUUID(),buf.readComponent(),buf.readEnum(Kind.class),buf.readUtf(256),buf.readBlockPos(),buf.readEnum(RecoveryState.class)));
         int trail=bounded(buf,0,FriendStories.MASK);
-        return new Snapshot(total,List.copyOf(entries),flags,List.copyOf(recovery),recoveryTotal,trail);
+        int requestCount=bounded(buf,0,3);var requests=new ArrayList<FriendRequests.Info>();var kinds=EnumSet.noneOf(Kind.class);
+        for(int i=0;i<requestCount;i++){var kind=buf.readEnum(Kind.class);if(!kinds.add(kind))throw new IllegalArgumentException("Duplicate request kind");var task=buf.readEnum(FriendRequests.Task.class);boolean accepted=buf.readBoolean();int memories=buf.readUnsignedByte();if(memories>7)throw new IllegalArgumentException("Invalid memories");requests.add(new FriendRequests.Info(kind,task,accepted,memories,bounded(buf,0,1000000),bounded(buf,0,600)));}
+        return new Snapshot(total,List.copyOf(entries),flags,List.copyOf(recovery),recoveryTotal,trail,List.copyOf(requests));
     }
 }

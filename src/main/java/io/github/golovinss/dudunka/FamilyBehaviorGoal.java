@@ -49,7 +49,8 @@ public final class FamilyBehaviorGoal extends Goal {
             }
         }
         if(mob.atHomeMode())return false;
-        if (mob.kind != Kind.SYUSYA) {
+        boolean walking=WalkScenes.current(mob)!=null;
+        if (!walking && mob.kind != Kind.SYUSYA) {
             var snails = mob.level().getEntitiesOfClass(Companion.class, mob.getBoundingBox().inflate(12),
                     other -> other.kind == Kind.SYUSYA && mob.sameFamily(other) && !other.staying());
             var snail = snails.stream().filter(other -> mob.distanceToSqr(other) > 16)
@@ -65,6 +66,7 @@ public final class FamilyBehaviorGoal extends Goal {
             targetBlock = findBlock(6, p -> safeStanding(p) && !mob.level().canSeeSky(p));
             if (targetBlock != null) { task = Activity.SIT; return true; }
         }
+        if(WalkScenes.select(mob)!=null)return false;
         if(CampfireScenes.select(mob)!=null)return false; // Explicit family rest yields only after urgent/weather tasks.
         if(mob.homeWelcomeRunning() || HomeTogetherScenes.select(mob)!=null || HomeScenes.select(mob)!=null)return false;
         if (mob.level().isNight()) {
@@ -148,6 +150,7 @@ public final class FamilyBehaviorGoal extends Goal {
         if(mob.openChestTarget()!=null && (task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE || task==Activity.ADJUST_GLASSES))return false;
         if (mob.kind == Kind.MARUSYA && task != Activity.ALERT && mob.tickCount % 20 == 0
                 && !mob.level().getEntitiesOfClass(Monster.class, mob.getBoundingBox().inflate(10), Entity::isAlive).isEmpty()) return false;
+        if(task!=Activity.ALERT && task!=Activity.SIT && WalkScenes.current(mob)!=null)return false;
         if (task == Activity.WAIT_FOR_SYUSYA) return targetEntity instanceof Companion snail && mob.sameFamily(snail)
                 && !snail.staying() && mob.distanceToSqr(snail) > 6.25 && mob.distanceToSqr(snail) < 225;
         if (task == Activity.ALERT) return mob.distanceToSqr(targetEntity) < 144;
