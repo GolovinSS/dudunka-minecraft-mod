@@ -11,7 +11,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 /** Direction-checked messages; all mutations run on the authenticated sender's server thread. */
 public final class AlbumNetwork {
-    private static final String VERSION="8";
+    private static final String VERSION="9";
     private static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(new ResourceLocation(DudunkaMod.ID,"album"),()->VERSION,VERSION::equals,VERSION::equals);
     private AlbumNetwork() {}
     public static void register(){

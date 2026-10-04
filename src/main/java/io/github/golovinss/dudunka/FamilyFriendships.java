@@ -26,11 +26,12 @@ public final class FamilyFriendships extends SavedData {
         Bond(Kind first,Kind second,int score,int progress){firstKind=first;secondKind=second;this.score=score;this.progress=progress;}
     }
     public record Relation(UUID partner,Kind kind,int score,int progress) {}
+    private MinecraftServer server;
     private final Map<Pair,Bond> bonds=new HashMap<>();
     // Not saved: a restart, unload or interrupted scene cannot retroactively credit elapsed time.
     private final Map<Pair,Long> samples=new HashMap<>();
     public static FamilyFriendships get(MinecraftServer server){
-        return server.getLevel(Level.OVERWORLD).getDataStorage().computeIfAbsent(FamilyFriendships::load,FamilyFriendships::new,"dudunka_friendships");
+        var ledger=server.getLevel(Level.OVERWORLD).getDataStorage().computeIfAbsent(FamilyFriendships::load,FamilyFriendships::new,"dudunka_friendships");ledger.server=server;return ledger;
     }
     public int score(UUID owner,UUID a,UUID b){var bond=bonds.get(Pair.of(owner,a,b));return bond==null?0:bond.score;}
     public int progress(UUID owner,UUID a,UUID b){var bond=bonds.get(Pair.of(owner,a,b));return bond==null?0:bond.progress;}
@@ -42,6 +43,7 @@ public final class FamilyFriendships extends SavedData {
             boolean ordered=pair.first().equals(a);
             bond=new Bond(ordered?aKind:bKind,ordered?bKind:aKind,0,0);bonds.put(pair,bond);setDirty();
         }
+        if(server!=null)FamilyMemories.together(server,owner,aKind,bKind,now);
         if(bond.score>=100){samples.remove(pair);return false;}
         Long previous=samples.put(pair,now);
         if(samples.size()>512)samples.entrySet().removeIf(entry->now-entry.getValue()>40);

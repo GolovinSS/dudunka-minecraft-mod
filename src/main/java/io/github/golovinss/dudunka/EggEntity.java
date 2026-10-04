@@ -63,6 +63,7 @@ public class EggEntity extends BlockEntity {
         mob.initialize(e.owner,p);
         l.removeBlock(p,false);
         if(!l.addFreshEntity(mob)) { l.setBlock(p,s,3); if(l.getBlockEntity(p) instanceof EggEntity restored) { restored.owner=e.owner; restored.offerings=e.offerings; restored.progress=e.progress; restored.setChanged(); } }
+        else FamilyMemories.record(mob,FamilyMemories.Event.HATCHED);
     }
     @Override public void load(CompoundTag t) { super.load(t); offerings=t.getInt("Offerings"); progress=t.getInt("Progress"); owner=t.hasUUID("Owner")?t.getUUID("Owner"):null; }
     @Override protected void saveAdditional(CompoundTag t) { super.saveAdditional(t); t.putInt("Offerings",offerings); t.putInt("Progress",progress); if(owner!=null)t.putUUID("Owner",owner); }

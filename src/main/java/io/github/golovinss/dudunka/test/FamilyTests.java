@@ -27,7 +27,7 @@ public class FamilyTests {
             h.assertTrue(!(l.getBlockState(p).getBlock() instanceof EggBlock),"Ready egg should hatch");
             var mobs=l.getEntitiesOfClass(Companion.class,new net.minecraft.world.phys.AABB(p).inflate(2));
             h.assertTrue(mobs.size()==1,"Exactly one companion should hatch");
-            h.assertTrue(mobs.get(0).kind==Kind.SYUSYA&&mobs.get(0).stage()==0,"Hatched companion must be baby Syusya");h.succeed();
+            h.assertTrue(mobs.get(0).kind==Kind.SYUSYA&&mobs.get(0).stage()==0,"Hatched companion must be baby Syusya");h.assertTrue(FamilyMemories.get(l.getServer()).owned(state.getUUID("Owner")).stream().anyMatch(m->m.kind()==Kind.SYUSYA && m.event()==FamilyMemories.Event.HATCHED),"Successful hatching must record its personal memory");h.succeed();
         });
     }
     @GameTest(template="empty",timeoutTicks=40)
@@ -1164,11 +1164,10 @@ public class FamilyTests {
             level.setBlock(p,p.getY()==h.absolutePos(new BlockPos(0,1,0)).getY()?Blocks.STONE.defaultBlockState():Blocks.AIR.defaultBlockState(),3);
         var owner=testOwner(h);var goalPos=h.absolutePos(new BlockPos(17,2,2));owner.moveTo(goalPos.getX()+.5,goalPos.getY(),goalPos.getZ()+.5,0,0);owner.setOnGround(true);
         var snail=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(1,2,2));snail.setOnGround(true);snail.setNoAi(false);double start=snail.getX();
-        h.runAfterDelay(100,()->{
+        h.startSequence().thenIdle(100).thenWaitUntil(()->{
             double moved=snail.getX()-start;
             h.assertTrue(moved>1 && moved<10 && snail.distanceToSqr(owner)>9,"Reachable snail must walk slowly rather than teleport: moved="+moved);
-            owner.discard();h.succeed();
-        });
+        }).thenExecute(()->{snail.discard();owner.discard();}).thenSucceed();
     }
 
 
@@ -1245,7 +1244,7 @@ public class FamilyTests {
         var old=nether.getBlockState(p.below());nether.setBlock(p.below(),Blocks.STONE.defaultBlockState(),3);nether.setBlock(p,Blocks.AIR.defaultBlockState(),3);
         var mob=DudunkaMod.TYPES.get(Kind.DUDUNKA).get().create(nether);mob.moveTo(p.getX()+.5,p.getY(),p.getZ()+.5,0,0);mob.initialize(owner.getUUID(),p);mob.setNoAi(true);UUID id=mob.getUUID();nether.addFreshEntity(mob);
         h.runAfterDelay(50,()->{nether.setChunkForced(20,20,false);h.startSequence().thenWaitUntil(()->h.assertTrue(nether.getEntity(id)==null && !nether.hasChunkAt(p),"Fixture must genuinely unload entity and chunk"))
-            .thenExecute(()->{owner.setOnGround(true);var open=AlbumCommands.open(owner);h.assertTrue(open.snapshot().recovery().stream().anyMatch(e->e.id().equals(id)),"Unloaded entity must remain in index");AlbumCommands.recover(owner,new AlbumCommands.RecoveryCommand(open.session(),id,1));h.assertTrue(FamilyRecovery.pending(owner.server,owner.getUUID()),"Return must enqueue bounded chunk search");})
+            .thenExecute(()->{owner.setOnGround(true);var open=AlbumCommands.open(owner);h.assertTrue(open.snapshot().recovery().stream().anyMatch(e->e.id().equals(id) && !e.loaded() && e.mode()==FamilyAlbum.Mode.FOLLOW && e.canReturn()),"Unloaded entity must retain last mode and searchable index without claiming live observation");AlbumCommands.recover(owner,new AlbumCommands.RecoveryCommand(open.session(),id,1));h.assertTrue(FamilyRecovery.pending(owner.server,owner.getUUID()),"Return must enqueue bounded chunk search");})
             .thenWaitUntil(()->h.assertTrue(h.getLevel().getEntity(id) instanceof Companion,"Real disk entity must return from unloaded chunk"))
             .thenWaitUntil(()->h.assertTrue(!nether.hasChunkAt(p),"Source chunk must unload again after return ticket removal"))
             .thenExecute(()->{h.assertTrue(!FamilyRecovery.pending(owner.server,owner.getUUID()) && !nether.getForcedChunks().contains(new net.minecraft.world.level.ChunkPos(p).toLong()),"Completed return must remove transient ticket without persistent chunk forcing");var actual=(Companion)h.getLevel().getEntity(id);actual.discard();owner.discard();nether.getChunkAt(p);nether.setBlock(p.below(),old,3);}).thenSucceed();});
@@ -1302,7 +1301,7 @@ public class FamilyTests {
             var original=new AlbumCommands.Reply(UUID.randomUUID(),7,new RecoveryResult(code,code==RecoveryResult.Code.COOLDOWN?7:0),snapshot);var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
             try{AlbumNetwork.encodeReply(original,buf);h.assertTrue(original.equals(AlbumNetwork.decodeReply(buf)) && buf.readableBytes()==0,"Every reason, retry delay and private trail mask must round-trip");}finally{buf.release();}
         }
-        var invalid=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,invalid);invalid.writerIndex(invalid.writerIndex()-1);invalid.writeVarInt(FriendStories.MASK+1);boolean rejected=false;try{FamilyAlbum.decode(invalid);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Invalid trail mask must be rejected");}finally{invalid.release();}
+        var invalid=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,invalid);invalid.writerIndex(invalid.writerIndex()-3);invalid.writeVarInt(FriendStories.MASK+1);invalid.writeVarInt(0);invalid.writeVarInt(0);boolean rejected=false;try{FamilyAlbum.decode(invalid);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Invalid trail mask must be rejected");}finally{invalid.release();}
         boolean bad=false;try{new RecoveryResult(RecoveryResult.Code.COOLDOWN,11);}catch(IllegalArgumentException e){bad=true;}h.assertTrue(bad,"Retry payload must be bounded");h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=40)
@@ -1533,7 +1532,7 @@ public class FamilyTests {
     public static void characterSnapshotAndNineNotesCodec(GameTestHelper h){
         var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.SYUSYA);mob.beginFurnitureVariant();mob.beginFurnitureVariant();mob.setActivity(Activity.NIBBLE);mob.updateFeelers();for(int n=1;n<=9;n++)TrailNoteItem.read(owner,n);
         var snapshot=FamilyAlbum.collect(owner);var entry=snapshot.entries().get(0);h.assertTrue(entry.variant()==1 && entry.feelers()==CharacterMoments.Feelers.INTERESTED && snapshot.trailMask()==511,"Private snapshot reflects actual character and nine pages");
-        var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,buf);h.assertTrue(snapshot.equals(FamilyAlbum.decode(buf)) && buf.readableBytes()==0,"Nine-bit progress, mood and variant round-trip");buf.clear();FamilyAlbum.encode(new FamilyAlbum.Snapshot(snapshot.total(),snapshot.entries(),snapshot.guideFlags(),snapshot.recovery(),snapshot.recoveryTotal(),snapshot.trailMask()),buf);buf.writerIndex(buf.writerIndex()-3);buf.writeVarInt(512);buf.writeVarInt(0);boolean rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"More than nine bits rejected");}finally{buf.release();}owner.discard();h.succeed();
+        var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,buf);h.assertTrue(snapshot.equals(FamilyAlbum.decode(buf)) && buf.readableBytes()==0,"Nine-bit progress, mood and variant round-trip");buf.clear();FamilyAlbum.encode(new FamilyAlbum.Snapshot(snapshot.total(),snapshot.entries(),snapshot.guideFlags(),snapshot.recovery(),snapshot.recoveryTotal(),snapshot.trailMask()),buf);buf.writerIndex(buf.writerIndex()-4);buf.writeVarInt(512);buf.writeVarInt(0);buf.writeVarInt(0);boolean rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"More than nine bits rejected");}finally{buf.release();}owner.discard();h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=2200,batch="isolated_livedudunkashowsallthreematchingdrawings")
     public static void liveDudunkaShowsAllThreeMatchingDrawings(GameTestHelper h){
@@ -1723,6 +1722,8 @@ public class FamilyTests {
     private static java.util.List<Companion> atmosphereHome(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner){
         // This server uses normal terrain with an underground GameTest origin; build above it.
         var level=h.getLevel();var home=h.absolutePos(new BlockPos(2,302,2));
+        // Vanilla clears the underground template, not these above-terrain fixture entities.
+        for(var old:level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,new net.minecraft.world.phys.AABB(home).inflate(20),e->e!=owner))old.discard();
         for(int x=-1;x<=6;x++)for(int z=-1;z<=6;z++){
             level.setBlock(h.absolutePos(new BlockPos(x,301,z)),Blocks.STONE.defaultBlockState(),3);
             level.setBlock(h.absolutePos(new BlockPos(x,304,z)),Blocks.STONE.defaultBlockState(),3);
@@ -1845,4 +1846,70 @@ public class FamilyTests {
         h.runAfterDelay(420,()->{h.assertTrue(greeted.size()==3,"Each friend must actually arrive and greet after the real excursion: "+greeted);owner.moveTo(start.add(4,0,0));});
         h.runAfterDelay(430,()->{for(var m:members)h.assertTrue(!m.homeWelcomeRunning() && m.homeSceneTarget()==null && m.atHomeMode(),"Leaving greeting releases transient targets and preserves home mode");owner.discard();h.succeed();});});
     }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void memoriesPersistArePrivateAndBounded(GameTestHelper h){
+        var ledger=new FamilyMemories();UUID owner=UUID.randomUUID();
+        for(var kind:Kind.values())for(var event:FamilyMemories.Event.values())ledger.record(owner,kind,event,123);
+        h.assertTrue(ledger.owned(owner).size()==18,"Only valid species milestones fit the bounded journal");
+        h.assertTrue(!ledger.record(owner,Kind.DUDUNKA,FamilyMemories.Event.HATCHED,999),"Repeats must not replace first event time");
+        var loaded=FamilyMemories.load(ledger.save(new CompoundTag()));h.assertTrue(loaded.owned(owner).equals(ledger.owned(owner)) && loaded.owned(UUID.randomUUID()).isEmpty(),"Reload preserves private first events");
+        h.assertTrue(!loaded.record(null,Kind.DUDUNKA,FamilyMemories.Event.ADULT,0) && !loaded.record(owner,Kind.SYUSYA,FamilyMemories.Event.MET_SYUSYA,0) && !loaded.record(owner,Kind.DUDUNKA,FamilyMemories.Event.TEEN,-1),"Invalid owner, self-meeting and negative dates must be rejected");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void growthMemoriesComeFromTransitionsNotLoading(GameTestHelper h){
+        UUID owner=UUID.randomUUID();var mob=create(h,Kind.DUDUNKA,owner,new BlockPos(2,2,2));var ledger=FamilyMemories.get(h.getLevel().getServer());var data=new CompoundTag();mob.addAdditionalSaveData(data);data.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*20-1);mob.readAdditionalSaveData(data);
+        h.assertTrue(ledger.owned(owner).isEmpty(),"NBT loading must not invent old hatching or growth");
+        h.startSequence().thenIdle(3).thenExecute(()->{
+            h.assertTrue(mob.stage()==1 && ledger.owned(owner).stream().anyMatch(m->m.event()==FamilyMemories.Event.TEEN),"Real tick crossing records teenager");
+            mob.addAdditionalSaveData(data);data.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40-1);mob.readAdditionalSaveData(data);
+        }).thenIdle(3).thenExecute(()->{
+            h.assertTrue(mob.stage()==2 && ledger.owned(owner).stream().anyMatch(m->m.event()==FamilyMemories.Event.ADULT),"Real adult transition records adulthood");
+            var restored=DudunkaMod.TYPES.get(Kind.DUDUNKA).get().create(h.getLevel());mob.addAdditionalSaveData(data);restored.readAdditionalSaveData(data);h.assertTrue(ledger.owned(owner).size()==2,"Entity restoration neither duplicates events nor invents hatching");mob.discard();
+        }).thenSucceed();
+    }
+    @GameTest(template="empty",timeoutTicks=40,batch="isolated_memorymeeting")
+    public static void meetingMemoriesRequireSameFamilyAndSight(GameTestHelper h){
+        UUID owner=UUID.randomUUID();var d=create(h,Kind.DUDUNKA,owner,new BlockPos(1,2,2));var cat=create(h,Kind.MARUSYA,owner,new BlockPos(4,2,2));var stranger=create(h,Kind.SYUSYA,UUID.randomUUID(),new BlockPos(1,2,3));var ledger=FamilyMemories.get(h.getLevel().getServer());
+        for(int y=1;y<=4;y++)for(int z=0;z<=4;z++)h.getLevel().setBlock(h.absolutePos(new BlockPos(3,y,z)),Blocks.STONE.defaultBlockState(),3);
+        FamilyMemories.observeNearby(d);h.assertTrue(ledger.owned(owner).isEmpty(),"Wall and foreign owner must prevent false acquaintance");
+        for(int y=1;y<=4;y++)for(int z=0;z<=4;z++)h.getLevel().setBlock(h.absolutePos(new BlockPos(3,y,z)),Blocks.AIR.defaultBlockState(),3);
+        FamilyMemories.observeNearby(d);FamilyMemories.observeNearby(cat);h.assertTrue(ledger.owned(owner).size()==2 && ledger.owned(owner).stream().noneMatch(m->m.event()==FamilyMemories.Event.SHARED_SCENE),"Visible meeting produces two personal captions once, without claiming a shared rest");d.discard();cat.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void sharedSceneMemoriesDoNotGrantFriendshipOrDuplicate(GameTestHelper h){
+        UUID owner=UUID.randomUUID(),a=UUID.randomUUID(),b=UUID.randomUUID();var bonds=FamilyFriendships.get(h.getLevel().getServer());long now=h.getLevel().getServer().overworld().getGameTime();
+        bonds.observe(owner,a,Kind.DUDUNKA,b,Kind.SYUSYA,now);bonds.observe(owner,a,Kind.DUDUNKA,b,Kind.SYUSYA,now);
+        var entries=FamilyMemories.get(h.getLevel().getServer()).owned(owner);h.assertTrue(entries.size()==4 && entries.stream().filter(m->m.event()==FamilyMemories.Event.SHARED_SCENE).count()==2 && bonds.score(owner,a,b)==0,"First confirmed pair creates personal scene captions once and no bonus friendship");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void familyOverviewShowsCurrentModesAndLastKnownWithoutLoading(GameTestHelper h){
+        var owner=recoveryOwner(h);var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));h.assertTrue(cat.commandStay(owner,true),"Nearby test owner can issue wait");
+        var registry=FamilyRegistry.get(owner.server);var tag=new CompoundTag();var rows=new net.minecraft.nbt.ListTag();var row=new CompoundTag();UUID absent=UUID.randomUUID();row.putUUID("Id",absent);row.putUUID("Owner",owner.getUUID());row.putInt("Kind",2);row.putString("Dimension","minecraft:overworld");row.putLong("Pos",new BlockPos(100000,70,100000).asLong());rows.add(row);tag.put("Members",rows);
+        h.assertTrue(FamilyRegistry.load(tag).member(absent).mode()==FamilyAlbum.Mode.UNKNOWN,"Legacy positions must not invent a mode");
+        var snapshot=FamilyAlbum.collect(owner);h.assertTrue(snapshot.recovery().stream().anyMatch(e->e.id().equals(d.getUUID()) && e.loaded() && e.mode()==FamilyAlbum.Mode.FOLLOW) && snapshot.recovery().stream().anyMatch(e->e.id().equals(cat.getUUID()) && e.loaded() && e.mode()==FamilyAlbum.Mode.STAY),"Album immediately observes actual follow/wait modes");
+        var copy=FamilyRegistry.load(registry.save(new CompoundTag()));h.assertTrue(copy.member(cat.getUUID()).mode()==FamilyAlbum.Mode.STAY,"Last observed wait survives index reload");h.assertTrue(!h.getLevel().hasChunkAt(new BlockPos(100000,70,100000)),"Opening album must not load remote chunks");
+        d.discard();cat.discard();owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=100,batch="isolated_albumhome")
+    public static void familyOverviewDistinguishesAtHomeFromHomeMode(GameTestHelper h){
+        var owner=testOwner(h);var family=atmosphereHome(h,owner);
+        h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,family);var snapshot=FamilyAlbum.collect(owner);h.assertTrue(snapshot.recovery().stream().filter(e->e.atHome() && e.loaded() && e.mode()==FamilyAlbum.Mode.HOME).count()==3,"Valid nearby personal homes produce actual at-home statuses");family.get(0).moveTo(owner.getX()+20,owner.getY(),owner.getZ(),0,0);snapshot=FamilyAlbum.collect(owner);h.assertTrue(snapshot.recovery().stream().anyMatch(e->e.id().equals(family.get(0).getUUID()) && e.mode()==FamilyAlbum.Mode.HOME && !e.atHome()),"Home mode alone does not mean the friend has arrived");family.forEach(Companion::discard);owner.discard();}).thenSucceed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void familyOverviewCarrierAvailabilityIsReadOnly(GameTestHelper h){
+        var owner=testOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(2,2,2));var data=new CompoundTag();mob.save(data);UUID id=mob.getUUID(),token=UUID.randomUUID();var ledger=CarrierLedger.get(owner.server);ledger.capture(id,token,owner.getUUID(),data);mob.discard();
+        var stack=new net.minecraft.world.item.ItemStack(DudunkaMod.CARRIER.get());stack.getOrCreateTag().put("Companion",data);stack.getOrCreateTag().putUUID("Ticket",token);owner.getInventory().setItem(1,stack);
+        var e=FamilyAlbum.collect(owner).recovery().stream().filter(m->m.id().equals(id)).findFirst().orElseThrow();h.assertTrue(e.state()==FamilyAlbum.RecoveryState.CARRIED && !e.canReturn() && !e.loaded() && ledger.matches(id,token,owner.getUUID()),"Existing valid carrier disables restoration without rotating ticket");
+        owner.getInventory().setItem(1,net.minecraft.world.item.ItemStack.EMPTY);e=FamilyAlbum.collect(owner).recovery().stream().filter(m->m.id().equals(id)).findFirst().orElseThrow();h.assertTrue(e.canReturn() && ledger.matches(id,token,owner.getUUID()),"Missing carrier exposes restoration without side effects");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void journalAndFamilyStatusCodecRejectInvalidData(GameTestHelper h){
+        var memory=new FamilyMemories.Memory(Kind.MARUSYA,FamilyMemories.Event.ADULT,24001);var entry=new FamilyAlbum.RecoveryEntry(UUID.randomUUID(),net.minecraft.network.chat.Component.literal("Cat"),Kind.MARUSYA,"minecraft:overworld",BlockPos.ZERO,FamilyAlbum.RecoveryState.LIVE,FamilyAlbum.Mode.HOME,true,true,true);
+        var snapshot=new FamilyAlbum.Snapshot(0,java.util.List.of(),0,java.util.List.of(entry),1,0,java.util.List.of(),java.util.List.of(memory));var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+        try{FamilyAlbum.encode(snapshot,buf);h.assertTrue(snapshot.equals(FamilyAlbum.decode(buf)) && buf.readableBytes()==0,"Milestone dates and truthful family fields round-trip");buf.clear();FamilyAlbum.encode(snapshot,buf);buf.setLong(buf.writerIndex()-8,-1);boolean rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Negative memory time rejected");
+            buf.clear();FamilyAlbum.encode(new FamilyAlbum.Snapshot(0,java.util.List.of(),0,java.util.List.of(),0,0,java.util.List.of(),java.util.List.of(memory,memory)),buf);rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Duplicate memories rejected");
+            buf.clear();FamilyAlbum.encode(new FamilyAlbum.Snapshot(0,java.util.List.of()),buf);buf.writerIndex(buf.writerIndex()-1);buf.writeVarInt(19);rejected=false;try{FamilyAlbum.decode(buf);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Journal packet bounded to eighteen valid entries");
+        }finally{buf.release();}h.succeed();
+    }
+
 }
