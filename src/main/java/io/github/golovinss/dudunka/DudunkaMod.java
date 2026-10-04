@@ -33,7 +33,7 @@ public class DudunkaMod {
     public static final DeferredRegister<net.minecraft.world.level.levelgen.feature.Feature<?>> FEATURES=DeferredRegister.create(ForgeRegistries.FEATURES,ID);
     public static final RegistryObject<SnailEggFeature> SNAIL_EGG_FEATURE=FEATURES.register("snail_egg",SnailEggFeature::new);
     public static final ForgeConfigSpec CONFIG;
-    public static final ForgeConfigSpec.BooleanValue NATURAL_EGGS;
+    public static final ForgeConfigSpec.BooleanValue NATURAL_EGGS,FAMILY_CATCH_UP;
     public static final ForgeConfigSpec.IntValue HATCH_SECONDS,GROWTH_SECONDS;
     public static final ForgeConfigSpec.DoubleValue LOOT_MULTIPLIER;
     static {
@@ -42,6 +42,7 @@ public class DudunkaMod {
         GROWTH_SECONDS=b.comment("Loaded seconds per growth stage; two stages to adult.").defineInRange("growthStageSeconds",1200,1,86400);
         LOOT_MULTIPLIER=b.comment("Multiplier for egg chest chance; 0 disables loot.").defineInRange("eggLootMultiplier",1.0,0.0,10.0);
         NATURAL_EGGS=b.comment("Allow rare natural Syusya eggs in newly generated swamp and lush-cave chunks.").define("naturalEggGeneration",true);
+        FAMILY_CATCH_UP=b.comment("Allow safe same-dimension catch-up after six stalled following seconds, within 64 loaded blocks.").define("familyCatchUp",true);
         CONFIG=b.build();
         for (Kind k:Kind.values()) {
             TYPES.put(k,ENTITIES.register(k.id,()->EntityType.Builder.<Companion>of((t,l)->new Companion(t,l,k),MobCategory.CREATURE).sized(k==Kind.SYUSYA?.35f:.4f,k.height).clientTrackingRange(8).build(ID+":"+k.id)));

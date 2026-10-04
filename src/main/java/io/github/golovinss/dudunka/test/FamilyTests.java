@@ -879,4 +879,75 @@ public class FamilyTests {
         h.assertTrue(ledger.relations(owner.getUUID(),first.getUUID()).size()==13,"Reading album must not truncate persistent friendship history");owner.discard();h.succeed();
     }
 
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void catchUpCounterNeedsContinuousStallAndKeepsCooldown(GameTestHelper h) {
+        var counter=new FamilyTravel.Counter();h.assertTrue(!counter.sample(0,true),"First observation must not credit an offline stall");
+        for(int i=1;i<6;i++)h.assertTrue(!counter.sample(i*20,true),"Catch-up must wait six full seconds");
+        h.assertTrue(counter.sample(120,true),"Six consecutive stalled seconds permit destination checks");counter.teleported(120);
+        for(int i=1;i<=6;i++)h.assertTrue(!counter.sample(120+i*20,true),"Another stall inside twenty-second cooldown must not teleport");
+        counter.reset();counter.sample(300,true);for(int i=1;i<=6;i++)h.assertTrue(!counter.sample(300+i*20,true),"Stopping goal must preserve teleport cooldown");
+        counter.sample(10000,true);h.assertTrue(!counter.sample(10020,true),"Gap must restart the six-second clock");
+        counter.sample(10040,false);for(int i=1;i<=5;i++)h.assertTrue(!counter.sample(10040+i*20,true),"Walking progress must reset the accumulated stall");
+        h.assertTrue(counter.sample(10160,true),"Fresh uninterrupted stall after cooldown can catch up");h.succeed();
+    }
+    private static Companion travelFixture(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner) {
+        interestFloor(h);var origin=h.absolutePos(new BlockPos(2,2,2));
+        owner.moveTo(origin.getX()+.5,origin.getY(),origin.getZ()+.5,0,0);owner.setOnGround(true);
+        var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));
+        mob.moveTo(origin.getX()+24.5,origin.getY(),origin.getZ()+.5,0,0);mob.setOnGround(true);return mob;
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void catchUpPreservesIdentityAndAvoidsOccupiedPlaces(GameTestHelper h) {
+        var owner=testOwner(h);var mob=travelFixture(h,owner);var before=new CompoundTag();mob.addAdditionalSaveData(before);var id=mob.getUUID();
+        var destination=FamilyTravel.destination(mob,owner);h.assertTrue(destination!=null && FamilyTravel.safeDestination(mob,destination),"Fixture must provide a safe loaded landing");
+        var occupant=create(h,Kind.MARUSYA,UUID.randomUUID(),h.relativePos(destination));
+        h.assertTrue(!FamilyTravel.safeDestination(mob,destination),"A living entity must reserve its physical landing space");
+        h.assertTrue(FamilyTravel.teleportNearOwner(mob,owner),"Another free nearby place must permit catch-up");
+        var after=new CompoundTag();mob.addAdditionalSaveData(after);
+        h.assertTrue(mob.getUUID().equals(id) && after.equals(before) && mob.distanceToSqr(owner)<36 && mob.fallDistance==0,"Catch-up must preserve identity/home/care/mode and reset fall distance");
+        occupant.discard();owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void catchUpRejectsCommandsVehiclesForeignOwnersAndUnsafeGround(GameTestHelper h) {
+        var owner=testOwner(h);var mob=travelFixture(h,owner);var stranger=testOwner(h);
+        h.assertTrue(!FamilyTravel.teleportNearOwner(mob,stranger),"Foreign player must not move a companion");
+        var data=new CompoundTag();mob.addAdditionalSaveData(data);data.putBoolean("Staying",true);mob.readAdditionalSaveData(data);
+        h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner),"Stay command forbids catch-up");data.putBoolean("Staying",false);mob.readAdditionalSaveData(data);
+        mob.setActivity(Activity.WAIT_FOR_SYUSYA);h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner),"Family waiting must not be bypassed");mob.setActivity(Activity.IDLE);
+        owner.setOnGround(false);h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner),"Airborne owner must not be a teleport target");owner.setOnGround(true);
+        var boat=new net.minecraft.world.entity.vehicle.Boat(h.getLevel(),mob.getX(),mob.getY(),mob.getZ());h.getLevel().addFreshEntity(boat);mob.startRiding(boat,true);
+        h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner),"Passengers must not be pulled out of vehicles");mob.stopRiding();boat.discard();
+        var safe=FamilyTravel.destination(mob,owner);h.assertTrue(safe!=null,"Fixture must remain usable");
+        h.getLevel().setBlock(safe.below(),Blocks.MAGMA_BLOCK.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Magma floor must be rejected");
+        h.getLevel().setBlock(safe.below(),Blocks.STONE.defaultBlockState(),3);h.getLevel().setBlock(safe,Blocks.SWEET_BERRY_BUSH.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Damaging plant must be rejected");
+        h.getLevel().setBlock(safe,Blocks.AIR.defaultBlockState(),3);h.getLevel().setBlock(safe.above(),Blocks.WATER.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Water/head fluid must be rejected");
+        boolean setting=DudunkaMod.FAMILY_CATCH_UP.get();try{DudunkaMod.FAMILY_CATCH_UP.set(false);h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner),"World configuration must disable catch-up");}finally{DudunkaMod.FAMILY_CATCH_UP.set(setting);}
+        owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=210)
+    public static void followGoalReallyCatchesUpAfterSixStalledSeconds(GameTestHelper h) {
+        var owner=testOwner(h);var mob=travelFixture(h,owner);var goal=new FamilyFollowGoal(mob);
+        h.assertTrue(goal.canUse(),"Following must remain selectable beyond old 24-block cutoff");goal.start();
+        h.onEachTick(goal::tick);
+        h.runAfterDelay(100,()->h.assertTrue(mob.distanceToSqr(owner)>=144,"Unreachable gap must not be crossed before six seconds"));
+        h.runAfterDelay(165,()->{
+            h.assertTrue(mob.distanceToSqr(owner)<36,"Actual goal ticks must catch up over the unreachable gap");
+            goal.stop();owner.discard();h.succeed();
+        });
+    }
+
+    @GameTest(template="empty",batch="travel_walk",timeoutTicks=150)
+    public static void reachableSnailWalksWithoutTeleporting(GameTestHelper h) {
+        var level=h.getLevel();
+        for(BlockPos p:BlockPos.betweenClosed(h.absolutePos(new BlockPos(0,1,0)),h.absolutePos(new BlockPos(18,6,5))))
+            level.setBlock(p,p.getY()==h.absolutePos(new BlockPos(0,1,0)).getY()?Blocks.STONE.defaultBlockState():Blocks.AIR.defaultBlockState(),3);
+        var owner=testOwner(h);var goalPos=h.absolutePos(new BlockPos(17,2,2));owner.moveTo(goalPos.getX()+.5,goalPos.getY(),goalPos.getZ()+.5,0,0);owner.setOnGround(true);
+        var snail=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(1,2,2));snail.setOnGround(true);snail.setNoAi(false);double start=snail.getX();
+        h.runAfterDelay(100,()->{
+            double moved=snail.getX()-start;
+            h.assertTrue(moved>1 && moved<10 && snail.distanceToSqr(owner)>9,"Reachable snail must walk slowly rather than teleport: moved="+moved);
+            owner.discard();h.succeed();
+        });
+    }
+
 }

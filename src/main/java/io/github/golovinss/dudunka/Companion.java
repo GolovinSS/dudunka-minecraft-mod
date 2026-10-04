@@ -43,7 +43,7 @@ public class Companion extends PathfinderMob {
         goalSelector.addGoal(3,new CampfireRestGoal(this));
         goalSelector.addGoal(4,new ChestCuriosityGoal(this));
         goalSelector.addGoal(5,new HomeSceneGoal(this));
-        goalSelector.addGoal(6,new FollowOwner(this));
+        goalSelector.addGoal(6,new FamilyFollowGoal(this));
         goalSelector.addGoal(7,new WaterAvoidingRandomStrollGoal(this, .8) {
             @Override public boolean canUse() { return !staying()&&super.canUse(); }
         });
@@ -222,14 +222,5 @@ public class Companion extends PathfinderMob {
             Player player=mob.ownerPlayer();if(player!=null && mob.distanceToSqr(player)<36)mob.getLookControl().setLookAt(player,15,25);
         }
         @Override public void stop(){mob.setActivity(Activity.IDLE);}
-    }
-    private static class FollowOwner extends Goal {
-        private final Companion mob; private Player player;
-        FollowOwner(Companion mob){this.mob=mob;setFlags(java.util.EnumSet.of(Flag.MOVE,Flag.LOOK));}
-        @Override public boolean canUse(){player=mob.owner==null?null:mob.level().getPlayerByUUID(mob.owner);return mob.willingToFollow() && !mob.staying()&&player!=null&&!player.isSpectator()&&mob.distanceToSqr(player)>9&&mob.distanceToSqr(player)<576;}
-        @Override public boolean canContinueToUse(){return mob.willingToFollow() && !mob.staying()&&player!=null&&player.isAlive()&&mob.distanceToSqr(player)>4&&mob.distanceToSqr(player)<576;}
-        @Override public boolean requiresUpdateEveryTick(){return true;}
-        @Override public void tick(){mob.getLookControl().setLookAt(player,10,30);if(mob.tickCount%10==0)mob.getNavigation().moveTo(player,1.1);}
-        @Override public void stop(){mob.getNavigation().stop();player=null;}
     }
 }
