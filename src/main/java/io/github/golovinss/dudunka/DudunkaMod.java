@@ -53,13 +53,15 @@ public class DudunkaMod {
     }
     public static final RegistryObject<BlockEntityType<EggEntity>> EGG_BE=BLOCK_ENTITIES.register("egg",()->BlockEntityType.Builder.of(EggEntity::new,EGGS.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
     public static final RegistryObject<BlockEntityType<HomeMarkerEntity>> HOME_BE=BLOCK_ENTITIES.register("home",()->BlockEntityType.Builder.of(HomeMarkerEntity::new,HOMES.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
+    public static final RegistryObject<Item> ALBUM=ITEMS.register("family_album",()->new FamilyAlbumItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CARRIER=ITEMS.register("syusya_carrier",()->new SyusyaCarrierItem(new Item.Properties().stacksTo(1).fireResistant()));
     public static final RegistryObject<Codec<EggLootModifier>> EGG_LOOT=LOOT.register("egg",()->EggLootModifier.CODEC);
-    public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); }).build());
+    public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); out.accept(ALBUM.get()); }).build());
     public DudunkaMod() {
         IEventBus bus=FMLJavaModLoadingContext.get().getModEventBus();
         ENTITIES.register(bus); BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus); TABS.register(bus); LOOT.register(bus); FEATURES.register(bus);
         bus.addListener(this::attributes);
+        AlbumNetwork.register();
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER,CONFIG);
     }
     private void attributes(EntityAttributeCreationEvent e) {

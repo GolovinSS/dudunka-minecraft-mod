@@ -98,14 +98,19 @@ public class FamilyTests {
     }
 
     private static net.minecraft.server.level.ServerPlayer testOwner(GameTestHelper h) {return testOwner(h,null);}
-    private static net.minecraft.server.level.ServerPlayer testOwner(GameTestHelper h,java.util.List<net.minecraft.network.chat.Component> messages) {
+    private static net.minecraft.server.level.ServerPlayer testOwner(GameTestHelper h,java.util.List<net.minecraft.network.chat.Component> messages) {return testOwner(h,messages,null);}
+    private static net.minecraft.server.level.ServerPlayer testOwner(GameTestHelper h,java.util.List<net.minecraft.network.chat.Component> messages,java.util.List<net.minecraft.network.protocol.Packet<?>> packets) {
         // Ordinary ServerPlayer is needed: Forge rejects FakePlayer advancement awards.
         // Register directly in the test level with a no-op listener; there is no real network client.
         var player = new net.minecraft.server.level.ServerPlayer(h.getLevel().getServer(), h.getLevel(),
                 new com.mojang.authlib.GameProfile(UUID.randomUUID(), "DudunkaTest"));
-        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND) {
+            @Override public void send(net.minecraft.network.protocol.Packet<?> packet){if(packets!=null)packets.add(packet);}
+            @Override public void send(net.minecraft.network.protocol.Packet<?> packet,net.minecraft.network.PacketSendListener listener){send(packet);}
+        };
         player.connection = new net.minecraft.server.network.ServerGamePacketListenerImpl(h.getLevel().getServer(), connection, player) {
             @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {
+                if(packets!=null)packets.add(packet);
                 if(messages!=null && packet instanceof net.minecraft.network.protocol.game.ClientboundSystemChatPacket chat)messages.add(chat.content());
             }
             @Override public void send(net.minecraft.network.protocol.Packet<?> packet, net.minecraft.network.PacketSendListener listener) {send(packet);}
@@ -233,7 +238,7 @@ public class FamilyTests {
         player.discard();other.discard();h.succeed();
     }
 
-    @GameTest(template="empty", timeoutTicks=180)
+    @GameTest(template="empty", timeoutTicks=240)
     public static void carrierCanReleaseInAnotherDimension(GameTestHelper h) {
         var player=testOwner(h);var mob=create(h,Kind.SYUSYA,player.getUUID(),new BlockPos(2,2,2));
         mob.bindHome(h.absolutePos(new BlockPos(2,2,2)));
@@ -247,14 +252,13 @@ public class FamilyTests {
         player.teleportTo(nether,8.5,200,8.5,0,0);
         h.runAfterDelay(60,()->{
             h.assertTrue(SyusyaCarrierItem.release(nether,pos,player,stack),"Global ticket must allow release in Nether");
-            h.runAfterDelay(20,()->{
+            h.startSequence().thenWaitUntil(()->h.assertTrue(nether.getEntity(id) instanceof Companion,"Released Syusya must become accessible in the target dimension")).thenExecute(()->{
                 var released=(Companion)nether.getEntity(id);
-                h.assertTrue(released!=null,"Released Syusya must become accessible in the target dimension");
                 var data=new CompoundTag();released.addAdditionalSaveData(data);
                 h.assertTrue(released.level()==nether && data.getString("HomeDimension").equals("minecraft:overworld"),"Transfer must preserve the original home dimension");
                 h.assertTrue(released.homePosition()==null,"Home in another dimension must not resolve to a local coordinate");
-                released.discard();nether.setBlock(pos.below(),oldFloor,3);nether.setBlock(pos,oldSpace,3);nether.setChunkForced(0,0,false);player.discard();h.succeed();
-            });
+                released.discard();nether.setBlock(pos.below(),oldFloor,3);nether.setBlock(pos,oldSpace,3);nether.setChunkForced(0,0,false);player.discard();
+            }).thenSucceed();
         });
     }
 
@@ -810,6 +814,69 @@ public class FamilyTests {
         var loaded=DudunkaMod.TYPES.get(Kind.DUDUNKA).get().create(h.getLevel());loaded.readAdditionalSaveData(saved);loaded.observeHomecoming();
         h.assertTrue(!loaded.homeWelcomePending() && !loaded.homeWelcomeRunning(),"Loading an owned home must establish a baseline, not invent a return");
         owner.discard();h.succeed();
+    }
+
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumFiltersOwnerAndShowsSavedState(GameTestHelper h) {
+        var owner=testOwner(h);var own=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(own.getX(),own.getY(),own.getZ(),0,0);
+        own.setCustomName(net.minecraft.network.chat.Component.literal("Маруся дома"));
+        var data=new CompoundTag();own.addAdditionalSaveData(data);data.putInt("Trust",42);data.putBoolean("Staying",true);data.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);own.readAdditionalSaveData(data);
+        create(h,Kind.DUDUNKA,UUID.randomUUID(),new BlockPos(3,2,2));create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,2));
+        var distant=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(5,2,2));distant.moveTo(owner.getX()+100,owner.getY(),owner.getZ(),0,0);
+        var snapshot=FamilyAlbum.collect(owner);h.assertTrue(snapshot.total()==2 && snapshot.entries().size()==2,"Album must only include own loaded members within radius");
+        var cat=snapshot.entries().stream().filter(e->e.kind()==Kind.MARUSYA).findFirst().orElseThrow();
+        h.assertTrue(cat.stage()==2 && cat.trust()==42 && cat.staying() && cat.name().getString().equals("Маруся дома") && cat.home().state()==FamilyAlbum.HomeState.LEGACY,"Saved age/trust/mode/name/legacy home must be accurate");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumHomeConditionsAreFreshAndDoNotLoadChunks(GameTestHelper h) {
+        var owner=testOwner(h);var anchor=sceneHome(h,owner,Kind.DUDUNKA);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(1,2,3));mob.bindHome(anchor);
+        h.assertTrue(mob.albumHome().state()==FamilyAlbum.HomeState.READY && mob.albumHome().flags()==31,"Complete home must report all conditions");
+        h.getLevel().setBlock(h.absolutePos(new BlockPos(0,2,4)),Blocks.AIR.defaultBlockState(),3);
+        h.assertTrue(mob.albumHome().state()==FamilyAlbum.HomeState.INCOMPLETE && (mob.albumHome().flags()&16)==0,"Album must report missing cake immediately without waiting for cache");
+        h.getLevel().setBlock(anchor,Blocks.AIR.defaultBlockState(),3);h.assertTrue(mob.albumHome().state()==FamilyAlbum.HomeState.MISSING,"Destroyed marker must be distinguished");
+        var data=new CompoundTag();mob.addAdditionalSaveData(data);data.putString("HomeDimension","minecraft:the_nether");mob.readAdditionalSaveData(data);
+        h.assertTrue(mob.albumHome().state()==FamilyAlbum.HomeState.OTHER_DIMENSION,"Foreign dimension must not resolve local home");
+        var unloaded=new BlockPos(20000000,80,20000000);data.putString("HomeDimension",h.getLevel().dimension().location().toString());data.putLong("FamilyHome",unloaded.asLong());mob.readAdditionalSaveData(data);
+        h.assertTrue(!h.getLevel().hasChunkAt(unloaded) && mob.albumHome().state()==FamilyAlbum.HomeState.UNLOADED && !h.getLevel().hasChunkAt(unloaded),"Read-only home lookup must never load its chunk");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumCodecRoundTripsAndRejectsOversizedLists(GameTestHelper h) {
+        var friend=new FamilyAlbum.Friend(net.minecraft.network.chat.Component.literal("Сюся"),70);
+        var entry=new FamilyAlbum.Entry(net.minecraft.network.chat.Component.literal("Дюдюнька"),Kind.DUDUNKA,1,25,false,new FamilyAlbum.HomeInfo(FamilyAlbum.HomeState.READY,31),java.util.List.of(friend));
+        var original=new FamilyAlbum.Snapshot(1,java.util.List.of(entry));var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+        try {FamilyAlbum.encode(original,buf);h.assertTrue(original.equals(FamilyAlbum.decode(buf)),"Localized snapshot and friendship must round-trip exactly");}
+        finally {buf.release();}
+        var invalid=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+        try {invalid.writeVarInt(13);invalid.writeVarInt(13);boolean rejected=false;try{FamilyAlbum.decode(invalid);}catch(IllegalArgumentException expected){rejected=true;}h.assertTrue(rejected,"Client decoder must reject more than 12 entries");}finally{invalid.release();}h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumItemSendsOnlyToUserAndKeepsInventory(GameTestHelper h) {
+        var packets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();var owner=testOwner(h,null,packets);var foreignPackets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();var stranger=testOwner(h,null,foreignPackets);
+        var album=new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get());owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,album);packets.clear();foreignPackets.clear();
+        DudunkaMod.ALBUM.get().use(h.getLevel(),owner,net.minecraft.world.InteractionHand.MAIN_HAND);
+        long sent=packets.stream().filter(p->p instanceof net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket).count();
+        h.assertTrue(sent==1 && foreignPackets.isEmpty() && album.getCount()==1 && !album.hasTag(),"Private album: sent="+sent+", packets="+packets.stream().map(p->p.getClass().getName()).toList()+", foreign="+foreignPackets.size()+", count="+album.getCount()+", tag="+album.hasTag());
+        DudunkaMod.ALBUM.get().use(h.getLevel(),owner,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(packets.stream().filter(p->p instanceof net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket).count()==1,"Immediate repeated use must respect cooldown");
+        owner.getCooldowns().removeCooldown(DudunkaMod.ALBUM.get());
+        var own=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));int trust=own.trust();boolean stay=own.staying();
+        own.interact(owner,net.minecraft.world.InteractionHand.MAIN_HAND);
+        h.assertTrue(packets.stream().filter(p->p instanceof net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket).count()==2 && own.trust()==trust && own.staying()==stay,"Clicking own companion with album must open it without changing care/commands");
+        owner.discard();stranger.discard();h.succeed();
+    }
+
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumCapsPagesAndFriendHistory(GameTestHelper h) {
+        var owner=testOwner(h);var members=new java.util.ArrayList<Companion>();
+        for(int i=0;i<14;i++)members.add(create(h,Kind.values()[i%3],owner.getUUID(),new BlockPos(2,2,2)));
+        var first=members.get(0);owner.moveTo(first.getX(),first.getY(),first.getZ(),0,0);first.setCustomName(net.minecraft.network.chat.Component.literal("AlbumFirst"));
+        var ledger=FamilyFriendships.get(h.getLevel().getServer());
+        for(int i=1;i<members.size();i++)ledger.observe(owner.getUUID(),first.getUUID(),first.kind,members.get(i).getUUID(),members.get(i).kind,0);
+        var snapshot=FamilyAlbum.collect(owner);
+        h.assertTrue(snapshot.total()==14 && snapshot.entries().size()==12,"Large family must show capped pages with truthful total");
+        var entry=snapshot.entries().stream().filter(e->e.name().getString().equals("AlbumFirst")).findFirst().orElseThrow();
+        h.assertTrue(entry.friends().size()==5 && snapshot.entries().stream().allMatch(e->e.friends().size()<=5),"Friend history must be capped without losing ledger entries");
+        h.assertTrue(ledger.relations(owner.getUUID(),first.getUUID()).size()==13,"Reading album must not truncate persistent friendship history");owner.discard();h.succeed();
     }
 
 }

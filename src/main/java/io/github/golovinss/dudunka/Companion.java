@@ -100,6 +100,20 @@ public class Companion extends PathfinderMob {
         if(!homeIsMarker || home==null || !level().dimension().location().toString().equals(homeDimension) || !level().hasChunkAt(home))return null;
         return level().getBlockEntity(home) instanceof HomeMarkerEntity marker && marker.validFor(this)?home:null;
     }
+    public FamilyAlbum.HomeInfo albumHome() {
+        var state=FamilyAlbum.HomeState.NONE;int flags=0;
+        if(home!=null) {
+            if(!level().dimension().location().toString().equals(homeDimension))state=FamilyAlbum.HomeState.OTHER_DIMENSION;
+            else if(!level().hasChunkAt(home))state=FamilyAlbum.HomeState.UNLOADED;
+            else if(!homeIsMarker)state=FamilyAlbum.HomeState.LEGACY;
+            else if(!(level().getBlockEntity(home) instanceof HomeMarkerEntity marker) || !java.util.Objects.equals(owner,marker.ownerId()) || marker.kind()!=kind)state=FamilyAlbum.HomeState.MISSING;
+            else {
+                var c=marker.conditions(true);flags=(c.roof()?1:0)|(c.bed()?2:0)|(c.chest()?4:0)|(c.light()?8:0)|(c.food()?16:0);
+                state=!c.ready()?FamilyAlbum.HomeState.INCOMPLETE:HomeRules.nearbyStanding(level(),home,this)==null?FamilyAlbum.HomeState.UNSAFE:FamilyAlbum.HomeState.READY;
+            }
+        }
+        return new FamilyAlbum.HomeInfo(state,flags);
+    }
     public BlockPos homePosition() {
         if(home==null || !level().dimension().location().toString().equals(homeDimension) || !level().hasChunkAt(home)) return null;
         if(homeIsMarker && (!(level().getBlockEntity(home) instanceof HomeMarkerEntity marker) || !marker.validFor(this))) return null;
@@ -144,6 +158,7 @@ public class Companion extends PathfinderMob {
         if(owner!=null&&!owner.equals(player.getUUID())) { player.displayClientMessage(Component.translatable("message.dudunka.not_owner"),true); return InteractionResult.CONSUME; }
         if(owner==null) { player.displayClientMessage(Component.translatable("message.dudunka.hatch_first"),true); return InteractionResult.CONSUME; }
         var food=player.getItemInHand(hand);
+        if(food.is(DudunkaMod.ALBUM.get())){food.getItem().use(level(),player,hand);return InteractionResult.CONSUME;}
         if(food.is(net.minecraft.world.item.Items.BOOK)){FamilyFriendships.show(player,this);return InteractionResult.CONSUME;}
         if(food.is(DudunkaMod.CARRIER.get())) { SyusyaCarrierItem.capture(this,player,food); return InteractionResult.CONSUME; }
         if(kind.likes(food)) {
