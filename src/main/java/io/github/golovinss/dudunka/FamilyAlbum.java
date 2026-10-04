@@ -11,7 +11,9 @@ public final class FamilyAlbum {
     public enum HomeState { NONE, LEGACY, OTHER_DIMENSION, UNLOADED, MISSING, INCOMPLETE, READY, UNSAFE }
     public record HomeInfo(HomeState state,int flags) {}
     public record Friend(Component name,int score) {}
-    public record Entry(UUID id,Component name,Kind kind,int stage,int trust,boolean staying,HomeInfo home,List<Friend> friends) {}
+    public record Entry(UUID id,Component name,Kind kind,int stage,int trust,boolean staying,HomeInfo home,List<Friend> friends,boolean homeMode,FurnitureScenes.Info furniture,Activity activity) {
+        public Entry(UUID id,Component name,Kind kind,int stage,int trust,boolean staying,HomeInfo home,List<Friend> friends){this(id,name,kind,stage,trust,staying,home,friends,false,new FurnitureScenes.Info(FurnitureScenes.State.NONE,net.minecraft.core.BlockPos.ZERO),Activity.IDLE);}
+    }
     public enum RecoveryState { LIVE, CARRIED, LEGACY_CARRIED }
     public record RecoveryEntry(UUID id,Component name,Kind kind,String dimension,net.minecraft.core.BlockPos pos,RecoveryState state) {}
     public record Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask) {
@@ -34,7 +36,7 @@ public final class FamilyAlbum {
                 if(other instanceof Companion companion && player.getUUID().equals(companion.ownerId()))name=name(companion);
                 friends.add(new Friend(name,relation.score()));
             }
-            entries.add(new Entry(mob.getUUID(),name(mob),mob.kind,mob.stage(),mob.trust(),mob.staying(),mob.albumHome(),List.copyOf(friends)));
+            entries.add(new Entry(mob.getUUID(),name(mob),mob.kind,mob.stage(),mob.trust(),mob.staying(),mob.albumHome(),List.copyOf(friends),mob.atHomeMode(),FurnitureScenes.info(mob),mob.activity()));
         }
         var recovery=new TreeMap<UUID,RecoveryEntry>();var registry=FamilyRegistry.get(level.getServer());
         for(var member:registry.owned(player.getUUID()))recovery.put(member.id(),new RecoveryEntry(member.id(),member.name().isEmpty()?Component.translatable("entity.dudunka."+member.kind().id):Component.literal(member.name()),member.kind(),member.dimension().toString(),member.pos(),RecoveryState.LIVE));
@@ -55,6 +57,7 @@ public final class FamilyAlbum {
             buf.writeUUID(entry.id());buf.writeComponent(entry.name());buf.writeEnum(entry.kind());buf.writeVarInt(entry.stage());buf.writeVarInt(entry.trust());buf.writeBoolean(entry.staying());
             buf.writeEnum(entry.home().state());buf.writeByte(entry.home().flags());buf.writeVarInt(entry.friends().size());
             for(var friend:entry.friends()){buf.writeComponent(friend.name());buf.writeVarInt(friend.score());}
+            buf.writeBoolean(entry.homeMode());buf.writeEnum(entry.furniture().state());buf.writeBlockPos(entry.furniture().pos());buf.writeEnum(entry.activity());
         }
         encodeRecovery(snapshot,buf);buf.writeByte(snapshot.trailMask());
     }
@@ -67,7 +70,9 @@ public final class FamilyAlbum {
             UUID id=buf.readUUID();Component name=buf.readComponent();Kind kind=buf.readEnum(Kind.class);int stage=bounded(buf,0,2),trust=bounded(buf,0,100);boolean staying=buf.readBoolean();
             var home=new HomeInfo(buf.readEnum(HomeState.class),buf.readUnsignedByte()&31);int size=bounded(buf,0,5);var friends=new ArrayList<Friend>();
             for(int j=0;j<size;j++)friends.add(new Friend(buf.readComponent(),bounded(buf,0,100)));
-            entries.add(new Entry(id,name,kind,stage,trust,staying,home,List.copyOf(friends)));
+            boolean homeMode=buf.readBoolean();if(homeMode && staying)throw new IllegalArgumentException("Conflicting modes");
+            var furniture=new FurnitureScenes.Info(buf.readEnum(FurnitureScenes.State.class),buf.readBlockPos());var activity=buf.readEnum(Activity.class);
+            entries.add(new Entry(id,name,kind,stage,trust,staying,home,List.copyOf(friends),homeMode,furniture,activity));
         }
         int recoveryTotal=bounded(buf,0,Integer.MAX_VALUE),size=bounded(buf,0,32);if(recoveryTotal<size)throw new IllegalArgumentException("Invalid recovery count");var recovery=new ArrayList<RecoveryEntry>();
         for(int i=0;i<size;i++)recovery.add(new RecoveryEntry(buf.readUUID(),buf.readComponent(),buf.readEnum(Kind.class),buf.readUtf(256),buf.readBlockPos(),buf.readEnum(RecoveryState.class)));

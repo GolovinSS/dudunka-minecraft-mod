@@ -7,7 +7,10 @@ import net.minecraft.server.level.ServerPlayer;
 /** Server-thread-only sessions with weak player keys; recovery delegates bounded loading to FamilyRecovery. */
 public final class AlbumCommands {
     public record Open(UUID session,FamilyAlbum.Snapshot snapshot) {}
-    public record Command(UUID session,UUID member,boolean stay,int request) {}
+    public record Command(UUID session,UUID member,boolean stay,int request,boolean home) {
+        public Command(UUID session,UUID member,boolean stay,int request){this(session,member,stay,request,false);}
+    }
+    public record FurnitureCommand(UUID session,UUID member,boolean clear,int request) {}
     public record RecoveryCommand(UUID session,UUID member,int request) {}
     public record Reply(UUID session,int request,RecoveryResult result,FamilyAlbum.Snapshot snapshot) {
         public Reply(UUID session,int request,boolean accepted,FamilyAlbum.Snapshot snapshot){this(session,request,RecoveryResult.of(accepted?RecoveryResult.Code.APPLIED:RecoveryResult.Code.REJECTED),snapshot);}
@@ -43,6 +46,34 @@ public final class AlbumCommands {
         var result=FamilyRecovery.startResult(p,command.member(),s.id,s.request);
         if(!result.accepted())finishRecovery(p,s.id,s.request,result);
     }
+    public static Reply executeFurniture(ServerPlayer player,FurnitureCommand command){
+        if(player==null || FamilyRecovery.pending(player.server,player.getUUID()))return null;
+        var session=SESSIONS.get(player);long now=player.level().getGameTime();
+        if(session==null || !session.id.equals(command.session()) || command.request()<=session.request || command.request()<=0)return null;
+        if(now>session.expires || !session.dimension.equals(player.level().dimension().location())){SESSIONS.remove(player);return null;}
+        session.request=command.request();if(session.lastCommand!=Long.MIN_VALUE && now-session.lastCommand<10)return null;session.lastCommand=now;
+        boolean accepted=false;
+        if(held(player) && player.isAlive() && !player.isSpectator() && session.members.contains(command.member())
+            && player.serverLevel().getEntity(command.member()) instanceof Companion mob && player.getUUID().equals(mob.ownerId()) && mob.distanceToSqr(player)<=4096){
+            if(command.clear()){mob.clearFurniture();accepted=true;}
+            else {
+                var home=mob.homeAnchor();var candidates=new ArrayList<FurnitureEntity>();
+                if(home!=null && player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(home))<=100){
+                    for(var pos:net.minecraft.core.BlockPos.betweenClosed(home.offset(-4,-1,-4),home.offset(4,3,4))){
+                        if(!player.level().hasChunkAt(pos) || player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos))>64)continue;
+                        if(player.level().getBlockEntity(pos) instanceof FurnitureEntity f && f.available(mob) && home.distSqr(pos)<=64)candidates.add(f);
+                    }
+                    candidates.sort(Comparator.comparingDouble(f->player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(f.getBlockPos()))));
+                    if(!candidates.isEmpty()){
+                        var chosen=candidates.get(0);var previous=FurnitureScenes.furniture(mob);
+                        if(chosen.assign(mob)){if(previous!=null && previous!=chosen)previous.release(mob);mob.bindFurniture(chosen.getBlockPos());accepted=true;}
+                    }
+                }
+            }
+        }
+        var snapshot=FamilyAlbum.collect(player);session.refresh(player,snapshot);
+        return new Reply(session.id,command.request(),RecoveryResult.of(accepted?(command.clear()?RecoveryResult.Code.FURNITURE_CLEARED:RecoveryResult.Code.FURNITURE_ASSIGNED):RecoveryResult.Code.NO_FURNITURE),snapshot);
+    }
     private AlbumCommands() {}
     public static Open open(ServerPlayer player) {
         var snapshot=FamilyAlbum.collect(player);var session=new Session(player,snapshot);SESSIONS.put(player,session);
@@ -62,7 +93,7 @@ public final class AlbumCommands {
         boolean accepted=false;
         if(held && player.isAlive() && !player.isSpectator() && session.members.contains(command.member())) {
             var target=player.serverLevel().getEntity(command.member());
-            if(target instanceof Companion mob)accepted=mob.commandStay(player,command.stay());
+            if(target instanceof Companion mob)accepted=command.home() && !command.stay()?mob.commandHome(player):!command.home() && mob.commandStay(player,command.stay());
         }
         var snapshot=FamilyAlbum.collect(player);session.refresh(player,snapshot);
         return new Reply(session.id,command.request(),accepted,snapshot);

@@ -16,7 +16,7 @@ public final class HomeTogetherScenes {
     private HomeTogetherScenes() {}
     private static boolean eligible(Companion mob) {
         var owner=mob.ownerPlayer();var home=mob.homeAnchor();
-        if(home==null || owner==null || !owner.isAlive() || owner.isSpectator() || owner.isSleeping() || owner.isShiftKeyDown()
+        if(mob.atHomeMode() && FurnitureScenes.furniture(mob)!=null || home==null || owner==null || !owner.isAlive() || owner.isSpectator() || owner.isSleeping() || owner.isShiftKeyDown()
             || !mob.isAlive() || mob.staying() || !mob.homeTogetherReady() || mob.isInWaterOrBubble()
             || mob.isPassenger() || mob.isVehicle() || mob.isLeashed() || mob.level().isRainingAt(mob.blockPosition())
             || owner.distanceToSqr(Vec3.atCenterOf(home))>64 || mob.distanceToSqr(Vec3.atCenterOf(home))>100)return false;
@@ -47,6 +47,7 @@ public final class HomeTogetherScenes {
         return present>=2;
     }
     public static Scene select(Companion mob) {
+        if(mob.atHomeMode() && FurnitureScenes.furniture(mob)!=null)return null;
         if(!(mob.level() instanceof ServerLevel level) || !eligible(mob))return null;
         long now=level.getGameTime();var states=STATES.computeIfAbsent(level,key->new HashMap<>());
         var state=states.get(mob.ownerId());

@@ -34,7 +34,7 @@ public final class FamilyTravel {
         return !mob.level().isClientSide && DudunkaMod.FAMILY_CATCH_UP.get() && owner!=null && owner.level()==mob.level()
             && mob.ownerId()!=null && mob.ownerId().equals(owner.getUUID()) && mob.isAlive() && owner.isAlive()
             && !owner.isSpectator() && !owner.isSleeping() && owner.onGround() && !owner.isPassenger() && !owner.isFallFlying()
-            && !owner.isInWaterOrBubble() && !owner.isInLava() && !mob.staying() && mob.willingToFollow()
+            && !owner.isInWaterOrBubble() && !owner.isInLava() && !mob.staying() && !mob.atHomeMode() && mob.willingToFollow()
             && !mob.isLeashed() && !mob.isPassenger() && !mob.isVehicle() && mob.activity()==Activity.IDLE
             && mob.distanceToSqr(owner)>=144 && mob.distanceToSqr(owner)<=4096
             && mob.level().hasChunkAt(mob.blockPosition()) && mob.level().hasChunkAt(owner.blockPosition());

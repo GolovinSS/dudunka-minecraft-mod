@@ -14,7 +14,7 @@ public final class FamilyFollowGoal extends Goal {
     private long nextSample;
     public FamilyFollowGoal(Companion mob){this.mob=mob;setFlags(EnumSet.of(Flag.MOVE,Flag.LOOK));}
     private boolean follows(){return owner!=null && owner.level()==mob.level() && owner.isAlive() && !owner.isSpectator()
-        && !owner.isSleeping() && !mob.staying() && mob.willingToFollow() && mob.distanceToSqr(owner)<=4096;}
+        && !owner.isSleeping() && !mob.staying() && !mob.atHomeMode() && mob.willingToFollow() && mob.distanceToSqr(owner)<=4096;}
     @Override public boolean canUse(){owner=mob.ownerPlayer();return follows() && mob.distanceToSqr(owner)>9;}
     @Override public boolean canContinueToUse(){return follows() && mob.distanceToSqr(owner)>4;}
     @Override public boolean requiresUpdateEveryTick(){return true;}

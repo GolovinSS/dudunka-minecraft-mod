@@ -1,7 +1,24 @@
 {
   "variants": {
-    "": {
-      "model": "dudunka:block/syusya_home"
+    "facing=north": {
+      "model": "dudunka:block/syusya_home",
+      "y": 0,
+      "uvlock": false
+    },
+    "facing=east": {
+      "model": "dudunka:block/syusya_home",
+      "y": 90,
+      "uvlock": false
+    },
+    "facing=south": {
+      "model": "dudunka:block/syusya_home",
+      "y": 180,
+      "uvlock": false
+    },
+    "facing=west": {
+      "model": "dudunka:block/syusya_home",
+      "y": 270,
+      "uvlock": false
     }
   }
 }

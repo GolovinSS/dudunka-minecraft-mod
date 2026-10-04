@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PPP",
+    "P P",
+    "MLM"
+  ],
+  "key": {
+    "P": {
+      "item": "minecraft:oak_planks"
+    },
+    "M": {
+      "item": "minecraft:moss_block"
+    },
+    "L": {
+      "item": "minecraft:oak_leaves"
+    }
+  },
+  "result": {
+    "item": "dudunka:syusya_furniture"
+  }
+}

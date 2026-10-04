@@ -1363,4 +1363,110 @@ public class FamilyTests {
         h.runAfterDelay(110,()->{var reply=latestAlbumReply(packets);h.assertTrue(reply!=null && reply.result().code()==RecoveryResult.Code.NOT_FOUND && !FamilyRecovery.pending(owner.server,owner.getUUID()) && h.getLevel().getEntity(id)==null,"Timed-out real command must release search and send not-found without resurrection");registry.forget(id);owner.discard();h.succeed();});
     }
 
+    private static Companion furnitureFixture(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner,Kind kind){
+        var home=sceneHome(h,owner,kind);var mob=create(h,kind,owner.getUUID(),new BlockPos(2,2,3));mob.bindHome(home);
+        var pos=h.absolutePos(new BlockPos(2,2,4));h.getLevel().setBlock(pos,DudunkaMod.FURNITURE.get(kind).get().defaultBlockState(),3);
+        var f=(FurnitureEntity)h.getLevel().getBlockEntity(pos);f.claim(owner.getUUID());h.assertTrue(f.assign(mob),"Fixture must assign matching furniture");mob.bindFurniture(pos);
+        h.assertTrue(mob.commandHome(owner),"Complete owned home must accept home mode");
+        // No invented welcome and no delay after fixture setup.
+        var data=new CompoundTag();mob.addAdditionalSaveData(data);mob.readAdditionalSaveData(data);mob.setOnGround(true);return mob;
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void furnitureModesAndBothBindingsSurviveSave(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.DUDUNKA);var tag=new CompoundTag();mob.addAdditionalSaveData(tag);
+        var restored=DudunkaMod.TYPES.get(mob.kind).get().create(h.getLevel());restored.setUUID(mob.getUUID());restored.readAdditionalSaveData(tag);
+        h.assertTrue(restored.atHomeMode() && !restored.staying() && restored.furniturePosition().equals(mob.furniturePosition()) && restored.homeAnchor().equals(mob.homeAnchor()) && restored.activity()==Activity.IDLE,"Persistent mode and furniture/home must restore without transient scene");
+        var f=FurnitureScenes.furniture(mob);var saved=f.saveWithoutMetadata();f.load(saved);h.assertTrue(f.assigned(mob),"Block assignment must survive NBT reload");
+        owner.moveTo(mob.getX()+20,mob.getY(),mob.getZ(),0,0);h.assertTrue(!new FamilyFollowGoal(mob).canUse() && !FamilyTravel.eligible(mob,owner),"At home mode must not follow or catch up");
+        h.assertTrue(mob.commandStay(owner,true) && !mob.atHomeMode() && mob.staying(),"Wait must replace home mode");h.assertTrue(mob.commandStay(owner,false) && !mob.staying() && !mob.atHomeMode(),"Follow must replace wait");
+        tag.remove("HomeMode");tag.remove("Furniture");tag.remove("FurnitureDimension");restored.readAdditionalSaveData(tag);h.assertTrue(!restored.atHomeMode() && restored.furniturePosition()==null,"Pre-furniture save must retain default follow mode");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void furnitureOwnershipExclusivityAndRelease(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.MARUSYA);var f=FurnitureScenes.furniture(mob);
+        var second=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(3,2,3));var foreign=create(h,Kind.MARUSYA,UUID.randomUUID(),new BlockPos(3,2,4));var wrong=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(1,2,3));
+        h.assertTrue(!f.assign(second) && !f.assign(foreign) && !f.assign(wrong) && !f.clear(foreign.ownerId()) && f.assigned(mob),"Other member, owner and kind cannot steal or clear furniture");
+        var stranger=testOwner(h);stranger.setShiftKeyDown(true);stranger.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));
+        var hit=new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(f.getBlockPos()),net.minecraft.core.Direction.UP,f.getBlockPos(),false);
+        DudunkaMod.ALBUM.get().useOn(new net.minecraft.world.item.context.UseOnContext(stranger,net.minecraft.world.InteractionHand.MAIN_HAND,hit));h.assertTrue(f.assigned(mob),"Actual secondary item use must not release foreign furniture");stranger.discard();
+        owner.setShiftKeyDown(true);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));
+        DudunkaMod.ALBUM.get().useOn(new net.minecraft.world.item.context.UseOnContext(owner,net.minecraft.world.InteractionHand.MAIN_HAND,hit));
+        h.assertTrue(f.memberId()==null && mob.furniturePosition()==null && f.assign(second),"Actual Shift+item use must free the block and companion binding");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void furnitureSafetyAndUnloadedStatus(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.SYUSYA);var pos=mob.furniturePosition();
+        h.assertTrue(FurnitureScenes.info(mob).state()==FurnitureScenes.State.READY && FurnitureScenes.select(mob)!=null,"Reachable covered furniture must be ready");
+        h.getLevel().setBlock(pos.north(),Blocks.STONE.defaultBlockState(),3);h.assertTrue(FurnitureScenes.select(mob)==null && FurnitureScenes.info(mob).state()==FurnitureScenes.State.BLOCKED,"Occupied approach must reject scene");
+        h.getLevel().setBlock(pos.north(),Blocks.AIR.defaultBlockState(),3);h.getLevel().setBlock(pos,Blocks.AIR.defaultBlockState(),3);h.assertTrue(FurnitureScenes.info(mob).state()==FurnitureScenes.State.MISSING,"Destroyed furniture must be reported");
+        var tag=new CompoundTag();mob.addAdditionalSaveData(tag);var unloaded=new BlockPos(20000000,80,20000000);tag.putLong("Furniture",unloaded.asLong());mob.readAdditionalSaveData(tag);
+        h.assertTrue(FurnitureScenes.info(mob).state()==FurnitureScenes.State.UNLOADED && !h.getLevel().hasChunkAt(unloaded),"Status must never load distant furniture");tag.putString("FurnitureDimension","minecraft:the_nether");mob.readAdditionalSaveData(tag);h.assertTrue(FurnitureScenes.info(mob).state()==FurnitureScenes.State.OTHER_DIMENSION,"Foreign dimension cannot resolve local block");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void furnitureCommandAuthenticationAndPrivateReply(GameTestHelper h){
+        var packets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();var foreignPackets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();var owner=testOwner(h,null,packets);var stranger=testOwner(h,null,foreignPackets);
+        var mob=furnitureFixture(h,owner,Kind.DUDUNKA);mob.clearFurniture();var open=commandAlbum(owner);var command=new AlbumCommands.FurnitureCommand(open.session(),mob.getUUID(),false,1);packets.clear();foreignPackets.clear();
+        h.assertTrue(AlbumCommands.executeFurniture(null,command)==null && AlbumCommands.executeFurniture(stranger,command)==null,"Unauthenticated or foreign session must remain silent");
+        AlbumNetwork.handleFurniture(owner,command);var reply=latestAlbumReply(packets);h.assertTrue(reply!=null && reply.accepted() && reply.result().code()==RecoveryResult.Code.FURNITURE_ASSIGNED && mob.furniturePosition()!=null && foreignPackets.isEmpty(),"Actual private handler must assign and acknowledge only sender");
+        h.assertTrue(AlbumCommands.executeFurniture(owner,command)==null,"Replay cannot mutate assignment");var next=commandAlbum(owner);owner.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,net.minecraft.world.item.ItemStack.EMPTY);
+        h.assertTrue(!AlbumCommands.executeFurniture(owner,new AlbumCommands.FurnitureCommand(next.session(),mob.getUUID(),true,1)).accepted() && mob.furniturePosition()!=null,"Missing held album must not release furniture");owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void furnitureAndHomeModePacketsRoundTrip(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.MARUSYA);var open=commandAlbum(owner);
+        var command=new AlbumCommands.Command(open.session(),mob.getUUID(),false,1,true);var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+        try{AlbumNetwork.encodeCommand(command,buf);h.assertTrue(command.equals(AlbumNetwork.decodeCommand(buf)),"Explicit home mode command must round-trip");buf.clear();var f=new AlbumCommands.FurnitureCommand(open.session(),mob.getUUID(),true,2);AlbumNetwork.encodeFurniture(f,buf);h.assertTrue(f.equals(AlbumNetwork.decodeFurniture(buf)),"Furniture command must round-trip");buf.clear();FamilyAlbum.encode(open.snapshot(),buf);h.assertTrue(open.snapshot().equals(FamilyAlbum.decode(buf)),"Furniture position/status, activity and mode must round-trip");}finally{buf.release();}
+        h.assertTrue(AlbumCommands.execute(owner,command).accepted() && mob.atHomeMode(),"Authenticated home mode command must succeed");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void furnitureGoalWaitsForArrivalAndCancelsImmediately(GameTestHelper h){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,Kind.DUDUNKA);var goal=new FurnitureGoal(mob);var scene=FurnitureScenes.select(mob);
+        mob.moveTo(mob.getX()-1,mob.getY(),mob.getZ(),0,0);
+        h.assertTrue(scene!=null && goal.canUse(),"Drawing table must be selectable");goal.start();goal.tick();
+        h.assertTrue(mob.activity()==Activity.CURIOUS && mob.homeSceneTarget()!=null,"Approaching must not display the drawing activity");h.getLevel().setBlock(mob.furniturePosition(),Blocks.AIR.defaultBlockState(),3);goal.tick();goal.tick();
+        h.assertTrue(mob.homeSceneTarget()==null && mob.activity()==Activity.IDLE,"Destroyed furniture must release the actual running goal even on its final tick");
+        h.assertTrue(FurnitureScenes.select(mob)==null && !FurnitureScenes.valid(mob,scene),"Destroying the table must invalidate its scene immediately");owner.discard();h.succeed();
+    }
+    private static void liveFurniture(GameTestHelper h,Kind kind){
+        var owner=testOwner(h);var mob=furnitureFixture(h,owner,kind);var pos=mob.furniturePosition();var before=new CompoundTag();mob.addAdditionalSaveData(before);
+        // Adult dimensions must fit the actual collision shapes.
+        before.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);mob.readAdditionalSaveData(before);mob.setNoAi(false);
+        var seen=java.util.EnumSet.noneOf(Activity.class);var target=FurnitureScenes.select(mob);h.assertTrue(target!=null,"Adult must fit furniture collision geometry: "+kind);
+        h.onEachTick(()->{if(mob.isAlive())seen.add(mob.activity());});
+        h.runAfterDelay(360,()->{
+            var expected=switch(kind){case DUDUNKA->java.util.Set.of(Activity.DRAW,Activity.SHOW_DRAWING);case MARUSYA->java.util.Set.of(Activity.STRETCH,Activity.SCRATCH,Activity.CURL);case SYUSYA->java.util.Set.of(Activity.RETREAT,Activity.SLEEP,Activity.PEEK,Activity.NIBBLE);};
+            h.assertTrue(seen.containsAll(expected),"Live AI must reach furniture and perform all phases for "+kind+": "+seen+" at "+mob.position());
+            var after=new CompoundTag();mob.addAdditionalSaveData(after);h.assertTrue(mob.trust()==before.getInt("Trust") && mob.homeAnchor()!=null && pos.equals(mob.furniturePosition()) && after.getBoolean("HomeMode"),"Activity must preserve care, both assignments and mode");
+            mob.commandStay(owner,true);
+        });
+        h.runAfterDelay(365,()->{h.assertTrue(mob.activity()==Activity.SIT && mob.homeSceneTarget()==null,"Wait must immediately end live furniture activity");owner.discard();h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=420)
+    public static void dudunkaReallyDrawsAtAssignedTable(GameTestHelper h){liveFurniture(h,Kind.DUDUNKA);}
+    @GameTest(template="empty",timeoutTicks=420)
+    public static void marusyaReallyUsesScratchingBed(GameTestHelper h){liveFurniture(h,Kind.MARUSYA);}
+    @GameTest(template="empty",timeoutTicks=420)
+    public static void syusyaReallyEntersAndLeavesLeafHouse(GameTestHelper h){liveFurniture(h,Kind.SYUSYA);}
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void furnitureRotationsFitAllAdults(GameTestHelper h){
+        var owner=testOwner(h);
+        for(Kind kind:Kind.values()){
+            var mob=furnitureFixture(h,owner,kind);var data=new CompoundTag();mob.addAdditionalSaveData(data);data.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);mob.readAdditionalSaveData(data);var p=mob.furniturePosition();
+            for(var dir:net.minecraft.core.Direction.Plane.HORIZONTAL){
+                h.getLevel().setBlock(p,DudunkaMod.FURNITURE.get(kind).get().defaultBlockState().setValue(FurnitureBlock.FACING,dir),3);
+                for(var adjacent:net.minecraft.core.Direction.Plane.HORIZONTAL){var q=p.relative(adjacent);h.getLevel().setBlock(q,Blocks.AIR.defaultBlockState(),3);h.getLevel().setBlock(q.below(),Blocks.STONE.defaultBlockState(),3);h.getLevel().setBlock(q.above(2),Blocks.STONE.defaultBlockState(),3);}
+                h.assertTrue(FurnitureScenes.select(mob)!=null,"Every rotated model must fit its adult and have a clear approach: "+kind+" "+dir);
+            }
+            mob.discard();
+        }
+        owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void furnitureForeignBreakAndHomeScenePreemption(GameTestHelper h){
+        var owner=testOwner(h);var stranger=testOwner(h);var mob=furnitureFixture(h,owner,Kind.DUDUNKA);var p=mob.furniturePosition();
+        var denied=new net.minecraftforge.event.level.BlockEvent.BreakEvent(h.getLevel(),p,h.getLevel().getBlockState(p),stranger);FamilyProtection.onBreak(denied);h.assertTrue(denied.isCanceled(),"Foreign survival player must not break assigned furniture");
+        var allowed=new net.minecraftforge.event.level.BlockEvent.BreakEvent(h.getLevel(),p,h.getLevel().getBlockState(p),owner);FamilyProtection.onBreak(allowed);h.assertTrue(!allowed.isCanceled(),"Furniture owner may break it");
+        var flower=h.absolutePos(new BlockPos(4,2,3));var old=new HomeScenes.Scene(mob.homeAnchor(),flower,mob.position(),Activity.SIT);
+        h.assertTrue(!HomeScenes.valid(mob,old) && HomeTogetherScenes.select(mob)==null && CampfireScenes.select(mob)==null,"Explicit furniture mode must preempt former home/camp scenes");owner.discard();stranger.discard();h.succeed();
+    }
 }

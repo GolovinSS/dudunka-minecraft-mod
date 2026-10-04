@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.Mod;
 public final class FamilyProtection {
     @SubscribeEvent public static void onBreak(BlockEvent.BreakEvent event) {
         var entity=event.getLevel().getBlockEntity(event.getPos());
-        var owner=entity instanceof EggEntity egg?egg.ownerId():entity instanceof HomeMarkerEntity home?home.ownerId():null;
+        var owner=entity instanceof EggEntity egg?egg.ownerId():entity instanceof HomeMarkerEntity home?home.ownerId():entity instanceof FurnitureEntity furniture?furniture.ownerId():null;
         if(owner!=null && !owner.equals(event.getPlayer().getUUID()) && !event.getPlayer().canUseGameMasterBlocks()) {
             event.setCanceled(true);
             event.getPlayer().displayClientMessage(Component.translatable("message.dudunka.not_owner"),true);

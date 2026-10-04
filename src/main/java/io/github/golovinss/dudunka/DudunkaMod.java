@@ -29,6 +29,7 @@ public class DudunkaMod {
     public static final Map<Kind,RegistryObject<EntityType<Companion>>> TYPES=new EnumMap<>(Kind.class);
     public static final Map<Kind,RegistryObject<Block>> EGGS=new EnumMap<>(Kind.class);
     public static final Map<Kind,RegistryObject<Item>> EGG_ITEMS=new EnumMap<>(Kind.class);
+    public static final Map<Kind,RegistryObject<Block>> FURNITURE=new EnumMap<>(Kind.class);
     public static final Map<Kind,RegistryObject<Block>> HOMES=new EnumMap<>(Kind.class);
     public static final DeferredRegister<net.minecraft.world.level.levelgen.feature.Feature<?>> FEATURES=DeferredRegister.create(ForgeRegistries.FEATURES,ID);
     public static final RegistryObject<SnailEggFeature> SNAIL_EGG_FEATURE=FEATURES.register("snail_egg",SnailEggFeature::new);
@@ -50,18 +51,21 @@ public class DudunkaMod {
         for (Kind k:Kind.values()) {
             TYPES.put(k,ENTITIES.register(k.id,()->EntityType.Builder.<Companion>of((t,l)->new Companion(t,l,k),MobCategory.CREATURE).sized(k==Kind.SYUSYA?.35f:.4f,k.height).clientTrackingRange(8).build(ID+":"+k.id)));
             EGGS.put(k,BLOCKS.register(k.id+"_egg",()->new EggBlock(k,BlockBehaviour.Properties.of().strength(.3f,3600000f).pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK).noOcclusion().lightLevel(s->k==Kind.DUDUNKA?5:0))));
+            FURNITURE.put(k,BLOCKS.register(k.id+"_furniture",()->new FurnitureBlock(k,BlockBehaviour.Properties.of().strength(1.0f).noOcclusion().pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK))));
+            ITEMS.register(k.id+"_furniture",()->new BlockItem(FURNITURE.get(k).get(),new Item.Properties()));
             HOMES.put(k,BLOCKS.register(k.id+"_home",()->new HomeMarkerBlock(k,BlockBehaviour.Properties.of().strength(.8f,3600000f).noOcclusion().pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK))));
             ITEMS.register(k.id+"_home",()->new BlockItem(HOMES.get(k).get(),new Item.Properties()));
             EGG_ITEMS.put(k,ITEMS.register(k.id+"_egg",()->new BlockItem(EGGS.get(k).get(),new Item.Properties().stacksTo(16))));
         }
     }
     public static final RegistryObject<BlockEntityType<EggEntity>> EGG_BE=BLOCK_ENTITIES.register("egg",()->BlockEntityType.Builder.of(EggEntity::new,EGGS.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
+    public static final RegistryObject<BlockEntityType<FurnitureEntity>> FURNITURE_BE=BLOCK_ENTITIES.register("furniture",()->BlockEntityType.Builder.of(FurnitureEntity::new,FURNITURE.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
     public static final RegistryObject<BlockEntityType<HomeMarkerEntity>> HOME_BE=BLOCK_ENTITIES.register("home",()->BlockEntityType.Builder.of(HomeMarkerEntity::new,HOMES.values().stream().map(RegistryObject::get).toArray(Block[]::new)).build(null));
     public static final RegistryObject<Item> ALBUM=ITEMS.register("family_album",()->new FamilyAlbumItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CARRIER=ITEMS.register("syusya_carrier",()->new SyusyaCarrierItem(new Item.Properties().stacksTo(1).fireResistant()));
     public static final RegistryObject<Codec<TrailLootModifier>> TRAIL_LOOT=LOOT.register("trail_note",()->TrailLootModifier.CODEC);
     public static final RegistryObject<Codec<EggLootModifier>> EGG_LOOT=LOOT.register("egg",()->EggLootModifier.CODEC);
-    public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); out.accept(ALBUM.get()); TRAIL_ITEMS.values().forEach(v->out.accept(v.get())); }).build());
+    public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); FURNITURE.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); out.accept(ALBUM.get()); TRAIL_ITEMS.values().forEach(v->out.accept(v.get())); }).build());
     public DudunkaMod() {
         IEventBus bus=FMLJavaModLoadingContext.get().getModEventBus();
         ENTITIES.register(bus); BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus); TABS.register(bus); LOOT.register(bus); FEATURES.register(bus);

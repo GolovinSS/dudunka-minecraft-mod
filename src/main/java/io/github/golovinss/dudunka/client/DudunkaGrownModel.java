@@ -35,6 +35,8 @@ public final class DudunkaGrownModel {
             var a=r.getChild("arm"+i);
             maker.box(a,"hand",0,-.68f,arm-1,-.68f,1.36f,1,1.36f,0,0,0);
             maker.box(a,"cuff",11,-.8f,arm-1.4f,-.8f,1.6f,.45f,1.6f,0,0,0);
+            if(i==1)maker.box(a,"drawing_sheet",11,-1.7f,arm-.5f,-.85f,3.4f,2.5f,.12f,0,0,0);
+            if(i==1){maker.box(a.getChild("drawing_sheet"),"flower",9,-.5f,arm,-.92f,1,.8f,.04f,0,0,0);maker.box(a.getChild("drawing_sheet"),"stem",12,-.12f,arm+.6f,-.92f,.24f,.6f,.04f,0,0,0);}
             if(i==1)maker.box(a,"ring",7,-.75f,arm-.6f,-.75f,1.5f,.24f,1.5f,0,0,0);
             maker.box(r,"strap"+i,5,-.27f,0,-1.65f,.54f,torso, .24f,x,shoulder,0);
             maker.box(r,"buckle"+i,7,-.35f,1.1f,-1.82f,.7f,.55f,.25f,x,shoulder,0);

@@ -48,6 +48,7 @@ public final class FamilyBehaviorGoal extends Goal {
                 return true;
             }
         }
+        if(mob.atHomeMode())return false;
         if (mob.kind != Kind.SYUSYA) {
             var snails = mob.level().getEntitiesOfClass(Companion.class, mob.getBoundingBox().inflate(12),
                     other -> other.kind == Kind.SYUSYA && mob.sameFamily(other) && !other.staying());
@@ -136,7 +137,7 @@ public final class FamilyBehaviorGoal extends Goal {
     }
 
     @Override public boolean canContinueToUse() {
-        if (mob.staying() || mob.level().getGameTime() >= until || (targetEntity != null && (!targetEntity.isAlive() || targetEntity.level() != mob.level()))) return false;
+        if (mob.staying() || mob.atHomeMode() && task!=Activity.ALERT || mob.level().getGameTime() >= until || (targetEntity != null && (!targetEntity.isAlive() || targetEntity.level() != mob.level()))) return false;
         if(mob.homeWelcomePending() && (task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE
                 || task==Activity.ADJUST_GLASSES || task==Activity.SLEEP))return false;
         if((task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE || task==Activity.ADJUST_GLASSES || task==Activity.SLEEP) && CampfireScenes.select(mob)!=null)return false;
@@ -157,7 +158,7 @@ public final class FamilyBehaviorGoal extends Goal {
     }
 
     @Override public void tick() {
-        if(mob.staying()){stop();return;}
+        if(!canContinueToUse()){stop();return;}
         if(task==Activity.CAKE_RUN && !canContinueToUse()) {
             until=0;targetBlock=null;approachBlock=null;mob.getNavigation().stop();mob.setActivity(Activity.IDLE);return;
         }

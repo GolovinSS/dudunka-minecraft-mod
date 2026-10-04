@@ -35,6 +35,9 @@ public class FamilyModel extends EntityModel<Companion> {
             cube(r,"leg1",4,-.7f,0,-.8f,1.4f,2,1.6f,PartPose.offset(.9f,22,0));
             cube(r,"arm0",0,-.6f,0,-.6f,1.2f,3.3f,1.2f,PartPose.offset(-2.4f,18.4f,0));
             cube(r,"arm1",0,-.6f,0,-.6f,1.2f,3.3f,1.2f,PartPose.offset(2.4f,18.4f,0));
+            cube(r.getChild("arm1"),"drawing_sheet",6,-1.2f,2.5f,-.85f,2.4f,2,.12f,PartPose.ZERO);
+            cube(r.getChild("arm1").getChild("drawing_sheet"),"flower",2,-.4f,3,-.92f,.8f,.7f,.05f,PartPose.ZERO);
+            cube(r.getChild("arm1").getChild("drawing_sheet"),"stem",6,-.1f,3.5f,-.92f,.2f,.5f,.05f,PartPose.ZERO);
             cube(r.getChild("arm1"),"ring",7,-.72f,2.6f,-.72f,1.44f,.3f,1.44f,PartPose.ZERO);
             cube(r,"head",0,-2.3f,-4.6f,-2.1f,4.6f,4.6f,4.2f,PartPose.offset(0,18,0));
             PartDefinition h=r.getChild("head");
@@ -78,7 +81,7 @@ public class FamilyModel extends EntityModel<Companion> {
     @Override public void setupAnim(Companion e,float limbSwing,float amount,float age,float yaw,float pitch){
         root.getAllParts().forEach(ModelPart::resetPose);
         head.yRot=yaw*Mth.DEG_TO_RAD;head.xRot=pitch*Mth.DEG_TO_RAD;
-        if(e.activity() != Activity.SIT && e.activity() != Activity.CAMP_REST && e.activity() != Activity.SLEEP && e.activity() != Activity.WAIT_FOR_SYUSYA)
+        if(e.activity() != Activity.SIT && e.activity() != Activity.CAMP_REST && e.activity() != Activity.SLEEP && e.activity() != Activity.CURL && e.activity() != Activity.STRETCH && e.activity() != Activity.SCRATCH && e.activity() != Activity.DRAW && e.activity() != Activity.SHOW_DRAWING && e.activity() != Activity.WAIT_FOR_SYUSYA)
             for(int i=0;i<legs.size();i++)legs.get(i).xRot=Mth.cos(limbSwing*(amount > .4f ? 1.1f : .8f)+(i%2==0?0:Mth.PI))*amount;
         AnimationPoses.apply(root, e.kind, e.activity(), age);
         if(e.kind == Kind.DUDUNKA && amount > .4f && (e.activity() == Activity.IDLE || e.activity() == Activity.CAKE_RUN)) root.y += Math.abs(Mth.sin(limbSwing * 1.1f)) * amount * .4f;

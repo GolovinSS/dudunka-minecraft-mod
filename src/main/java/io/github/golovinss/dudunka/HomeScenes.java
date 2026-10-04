@@ -23,6 +23,7 @@ public final class HomeScenes {
             && mob.distanceToSqr(Vec3.atCenterOf(anchor))<=100;
     }
     public static Scene select(Companion mob) {
+        if(mob.atHomeMode() && FurnitureScenes.furniture(mob)!=null)return null;
         if(!mob.homeSceneReady())return null;
         BlockPos anchor=mob.homeAnchor();
         if(!atHome(mob,anchor) || (mob.kind==Kind.MARUSYA && !evening(mob)))return null;
@@ -61,7 +62,7 @@ public final class HomeScenes {
         return CampfireScenes.safePath(mob,mob.getNavigation().createPath(BlockPos.containing(destination),0));
     }
     public static boolean valid(Companion mob,Scene scene) {
-        if(scene==null || !scene.anchor().equals(mob.homeAnchor()) || !atHome(mob,scene.anchor())
+        if(mob.atHomeMode() && FurnitureScenes.furniture(mob)!=null || scene==null || !scene.anchor().equals(mob.homeAnchor()) || !atHome(mob,scene.anchor())
             || !mob.level().hasChunkAt(scene.focus()) || (scene.activity()!=Activity.WAVE && !interest(mob,scene.focus()))
             || mob.level().canSeeSky(scene.focus().above()))return false;
         if(scene.activity()==Activity.WAVE)return mob.kind==Kind.DUDUNKA && mob.trust()>=25

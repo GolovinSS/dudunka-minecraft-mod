@@ -23,7 +23,7 @@ public final class CampfireScenes {
         return player!=null && player.isAlive() && !player.isSpectator() && player.isShiftKeyDown();
     }
     private static boolean member(Companion mob,UUID owner,BlockPos fire) {
-        return mob.isAlive() && owner.equals(mob.ownerId()) && !mob.staying() && mob.blockPosition().distSqr(fire)<=100;
+        return mob.isAlive() && owner.equals(mob.ownerId()) && !mob.atHomeMode() && !mob.staying() && mob.blockPosition().distSqr(fire)<=100;
     }
     private static boolean baseValid(Level level,Scene scene) {
         Player owner=level.getPlayerByUUID(scene.owner());
@@ -53,6 +53,7 @@ public final class CampfireScenes {
         return true;
     }
     public static Scene select(Companion mob) {
+        if(mob.atHomeMode())return null;
         if(mob.level().isClientSide || mob.ownerId()==null || mob.staying() || mob.isInWaterOrBubble()
                 || mob.level().isRainingAt(mob.blockPosition()))return null;
         Player owner=mob.ownerPlayer();if(!ownerResting(owner)) {
@@ -76,7 +77,7 @@ public final class CampfireScenes {
         }
         if(fire==null)return null;
         var family=mob.level().getEntitiesOfClass(Companion.class,new AABB(fire).inflate(8),
-                other->other.isAlive() && owner.getUUID().equals(other.ownerId()) && !other.staying());
+                other->other.isAlive() && owner.getUUID().equals(other.ownerId()) && !other.staying() && !other.atHomeMode());
         family.sort(Comparator.comparing((Companion other)->other.kind.ordinal()).thenComparing(other->other.getUUID().toString()));
         Map<UUID,BlockPos> seats=new LinkedHashMap<>();Set<BlockPos> used=new HashSet<>();
         for(Companion other:family) {

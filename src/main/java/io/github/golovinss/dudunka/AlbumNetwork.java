@@ -11,7 +11,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 /** Direction-checked messages; all mutations run on the authenticated sender's server thread. */
 public final class AlbumNetwork {
-    private static final String VERSION="5";
+    private static final String VERSION="6";
     private static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(new ResourceLocation(DudunkaMod.ID,"album"),()->VERSION,VERSION::equals,VERSION::equals);
     private AlbumNetwork() {}
     public static void register(){
@@ -28,7 +28,12 @@ public final class AlbumNetwork {
                 var ctx=context.get();ctx.enqueueWork(()->DistExecutor.unsafeRunWhenOn(Dist.CLIENT,()->()->io.github.golovinss.dudunka.client.FamilyAlbumScreen.update(message)));ctx.setPacketHandled(true);
             },Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(3,AlbumCommands.RecoveryCommand.class,(m,b)->{b.writeUUID(m.session());b.writeUUID(m.member());b.writeVarInt(m.request());},b->new AlbumCommands.RecoveryCommand(b.readUUID(),b.readUUID(),b.readVarInt()),(m,c)->{var ctx=c.get();ctx.enqueueWork(()->AlbumCommands.recover(ctx.getSender(),m));ctx.setPacketHandled(true);},Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(4,AlbumCommands.FurnitureCommand.class,AlbumNetwork::encodeFurniture,AlbumNetwork::decodeFurniture,(m,c)->{var ctx=c.get();ctx.enqueueWork(()->handleFurniture(ctx.getSender(),m));ctx.setPacketHandled(true);},Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
+    public static void furniture(AlbumCommands.FurnitureCommand message){CHANNEL.sendToServer(message);}
+    public static void handleFurniture(ServerPlayer player,AlbumCommands.FurnitureCommand message){var reply=AlbumCommands.executeFurniture(player,message);if(reply!=null)reply(player,reply);}
+    public static void encodeFurniture(AlbumCommands.FurnitureCommand m,FriendlyByteBuf b){b.writeUUID(m.session());b.writeUUID(m.member());b.writeBoolean(m.clear());b.writeVarInt(m.request());}
+    public static AlbumCommands.FurnitureCommand decodeFurniture(FriendlyByteBuf b){return new AlbumCommands.FurnitureCommand(b.readUUID(),b.readUUID(),b.readBoolean(),b.readVarInt());}
     public static void encodeReply(AlbumCommands.Reply reply,FriendlyByteBuf buf){buf.writeUUID(reply.session());buf.writeVarInt(reply.request());buf.writeEnum(reply.result().code());buf.writeVarInt(reply.result().retrySeconds());FamilyAlbum.encode(reply.snapshot(),buf);}
     public static AlbumCommands.Reply decodeReply(FriendlyByteBuf buf){return new AlbumCommands.Reply(buf.readUUID(),buf.readVarInt(),new RecoveryResult(buf.readEnum(RecoveryResult.Code.class),buf.readVarInt()),FamilyAlbum.decode(buf));}
     public static void reply(ServerPlayer p,AlbumCommands.Reply message){CHANNEL.send(PacketDistributor.PLAYER.with(()->p),message);}
@@ -37,8 +42,8 @@ public final class AlbumNetwork {
         var reply=AlbumCommands.execute(player,message);
         if(reply!=null)CHANNEL.send(PacketDistributor.PLAYER.with(()->player),reply);
     }
-    public static void encodeCommand(AlbumCommands.Command message,FriendlyByteBuf buf){buf.writeUUID(message.session());buf.writeUUID(message.member());buf.writeBoolean(message.stay());buf.writeVarInt(message.request());}
-    public static AlbumCommands.Command decodeCommand(FriendlyByteBuf buf){return new AlbumCommands.Command(buf.readUUID(),buf.readUUID(),buf.readBoolean(),buf.readVarInt());}
+    public static void encodeCommand(AlbumCommands.Command message,FriendlyByteBuf buf){buf.writeUUID(message.session());buf.writeUUID(message.member());buf.writeBoolean(message.stay());buf.writeVarInt(message.request());buf.writeBoolean(message.home());}
+    public static AlbumCommands.Command decodeCommand(FriendlyByteBuf buf){return new AlbumCommands.Command(buf.readUUID(),buf.readUUID(),buf.readBoolean(),buf.readVarInt(),buf.readBoolean());}
     public static void open(ServerPlayer player){CHANNEL.send(PacketDistributor.PLAYER.with(()->player),AlbumCommands.open(player));}
     public static void command(AlbumCommands.Command message){CHANNEL.sendToServer(message);}
 }
