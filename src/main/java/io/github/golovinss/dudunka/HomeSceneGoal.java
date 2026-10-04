@@ -14,6 +14,7 @@ public final class HomeSceneGoal extends Goal {
     @Override public boolean requiresUpdateEveryTick(){return true;}
     @Override public boolean canUse(){
         long now=mob.level().getGameTime();if(now<nextCheck)return false;nextCheck=now+20;
+        if(HomeTogetherScenes.select(mob)!=null)return false;
         scene=HomeScenes.select(mob);return scene!=null;
     }
     @Override public void start(){until=mob.level().getGameTime()+(scene.activity()==Activity.WAVE?80:200);mob.reserveHomeScene(scene.focus());

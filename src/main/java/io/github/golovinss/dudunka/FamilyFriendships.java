@@ -91,6 +91,24 @@ public final class FamilyFriendships extends SavedData {
             else ledger.pausePair(scene.owner(),mob.getUUID(),id);
         }
     }
+    private static boolean homeSeated(Companion mob,HomeTogetherScenes.Scene scene){
+        BlockPos seat=scene.seats().get(mob.getUUID());
+        return mob.activity()==Activity.SIT && HomeTogetherScenes.active(mob,scene) && seat!=null
+            && mob.distanceToSqr(Vec3.atBottomCenterOf(seat))<=.36;
+    }
+    public static void tickHome(Companion mob,HomeTogetherScenes.Scene scene){
+        if(!(mob.level() instanceof ServerLevel level) || scene==null)return;
+        long now=level.getServer().overworld().getGameTime();if(now%20!=0)return;
+        var ledger=get(level.getServer());
+        if(!homeSeated(mob,scene)){ledger.pause(mob.ownerId(),mob.getUUID());return;}
+        for(UUID id:scene.seats().keySet()){
+            if(id.equals(mob.getUUID()))continue;
+            var entity=level.getEntity(id);
+            if(entity instanceof Companion other && homeSeated(other,scene))
+                ledger.observe(scene.owner(),mob.getUUID(),mob.kind,other.getUUID(),other.kind,now);
+            else ledger.pausePair(scene.owner(),mob.getUUID(),id);
+        }
+    }
     public static boolean show(Player viewer,Companion mob){
         if(!(mob.level() instanceof ServerLevel level) || !viewer.getUUID().equals(mob.ownerId()))return false;
         var relations=get(level.getServer()).relations(mob.ownerId(),mob.getUUID());

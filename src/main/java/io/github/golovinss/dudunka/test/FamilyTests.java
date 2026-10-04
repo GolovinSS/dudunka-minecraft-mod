@@ -879,6 +879,88 @@ public class FamilyTests {
         h.assertTrue(ledger.relations(owner.getUUID(),first.getUUID()).size()==13,"Reading album must not truncate persistent friendship history");owner.discard();h.succeed();
     }
 
+    private static long togetherPreviousTime;
+    @BeforeBatch(batch="home_together")
+    public static void beforeTogether(net.minecraft.server.level.ServerLevel level){togetherPreviousTime=level.getDayTime();level.setDayTime(6000);}
+    @AfterBatch(batch="home_together")
+    public static void afterTogether(net.minecraft.server.level.ServerLevel level){level.setDayTime(togetherPreviousTime);}
+    private static java.util.List<Companion> togetherFamily(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner) {
+        var first=sceneHome(h,owner,Kind.DUDUNKA);var family=new java.util.ArrayList<Companion>();
+        BlockPos[] homes={first,h.absolutePos(new BlockPos(3,2,2)),h.absolutePos(new BlockPos(3,2,3))};
+        BlockPos[] starts={new BlockPos(1,2,3),new BlockPos(3,2,1),new BlockPos(3,2,4)};
+        for(int i=0;i<3;i++) {
+            Kind kind=Kind.values()[i];
+            if(i>0){h.getLevel().setBlock(homes[i],DudunkaMod.HOMES.get(kind).get().defaultBlockState(),3);((HomeMarkerEntity)h.getLevel().getBlockEntity(homes[i])).claim(owner.getUUID());}
+            var mob=create(h,kind,owner.getUUID(),starts[i]);mob.bindHome(homes[i]);mob.setOnGround(true);family.add(mob);
+        }
+        return family;
+    }
+    @GameTest(template="empty",batch="home_together",timeoutTicks=40)
+    public static void togetherReservesSeparateCoveredPlacesForOwnFamily(GameTestHelper h) {
+        var owner=testOwner(h);var family=togetherFamily(h,owner);var foreign=create(h,Kind.MARUSYA,UUID.randomUUID(),new BlockPos(5,2,5));foreign.bindHome(family.get(1).homeAnchor());
+        var scene=HomeTogetherScenes.select(family.get(0));h.assertTrue(scene!=null && scene.seats().size()==3,"All three nearby valid homes must offer shared rest");
+        h.assertTrue(new java.util.HashSet<>(scene.seats().values()).size()==3 && !scene.seats().containsKey(foreign.getUUID()),"Each own member gets a different seat; foreign member excluded");
+        for(var mob:family){var seat=scene.seats().get(mob.getUUID());h.assertTrue(HomeTogetherScenes.active(mob,scene) && !h.getLevel().canSeeSky(seat.above()) && HomeRules.safeStanding(h.getLevel(),seat,mob),"Each reserved place must be covered, safe and active");}
+        h.assertTrue(HomeTogetherScenes.select(foreign)==null,"Foreign marker cannot enable gathering");
+        var legacy=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,4));h.assertTrue(HomeTogetherScenes.select(legacy)==null,"Egg home without personal marker cannot gather");
+        owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",batch="home_together",timeoutTicks=40)
+    public static void togetherHonorsCommandsOwnerDepartureAndDestroyedHome(GameTestHelper h) {
+        var owner=testOwner(h);var family=togetherFamily(h,owner);var scene=HomeTogetherScenes.select(family.get(0));h.assertTrue(scene!=null,"Fixture must offer gathering");
+        var goal=new HomeTogetherGoal(family.get(0));h.assertTrue(goal.canUse(),"Gather goal must start");goal.start();
+        family.get(0).commandStay(owner,true);goal.tick();goal.tick();
+        h.assertTrue(family.get(0).staying() && !HomeTogetherScenes.active(family.get(0),scene) && HomeTogetherScenes.active(family.get(1),scene),"Stay cancels its member while remaining pair can rest");
+        h.getLevel().setBlock(family.get(2).homeAnchor(),Blocks.AIR.defaultBlockState(),3);
+        h.assertTrue(!HomeTogetherScenes.active(family.get(1),scene),"Missing second valid home must end remaining singleton");
+        owner.moveTo(owner.getX()+20,owner.getY(),owner.getZ(),0,0);h.assertTrue(HomeTogetherScenes.select(family.get(1))==null,"Owner leaving home cancels selection");
+        owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",batch="home_together",timeoutTicks=100)
+    public static void togetherFriendshipRequiresActualSimultaneousSitting(GameTestHelper h) {
+        var owner=testOwner(h);var family=togetherFamily(h,owner);var a=family.get(0);var b=family.get(1);family.get(2).discard();
+        var scene=HomeTogetherScenes.select(a);h.assertTrue(scene!=null && scene.seats().size()==2,"Pair must have gathering");
+        var ga=new HomeTogetherGoal(a);var gb=new HomeTogetherGoal(b);h.assertTrue(ga.canUse() && gb.canUse(),"Both goals select the same gathering");ga.start();gb.start();
+        var ledger=FamilyFriendships.get(h.getLevel().getServer());long now=h.getLevel().getServer().overworld().getGameTime();long start=now/20*20-1180;
+        for(int i=0;i<=59;i++)ledger.observe(owner.getUUID(),a.getUUID(),a.kind,b.getUUID(),b.kind,start+i*20);
+        b.setActivity(Activity.CURIOUS);FamilyFriendships.tickHome(a,scene);FamilyFriendships.tickHome(b,scene);
+        h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==0,"Approaching cannot earn a point");
+        for(var mob:java.util.List.of(a,b)){var seat=scene.seats().get(mob.getUUID());mob.moveTo(seat.getX()+.5,seat.getY(),seat.getZ()+.5,0,0);mob.setNoGravity(true);mob.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);}
+        h.onEachTick(()->{ga.tick();gb.tick();});int[] progress={-1};
+        h.runAfterDelay(45,()->{
+            h.assertTrue(a.activity()==Activity.SIT && b.activity()==Activity.SIT && ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==1,"Real goal ticks must finish seeded minute once for simultaneous sitting");
+            owner.setShiftKeyDown(true);ga.tick();gb.tick();progress[0]=ledger.progress(owner.getUUID(),a.getUUID(),b.getUUID());
+        });
+        h.runAfterDelay(80,()->{
+            h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==1 && ledger.progress(owner.getUUID(),a.getUUID(),b.getUUID())==progress[0],"Interrupted rest cannot accrue friendship");
+            ga.stop();gb.stop();owner.discard();h.succeed();
+        });
+    }
+    @GameTest(template="empty",batch="home_together",timeoutTicks=40)
+    public static void togetherYieldsToSnailThreatAndUnsafeSeat(GameTestHelper h) {
+        var owner=testOwner(h);var family=togetherFamily(h,owner);var scene=HomeTogetherScenes.select(family.get(0));h.assertTrue(scene!=null,"Fixture must offer gathering");
+        var snail=family.get(2);snail.moveTo(snail.getX()+6,snail.getY(),snail.getZ(),0,0);
+        h.assertTrue(HomeTogetherScenes.select(family.get(0))==null && new FamilyBehaviorGoal(family.get(0)).canUse(),"Waiting for distant own snail must take priority");
+        snail.moveTo(family.get(0).getX()+1,snail.getY(),family.get(0).getZ(),0,0);
+        var monster=new net.minecraft.world.entity.monster.Zombie(net.minecraft.world.entity.EntityType.ZOMBIE,h.getLevel());monster.moveTo(family.get(1).position());monster.setNoAi(true);h.getLevel().addFreshEntity(monster);
+        h.assertTrue(!HomeTogetherScenes.active(family.get(1),scene),"Cat must leave group on nearby threat");monster.discard();
+        var seat=scene.seats().get(family.get(0).getUUID());h.getLevel().setBlock(seat,Blocks.WATER.defaultBlockState(),3);
+        h.assertTrue(!HomeTogetherScenes.active(family.get(0),scene),"Water replacing seat must invalidate immediately");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",batch="home_together",timeoutTicks=150)
+    public static void togetherReallyWalksAndSitsWithLiveAI(GameTestHelper h) {
+        var owner=testOwner(h);var family=togetherFamily(h,owner);family.get(2).discard();var a=family.get(0);var b=family.get(1);
+        // Use two Dudunkas to isolate the gathering from cat independence/evening rules.
+        b.discard();b=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(4,2,4));b.bindHome(a.homeAnchor());
+        var scene=HomeTogetherScenes.select(a);h.assertTrue(scene!=null && scene.seats().size()==2,"Live fixture must reserve a pair");
+        a.moveTo(a.getX(),a.getY(),a.getZ()+1,0,0);b.moveTo(b.getX(),b.getY(),b.getZ()-1,0,0);a.setNoAi(false);b.setNoAi(false);final Companion second=b;
+        h.runAfterDelay(100,()->{
+            h.assertTrue(a.activity()==Activity.SIT && second.activity()==Activity.SIT && HomeTogetherScenes.active(a,scene),"Live AI must settle in the same gathering: a="+a.activity()+" "+a.position()+", b="+second.activity()+" "+second.position());
+            h.assertTrue(a.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(scene.seats().get(a.getUUID())))<=.36 && second.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(scene.seats().get(second.getUUID())))<=.36,"Each must physically arrive at its own seat");
+            owner.discard();h.succeed();
+        });
+    }
+
     private static AlbumCommands.Open commandAlbum(net.minecraft.server.level.ServerPlayer owner) {
         owner.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));
         return AlbumCommands.open(owner);

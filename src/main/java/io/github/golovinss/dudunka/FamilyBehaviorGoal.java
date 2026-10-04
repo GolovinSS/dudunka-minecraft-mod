@@ -65,7 +65,7 @@ public final class FamilyBehaviorGoal extends Goal {
             if (targetBlock != null) { task = Activity.SIT; return true; }
         }
         if(CampfireScenes.select(mob)!=null)return false; // Explicit family rest yields only after urgent/weather tasks.
-        if(mob.homeWelcomeRunning() || HomeScenes.select(mob)!=null)return false;
+        if(mob.homeWelcomeRunning() || HomeTogetherScenes.select(mob)!=null || HomeScenes.select(mob)!=null)return false;
         if (mob.level().isNight()) {
             // A marked cat uses the reserved scene; do not bypass its cooldown or occupied-bed checks.
             if(mob.kind==Kind.MARUSYA && mob.homeAnchor()!=null)return false;
@@ -143,6 +143,7 @@ public final class FamilyBehaviorGoal extends Goal {
         if(task==Activity.CAKE_RUN && (targetBlock==null || !mob.level().hasChunkAt(targetBlock)
                 || !mob.level().getBlockState(targetBlock).is(Blocks.CAKE) || approachBlock==null
                 || !HomeRules.safeStanding(mob.level(),approachBlock,mob)))return false;
+        if(HomeTogetherScenes.select(mob)!=null && (task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE || task==Activity.ADJUST_GLASSES || task==Activity.SLEEP))return false;
         if(mob.openChestTarget()!=null && (task==Activity.CURIOUS || task==Activity.CAKE_RUN || task==Activity.WAVE || task==Activity.ADJUST_GLASSES))return false;
         if (mob.kind == Kind.MARUSYA && task != Activity.ALERT && mob.tickCount % 20 == 0
                 && !mob.level().getEntitiesOfClass(Monster.class, mob.getBoundingBox().inflate(10), Entity::isAlive).isEmpty()) return false;
