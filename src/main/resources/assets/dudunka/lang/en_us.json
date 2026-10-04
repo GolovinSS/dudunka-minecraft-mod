@@ -88,5 +88,12 @@
   "home.dudunka.condition.light": "Light",
   "home.dudunka.condition.food": "Placed cake",
   "screen.dudunka.album_snapshot": "Snapshot at opening. Scroll with the wheel; reopen to refresh.",
-  "screen.dudunka.album_kind": "Character: %s"
+  "screen.dudunka.album_kind": "Character: %s",
+  "screen.dudunka.album_stay": "Wait here",
+  "screen.dudunka.album_follow": "Follow",
+  "screen.dudunka.album_commands": "Commands for this companion",
+  "screen.dudunka.album_applied": "Command applied",
+  "screen.dudunka.album_rejected": "Unavailable: check album and distance",
+  "screen.dudunka.album_pending": "Waiting for server…",
+  "screen.dudunka.album_timeout": "Reopen album or retry command"
 }

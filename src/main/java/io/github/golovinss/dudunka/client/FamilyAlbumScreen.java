@@ -1,6 +1,6 @@
 package io.github.golovinss.dudunka.client;
 
-import io.github.golovinss.dudunka.FamilyAlbum;
+import io.github.golovinss.dudunka.*;
 import java.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -9,20 +9,39 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
-/** Read-only snapshot, with paging and scrolling for small windows/long names. */
+/** Server-authoritative commands, with paging and scrolling for small windows/long names. */
 public final class FamilyAlbumScreen extends Screen {
-    private final FamilyAlbum.Snapshot snapshot;
+    private FamilyAlbum.Snapshot snapshot;
+    private final UUID session;
+    private int request,pending,pendingTicks;
+    private String status="screen.dudunka.album_commands";
     private int page,scroll;
     private List<FormattedCharSequence> lines=List.of();
-    private Button previous,next;
+    private Button previous,next,stay,follow;
     private int left,panelWidth,top,bottom;
-    public FamilyAlbumScreen(FamilyAlbum.Snapshot snapshot){super(Component.translatable("screen.dudunka.album"));this.snapshot=snapshot;}
-    public static void open(FamilyAlbum.Snapshot snapshot){var mc=Minecraft.getInstance();if(mc.player!=null && mc.level!=null)mc.setScreen(new FamilyAlbumScreen(snapshot));}
+    public FamilyAlbumScreen(AlbumCommands.Open message){super(Component.translatable("screen.dudunka.album"));session=message.session();snapshot=message.snapshot();}
+    public static void open(AlbumCommands.Open message){var mc=Minecraft.getInstance();if(mc.player!=null && mc.level!=null)mc.setScreen(new FamilyAlbumScreen(message));}
+    public static void update(AlbumCommands.Reply reply) {
+        var mc=Minecraft.getInstance();
+        if(!(mc.screen instanceof FamilyAlbumScreen screen) || !screen.session.equals(reply.session()) || screen.pending!=reply.request())return;
+        UUID selected=screen.snapshot.entries().isEmpty()?null:screen.snapshot.entries().get(screen.page).id();
+        screen.snapshot=reply.snapshot();screen.page=Math.max(0,Math.min(screen.page,screen.snapshot.entries().size()-1));
+        for(int i=0;i<screen.snapshot.entries().size();i++)if(screen.snapshot.entries().get(i).id().equals(selected))screen.page=i;
+        screen.pending=0;screen.status=reply.accepted()?"screen.dudunka.album_applied":"screen.dudunka.album_rejected";screen.rebuild();
+    }
+    private void command(boolean waiting) {
+        if(pending!=0 || snapshot.entries().isEmpty())return;
+        pending=++request;pendingTicks=0;status="screen.dudunka.album_pending";rebuild();
+        AlbumNetwork.command(new AlbumCommands.Command(session,snapshot.entries().get(page).id(),waiting,pending));
+    }
+    @Override public void tick(){if(pending!=0 && ++pendingTicks>=60){pending=0;status="screen.dudunka.album_timeout";rebuild();}}
     @Override protected void init(){
-        panelWidth=Math.min(340,width-16);left=(width-panelWidth)/2;top=39+font.split(scope(),panelWidth-16).size()*10;bottom=height-42;
+        panelWidth=Math.min(340,width-16);left=(width-panelWidth)/2;top=39+font.split(scope(),panelWidth-16).size()*10;bottom=height-105;
         previous=addRenderableWidget(Button.builder(Component.literal("<"),b->change(-1)).bounds(left,height-30,40,20).build());
         next=addRenderableWidget(Button.builder(Component.literal(">"),b->change(1)).bounds(left+panelWidth-40,height-30,40,20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"),b->onClose()).bounds(width/2-45,height-30,90,20).build());
+        stay=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.album_stay"),b->command(true)).bounds(left,height-60,panelWidth/2-4,20).build());
+        follow=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.album_follow"),b->command(false)).bounds(left+panelWidth/2+4,height-60,panelWidth/2-4,20).build());
         rebuild();
     }
     private void change(int delta){page=Math.max(0,Math.min(snapshot.entries().size()-1,page+delta));scroll=0;rebuild();}
@@ -51,7 +70,9 @@ public final class FamilyAlbumScreen extends Screen {
         }
         text.add(Component.empty());text.add(Component.translatable("screen.dudunka.album_snapshot"));
         var wrapped=new ArrayList<FormattedCharSequence>();for(var line:text)wrapped.addAll(font.split(line,Math.max(40,panelWidth-24)));
-        lines=List.copyOf(wrapped);previous.active=page>0;next.active=page+1<snapshot.entries().size();scroll=Math.min(scroll,maxScroll());
+        lines=List.copyOf(wrapped);previous.active=pending==0 && page>0;next.active=pending==0 && page+1<snapshot.entries().size();scroll=Math.min(scroll,maxScroll());
+        stay.active=pending==0 && !snapshot.entries().isEmpty() && !snapshot.entries().get(page).staying();
+        follow.active=pending==0 && !snapshot.entries().isEmpty() && snapshot.entries().get(page).staying();
     }
     private Component scope(){return Component.translatable("screen.dudunka.album_scope",snapshot.entries().size(),snapshot.total());}
     private int maxScroll(){return Math.max(0,lines.size()*12-(bottom-top));}
@@ -65,7 +86,8 @@ public final class FamilyAlbumScreen extends Screen {
         int y=top-scroll;for(var line:lines){graphics.drawString(font,line,left+12,y,0xF3E8CF,false);y+=12;}
         graphics.disableScissor();
         if(maxScroll()>0)graphics.drawString(font,Component.literal(scroll<maxScroll()?"↓":"↑"),left+panelWidth-10,bottom-10,0xFFE2AD,false);
-        if(!snapshot.entries().isEmpty())graphics.drawCenteredString(font,Component.literal((page+1)+" / "+snapshot.entries().size()),width/2,height-42,0xC7C0AE);
+        if(!snapshot.entries().isEmpty())graphics.drawCenteredString(font,Component.literal((page+1)+" / "+snapshot.entries().size()),width/2,height-102,0xC7C0AE);
+        int statusY=height-90;for(var line:font.split(Component.translatable(status),panelWidth-16)){graphics.drawString(font,line,width/2-font.width(line)/2,statusY,0xC7C0AE,false);statusY+=10;}
         super.render(graphics,mouseX,mouseY,partial);
     }
 }

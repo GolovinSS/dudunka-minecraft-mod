@@ -565,7 +565,7 @@ public class FamilyTests {
 
     @GameTest(template="empty",timeoutTicks=40)
     public static void marusyaAgeDimensionsAndPettingPersist(GameTestHelper h) {
-        var owner=testOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(2,2,2));
+        var owner=testOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX(),mob.getY(),mob.getZ(),0,0);
         float baby=mob.getBbWidth();var saved=new CompoundTag();mob.addAdditionalSaveData(saved);
         saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*20+1);mob.readAdditionalSaveData(saved);
         h.assertTrue(mob.stage()==1 && Math.abs(mob.getBbWidth()/baby-1.35f)<.001f,"Teen footprint must grow 1.35x");
@@ -622,7 +622,7 @@ public class FamilyTests {
         h.onEachTick(()->{ga.tick();gb.tick();FamilyFriendships.tick(foreign,scene);});
         int[] paused={-1};
         h.runAfterDelay(45,()->{
-            h.assertTrue(a.activity()==Activity.CAMP_REST && b.activity()==Activity.CAMP_REST,"Both must really be seated in the scene");
+            h.assertTrue(a.activity()==Activity.CAMP_REST && b.activity()==Activity.CAMP_REST,"Both must really be seated: a="+a.activity()+" pos="+a.position()+" b="+b.activity()+" pos="+b.position()+" active="+CampfireScenes.active(a,scene)+" owner="+owner.position()+" shift="+owner.isShiftKeyDown()+" fire="+CampfireScenes.lit(h.getLevel(),scene.fire()));
             h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==1,"Goal ticks must finish the seeded minute once, without duplicate credit");
             h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),foreign.getUUID())==0,"Foreign character must not earn friendship");
             owner.setShiftKeyDown(false);ga.tick();gb.tick();paused[0]=ledger.progress(owner.getUUID(),a.getUUID(),b.getUUID());
@@ -842,7 +842,7 @@ public class FamilyTests {
     @GameTest(template="empty",timeoutTicks=40)
     public static void albumCodecRoundTripsAndRejectsOversizedLists(GameTestHelper h) {
         var friend=new FamilyAlbum.Friend(net.minecraft.network.chat.Component.literal("Сюся"),70);
-        var entry=new FamilyAlbum.Entry(net.minecraft.network.chat.Component.literal("Дюдюнька"),Kind.DUDUNKA,1,25,false,new FamilyAlbum.HomeInfo(FamilyAlbum.HomeState.READY,31),java.util.List.of(friend));
+        var entry=new FamilyAlbum.Entry(UUID.randomUUID(),net.minecraft.network.chat.Component.literal("Дюдюнька"),Kind.DUDUNKA,1,25,false,new FamilyAlbum.HomeInfo(FamilyAlbum.HomeState.READY,31),java.util.List.of(friend));
         var original=new FamilyAlbum.Snapshot(1,java.util.List.of(entry));var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
         try {FamilyAlbum.encode(original,buf);h.assertTrue(original.equals(FamilyAlbum.decode(buf)),"Localized snapshot and friendship must round-trip exactly");}
         finally {buf.release();}
@@ -877,6 +877,70 @@ public class FamilyTests {
         var entry=snapshot.entries().stream().filter(e->e.name().getString().equals("AlbumFirst")).findFirst().orElseThrow();
         h.assertTrue(entry.friends().size()==5 && snapshot.entries().stream().allMatch(e->e.friends().size()<=5),"Friend history must be capped without losing ledger entries");
         h.assertTrue(ledger.relations(owner.getUUID(),first.getUUID()).size()==13,"Reading album must not truncate persistent friendship history");owner.discard();h.succeed();
+    }
+
+    private static AlbumCommands.Open commandAlbum(net.minecraft.server.level.ServerPlayer owner) {
+        owner.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));
+        return AlbumCommands.open(owner);
+    }
+    @GameTest(template="empty",timeoutTicks=80)
+    public static void albumCommandsWaitFollowAndPreserveCare(GameTestHelper h) {
+        var owner=testOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX(),mob.getY(),mob.getZ(),0,0);
+        var data=new CompoundTag();mob.addAdditionalSaveData(data);data.putInt("Trust",48);data.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);mob.readAdditionalSaveData(data);
+        var open=commandAlbum(owner);mob.reserveHomeScene(mob.blockPosition());mob.setActivity(Activity.SLEEP);
+        var reply=AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),mob.getUUID(),true,1));
+        h.assertTrue(reply!=null && reply.accepted() && mob.staying() && mob.activity()==Activity.SIT && mob.homeSceneTarget()==null,"Wait command must immediately release the home scene");
+        h.assertTrue(reply.snapshot().entries().get(0).id().equals(mob.getUUID()) && reply.snapshot().entries().get(0).staying(),"Response must carry authoritative UUID and mode");
+        var saved=new CompoundTag();mob.addAdditionalSaveData(saved);mob.readAdditionalSaveData(saved);h.assertTrue(mob.staying(),"Command must persist in existing NBT");
+        h.runAfterDelay(12,()->{
+            var follow=AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),mob.getUUID(),false,2));
+            var after=new CompoundTag();mob.addAdditionalSaveData(after);
+            h.assertTrue(follow!=null && follow.accepted() && !mob.staying() && mob.trust()==48 && mob.stage()==2 && after.getLong("FamilyHome")==data.getLong("FamilyHome"),"Follow must preserve trust, stage and home");
+            owner.discard();h.succeed();
+        });
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumCommandsRejectForeignMissingItemAndDistantTargets(GameTestHelper h) {
+        var owner=testOwner(h);var stranger=testOwner(h);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX(),mob.getY(),mob.getZ(),0,0);stranger.moveTo(mob.getX(),mob.getY(),mob.getZ(),0,0);
+        var foreign=commandAlbum(stranger);var denied=AlbumCommands.execute(stranger,new AlbumCommands.Command(foreign.session(),mob.getUUID(),true,1));
+        h.assertTrue(denied!=null && !denied.accepted() && !mob.commandStay(stranger,true),"Foreign owner must fail both album and shared command");
+        var open=commandAlbum(owner);owner.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,net.minecraft.world.item.ItemStack.EMPTY);
+        denied=AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),mob.getUUID(),true,1));h.assertTrue(denied!=null && !denied.accepted(),"Removing album must reject command");
+        open=commandAlbum(owner);mob.moveTo(owner.getX()+65,owner.getY(),owner.getZ(),0,0);
+        denied=AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),mob.getUUID(),true,1));h.assertTrue(denied!=null && !denied.accepted() && denied.snapshot().entries().isEmpty(),"Leaving radius must reject and remove stale page");
+        mob.moveTo(owner.getX(),owner.getY(),owner.getZ(),0,0);open=commandAlbum(owner);owner.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
+        denied=AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),mob.getUUID(),true,1));h.assertTrue(denied!=null && !denied.accepted() && !mob.staying(),"Spectator cannot command");
+        owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumSessionsRejectReplaysFloodsAndPreviousOpenings(GameTestHelper h) {
+        var owner=testOwner(h);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX(),mob.getY(),mob.getZ(),0,0);var open=commandAlbum(owner);
+        var first=new AlbumCommands.Command(open.session(),mob.getUUID(),true,1);h.assertTrue(AlbumCommands.execute(owner,first).accepted(),"First command must succeed immediately after opening");
+        h.assertTrue(AlbumCommands.execute(owner,first)==null && AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),mob.getUUID(),false,2))==null && mob.staying(),"Replay/flood must not toggle or reply");
+        var next=AlbumCommands.open(owner);h.assertTrue(AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),mob.getUUID(),false,3))==null,"Previous screen session must be invalidated");
+        h.assertTrue(AlbumCommands.execute(owner,new AlbumCommands.Command(next.session(),mob.getUUID(),true,1)).accepted() && mob.staying(),"Explicit repeated wait is idempotent");
+        h.assertTrue(AlbumCommands.execute(null,first)==null,"Unauthenticated sender must be ignored");owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumCommandsRejectHiddenAndRemovedMembers(GameTestHelper h) {
+        var owner=testOwner(h);var members=new java.util.ArrayList<Companion>();
+        for(int i=0;i<13;i++)members.add(create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(2,2,2)));
+        owner.moveTo(members.get(0).getX(),members.get(0).getY(),members.get(0).getZ(),0,0);var open=commandAlbum(owner);
+        var ids=open.snapshot().entries().stream().map(FamilyAlbum.Entry::id).toList();var hidden=members.stream().filter(m->!ids.contains(m.getUUID())).findFirst().orElseThrow();
+        var denied=AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),hidden.getUUID(),true,1));h.assertTrue(!denied.accepted() && !hidden.staying(),"UUID outside displayed twelve pages must be rejected");
+        open=AlbumCommands.open(owner);UUID removed=open.snapshot().entries().get(0).id();h.getLevel().getEntity(removed).discard();
+        denied=AlbumCommands.execute(owner,new AlbumCommands.Command(open.session(),removed,true,1));h.assertTrue(!denied.accepted() && denied.snapshot().entries().stream().noneMatch(e->e.id().equals(removed)),"Removed target must be revalidated and page refreshed");
+        owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void albumCommandCodecAndReplyArePrivate(GameTestHelper h) {
+        var packets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();var foreignPackets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();
+        var owner=testOwner(h,null,packets);var stranger=testOwner(h,null,foreignPackets);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));owner.moveTo(mob.getX(),mob.getY(),mob.getZ(),0,0);var open=commandAlbum(owner);
+        var command=new AlbumCommands.Command(open.session(),mob.getUUID(),true,1);var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+        try{AlbumNetwork.encodeCommand(command,buf);h.assertTrue(command.equals(AlbumNetwork.decodeCommand(buf)),"Session, UUID, explicit mode and request must round-trip");}finally{buf.release();}
+        packets.clear();foreignPackets.clear();AlbumNetwork.handleCommand(owner,command);
+        h.assertTrue(mob.staying() && packets.stream().filter(p->p instanceof net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket).count()==1 && foreignPackets.isEmpty(),"Authoritative command response must reach sender only");
+        owner.discard();stranger.discard();h.succeed();
     }
 
     @GameTest(template="empty",timeoutTicks=40)

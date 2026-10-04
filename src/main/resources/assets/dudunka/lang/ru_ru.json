@@ -88,5 +88,12 @@
   "home.dudunka.condition.light": "Свет",
   "home.dudunka.condition.food": "Поставленный торт",
   "screen.dudunka.album_snapshot": "Сведения на момент открытия. Колесо — прокрутка; открой снова для обновления.",
-  "screen.dudunka.album_kind": "Персонаж: %s"
+  "screen.dudunka.album_kind": "Персонаж: %s",
+  "screen.dudunka.album_stay": "Ждать здесь",
+  "screen.dudunka.album_follow": "Следовать",
+  "screen.dudunka.album_commands": "Команды выбранному персонажу",
+  "screen.dudunka.album_applied": "Команда выполнена",
+  "screen.dudunka.album_rejected": "Команда недоступна — проверьте альбом и расстояние",
+  "screen.dudunka.album_pending": "Ожидание ответа…",
+  "screen.dudunka.album_timeout": "Откройте альбом снова или повторите команду"
 }

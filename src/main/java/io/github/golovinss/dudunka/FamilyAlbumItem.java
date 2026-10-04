@@ -12,7 +12,7 @@ public final class FamilyAlbumItem extends Item {
     @Override public InteractionResultHolder<ItemStack> use(Level level,Player player,InteractionHand hand) {
         var stack=player.getItemInHand(hand);
         if(player.getCooldowns().isOnCooldown(this))return InteractionResultHolder.pass(stack);
-        if(player instanceof ServerPlayer serverPlayer){AlbumNetwork.send(serverPlayer,FamilyAlbum.collect(serverPlayer));player.getCooldowns().addCooldown(this,20);}
+        if(player instanceof ServerPlayer serverPlayer){AlbumNetwork.open(serverPlayer);player.getCooldowns().addCooldown(this,20);}
         return InteractionResultHolder.sidedSuccess(stack,level.isClientSide);
     }
 }

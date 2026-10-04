@@ -11,7 +11,7 @@ public final class FamilyAlbum {
     public enum HomeState { NONE, LEGACY, OTHER_DIMENSION, UNLOADED, MISSING, INCOMPLETE, READY, UNSAFE }
     public record HomeInfo(HomeState state,int flags) {}
     public record Friend(Component name,int score) {}
-    public record Entry(Component name,Kind kind,int stage,int trust,boolean staying,HomeInfo home,List<Friend> friends) {}
+    public record Entry(UUID id,Component name,Kind kind,int stage,int trust,boolean staying,HomeInfo home,List<Friend> friends) {}
     public record Snapshot(int total,List<Entry> entries) {}
     private FamilyAlbum() {}
     public static Snapshot collect(ServerPlayer player) {
@@ -28,7 +28,7 @@ public final class FamilyAlbum {
                 if(other instanceof Companion companion && player.getUUID().equals(companion.ownerId()))name=name(companion);
                 friends.add(new Friend(name,relation.score()));
             }
-            entries.add(new Entry(name(mob),mob.kind,mob.stage(),mob.trust(),mob.staying(),mob.albumHome(),List.copyOf(friends)));
+            entries.add(new Entry(mob.getUUID(),name(mob),mob.kind,mob.stage(),mob.trust(),mob.staying(),mob.albumHome(),List.copyOf(friends)));
         }
         return new Snapshot(members.size(),List.copyOf(entries));
     }
@@ -41,7 +41,7 @@ public final class FamilyAlbum {
     public static void encode(Snapshot snapshot,FriendlyByteBuf buf) {
         buf.writeVarInt(snapshot.total());buf.writeVarInt(snapshot.entries().size());
         for(var entry:snapshot.entries()) {
-            buf.writeComponent(entry.name());buf.writeEnum(entry.kind());buf.writeVarInt(entry.stage());buf.writeVarInt(entry.trust());buf.writeBoolean(entry.staying());
+            buf.writeUUID(entry.id());buf.writeComponent(entry.name());buf.writeEnum(entry.kind());buf.writeVarInt(entry.stage());buf.writeVarInt(entry.trust());buf.writeBoolean(entry.staying());
             buf.writeEnum(entry.home().state());buf.writeByte(entry.home().flags());buf.writeVarInt(entry.friends().size());
             for(var friend:entry.friends()){buf.writeComponent(friend.name());buf.writeVarInt(friend.score());}
         }
@@ -51,10 +51,10 @@ public final class FamilyAlbum {
         int total=bounded(buf,0,Integer.MAX_VALUE),count=bounded(buf,0,12);if(total<count)throw new IllegalArgumentException("Invalid album count");
         var entries=new ArrayList<Entry>();
         for(int i=0;i<count;i++){
-            Component name=buf.readComponent();Kind kind=buf.readEnum(Kind.class);int stage=bounded(buf,0,2),trust=bounded(buf,0,100);boolean staying=buf.readBoolean();
+            UUID id=buf.readUUID();Component name=buf.readComponent();Kind kind=buf.readEnum(Kind.class);int stage=bounded(buf,0,2),trust=bounded(buf,0,100);boolean staying=buf.readBoolean();
             var home=new HomeInfo(buf.readEnum(HomeState.class),buf.readUnsignedByte()&31);int size=bounded(buf,0,5);var friends=new ArrayList<Friend>();
             for(int j=0;j<size;j++)friends.add(new Friend(buf.readComponent(),bounded(buf,0,100)));
-            entries.add(new Entry(name,kind,stage,trust,staying,home,List.copyOf(friends)));
+            entries.add(new Entry(id,name,kind,stage,trust,staying,home,List.copyOf(friends)));
         }
         return new Snapshot(total,List.copyOf(entries));
     }

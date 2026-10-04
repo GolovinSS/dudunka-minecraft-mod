@@ -53,6 +53,16 @@ public class Companion extends PathfinderMob {
     public void initialize(UUID owner,BlockPos home) { this.owner=owner; this.home=home.immutable(); this.homeDimension=level().dimension().location().toString(); setCustomName(Component.translatable("entity.dudunka."+kind.id)); }
     public int stage() { return entityData.get(STAGE); }
     public boolean staying() { return entityData.get(STAY); }
+    /** Explicit, idempotent mode command shared by nearby interaction and album. */
+    public boolean commandStay(Player player,boolean stay) {
+        if(level().isClientSide || !isAlive() || !player.isAlive() || player.isSpectator()
+            || player.level()!=level() || owner==null || !owner.equals(player.getUUID()) || distanceToSqr(player)>4096)return false;
+        if(staying()!=stay) {
+            entityData.set(STAY,stay);getNavigation().stop();pettingTicks=0;openedChest=null;
+            homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;setActivity(Activity.IDLE);
+        }
+        return true;
+    }
     public UUID ownerId() { return owner; }
     public Player ownerPlayer() { return owner == null ? null : level().getPlayerByUUID(owner); }
     public boolean sameFamily(Companion other) { return owner != null && owner.equals(other.ownerId()); }
@@ -181,7 +191,7 @@ public class Companion extends PathfinderMob {
             player.displayClientMessage(Component.translatable("message.dudunka.petted",trust),true);
             return InteractionResult.CONSUME;
         } else if(player.isShiftKeyDown()&&food.isEmpty()) {
-            entityData.set(STAY,!staying()); getNavigation().stop();
+            commandStay(player,!staying());
         }
         player.displayClientMessage(Component.translatable("message.dudunka.companion_status",Component.translatable("stage.dudunka."+stage()),trust,Component.translatable(staying()?"mode.dudunka.stay":"mode.dudunka.follow")),true);
         return InteractionResult.CONSUME;

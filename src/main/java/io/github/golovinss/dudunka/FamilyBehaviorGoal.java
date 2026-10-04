@@ -156,6 +156,7 @@ public final class FamilyBehaviorGoal extends Goal {
     }
 
     @Override public void tick() {
+        if(mob.staying()){stop();return;}
         if(task==Activity.CAKE_RUN && !canContinueToUse()) {
             until=0;targetBlock=null;approachBlock=null;mob.getNavigation().stop();mob.setActivity(Activity.IDLE);return;
         }
