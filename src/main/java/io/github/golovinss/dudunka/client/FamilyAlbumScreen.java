@@ -18,7 +18,7 @@ public final class FamilyAlbumScreen extends Screen {
     private int page,guidePage,recoveryPage,scroll;
     private boolean guide,recovery;
     private List<FormattedCharSequence> lines=List.of();
-    private Button previous,next,stay,follow,homeMode,assignFurniture,clearFurniture,returnMember;
+    private Button previous,next,stay,follow,homeMode,assignFurniture,clearFurniture,returnMember,help;
     private int left,panelWidth,top,bottom;
     public FamilyAlbumScreen(AlbumCommands.Open message){super(Component.translatable("screen.dudunka.album"));session=message.session();snapshot=message.snapshot();guide=snapshot.entries().isEmpty();}
     public static void open(AlbumCommands.Open message){var mc=Minecraft.getInstance();if(mc.player!=null && mc.level!=null)mc.setScreen(new FamilyAlbumScreen(message));}
@@ -43,7 +43,7 @@ public final class FamilyAlbumScreen extends Screen {
         if(pending!=0 && ++pendingTicks>=160){pending=0;status=Component.translatable("screen.dudunka.album_timeout");rebuild();}
     }
     @Override protected void init(){
-        panelWidth=Math.min(340,width-16);left=(width-panelWidth)/2;top=69+font.split(scope(),panelWidth-16).size()*10;bottom=height-105;
+        panelWidth=Math.min(340,width-16);left=(width-panelWidth)/2;top=93+font.split(scope(),panelWidth-16).size()*10;bottom=height-105;
         previous=addRenderableWidget(Button.builder(Component.literal("<"),b->change(-1)).bounds(left,height-30,40,20).build());
         next=addRenderableWidget(Button.builder(Component.literal(">"),b->change(1)).bounds(left+panelWidth-40,height-30,40,20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"),b->onClose()).bounds(width/2-45,height-30,90,20).build());
@@ -56,12 +56,13 @@ public final class FamilyAlbumScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.guide_tab"),b->tab(true)).bounds(left,31,panelWidth/3-3,20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.family_tab"),b->tab(false)).bounds(left+panelWidth/3+2,31,panelWidth/3-3,20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.recovery_tab"),b->{guide=false;recovery=true;scroll=0;rebuild();}).bounds(left+2*panelWidth/3+4,31,panelWidth/3-4,20).build());
+        help=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.help"),b->minecraft.setScreen(new QuickStartScreen(this))).bounds(width/2-65,55,130,20).build());
         rebuild();
     }
     private void tab(boolean guide){this.guide=guide;recovery=false;scroll=0;rebuild();}
     private void change(int delta){if(recovery){recoveryPage=Math.max(0,Math.min(snapshot.recovery().size()-1,recoveryPage+delta));scroll=0;rebuild();return;}if(guide){guidePage=Math.max(0,Math.min(EggGuide.PAGES-1,guidePage+delta));scroll=0;rebuild();return;}page=Math.max(0,Math.min(snapshot.entries().size()-1,page+delta));scroll=0;rebuild();}
     private void rebuild(){
-        top=69+font.split(scope(),panelWidth-16).size()*10;bottom=guide?height-54:height-(recovery?75:99)-Math.max(2,font.split(status,panelWidth-16).size())*10;stay.visible=follow.visible=homeMode.visible=assignFurniture.visible=clearFurniture.visible=!guide && !recovery;returnMember.visible=recovery;
+        top=93+font.split(scope(),panelWidth-16).size()*10;bottom=guide?height-54:height-(recovery?75:99)-Math.max(2,font.split(status,panelWidth-16).size())*10;stay.visible=follow.visible=homeMode.visible=assignFurniture.visible=clearFurniture.visible=!guide && !recovery;returnMember.visible=recovery;
         var text=new ArrayList<Component>();
         if(guide){text.addAll(EggGuide.page(guidePage,snapshot.guideFlags(),snapshot.trailMask()));}
         else if(recovery){
@@ -100,6 +101,7 @@ public final class FamilyAlbumScreen extends Screen {
         }
         if(!guide){text.add(Component.empty());text.add(Component.translatable("screen.dudunka.album_snapshot"));}
         var wrapped=new ArrayList<FormattedCharSequence>();for(var line:text)wrapped.addAll(font.split(line,Math.max(40,panelWidth-24)));
+        help.active=pending==0;
         returnMember.active=pending==0 && retryTicks==0 && !snapshot.recovery().isEmpty();
         lines=List.copyOf(wrapped);previous.active=guide?guidePage>0:recovery?pending==0 && recoveryPage>0:pending==0 && page>0;next.active=guide?guidePage+1<EggGuide.PAGES:recovery?pending==0 && recoveryPage+1<snapshot.recovery().size():pending==0 && page+1<snapshot.entries().size();scroll=Math.min(scroll,maxScroll());
         stay.active=pending==0 && !snapshot.entries().isEmpty() && !snapshot.entries().get(page).staying();
@@ -114,7 +116,7 @@ public final class FamilyAlbumScreen extends Screen {
     @Override public void render(GuiGraphics graphics,int mouseX,int mouseY,float partial){
         renderBackground(graphics);graphics.fill(left-4,8,left+panelWidth+4,height-36,0xEE29241D);
         graphics.drawCenteredString(font,title,width/2,16,0xFFE2AD);
-        int subtitleY=61;for(var line:font.split(scope(),panelWidth-16)){graphics.drawString(font,line,width/2-font.width(line)/2,subtitleY,0xC7C0AE,false);subtitleY+=10;}
+        int subtitleY=85;for(var line:font.split(scope(),panelWidth-16)){graphics.drawString(font,line,width/2-font.width(line)/2,subtitleY,0xC7C0AE,false);subtitleY+=10;}
         graphics.enableScissor(left,top,left+panelWidth,bottom);
         int y=top-scroll;for(var line:lines){graphics.drawString(font,line,left+12,y,0xF3E8CF,false);y+=12;}
         graphics.disableScissor();
