@@ -16,6 +16,23 @@
     "dudunka:bmc_marusya_betterdungeons_skeleton_dungeon_chests_common",
     "dudunka:bmc_marusya_betterdungeons_zombie_dungeon_chests_common",
     "dudunka:bmc_syusya_mvs_swamps",
-    "dudunka:bmc_syusya_betterdungeons_small_dungeon_chests_loot_piles"
+    "dudunka:bmc_syusya_betterdungeons_small_dungeon_chests_loot_piles",
+    "dudunka:trail_1_village_plains",
+    "dudunka:trail_1_village_desert",
+    "dudunka:trail_1_village_savanna",
+    "dudunka:trail_1_village_snowy",
+    "dudunka:trail_1_village_taiga",
+    "dudunka:trail_2_village_plains",
+    "dudunka:trail_2_village_desert",
+    "dudunka:trail_2_village_savanna",
+    "dudunka:trail_2_village_snowy",
+    "dudunka:trail_2_village_taiga",
+    "dudunka:trail_3_village_plains",
+    "dudunka:trail_3_village_desert",
+    "dudunka:trail_3_village_savanna",
+    "dudunka:trail_3_village_snowy",
+    "dudunka:trail_3_village_taiga",
+    "dudunka:trail_2_mvs",
+    "dudunka:trail_3_mvs"
   ]
 }

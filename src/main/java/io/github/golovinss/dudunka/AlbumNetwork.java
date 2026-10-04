@@ -11,7 +11,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 /** Direction-checked messages; all mutations run on the authenticated sender's server thread. */
 public final class AlbumNetwork {
-    private static final String VERSION="4";
+    private static final String VERSION="5";
     private static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(new ResourceLocation(DudunkaMod.ID,"album"),()->VERSION,VERSION::equals,VERSION::equals);
     private AlbumNetwork() {}
     public static void register(){
@@ -24,12 +24,13 @@ public final class AlbumNetwork {
                 handleCommand(ctx.getSender(),message);
             });ctx.setPacketHandled(true);
         },Optional.of(NetworkDirection.PLAY_TO_SERVER));
-        CHANNEL.registerMessage(2,AlbumCommands.Reply.class,(message,buf)->{buf.writeUUID(message.session());buf.writeVarInt(message.request());buf.writeBoolean(message.accepted());FamilyAlbum.encode(message.snapshot(),buf);},
-            buf->new AlbumCommands.Reply(buf.readUUID(),buf.readVarInt(),buf.readBoolean(),FamilyAlbum.decode(buf)),(message,context)->{
+        CHANNEL.registerMessage(2,AlbumCommands.Reply.class,AlbumNetwork::encodeReply,AlbumNetwork::decodeReply,(message,context)->{
                 var ctx=context.get();ctx.enqueueWork(()->DistExecutor.unsafeRunWhenOn(Dist.CLIENT,()->()->io.github.golovinss.dudunka.client.FamilyAlbumScreen.update(message)));ctx.setPacketHandled(true);
             },Optional.of(NetworkDirection.PLAY_TO_CLIENT));
         CHANNEL.registerMessage(3,AlbumCommands.RecoveryCommand.class,(m,b)->{b.writeUUID(m.session());b.writeUUID(m.member());b.writeVarInt(m.request());},b->new AlbumCommands.RecoveryCommand(b.readUUID(),b.readUUID(),b.readVarInt()),(m,c)->{var ctx=c.get();ctx.enqueueWork(()->AlbumCommands.recover(ctx.getSender(),m));ctx.setPacketHandled(true);},Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
+    public static void encodeReply(AlbumCommands.Reply reply,FriendlyByteBuf buf){buf.writeUUID(reply.session());buf.writeVarInt(reply.request());buf.writeEnum(reply.result().code());buf.writeVarInt(reply.result().retrySeconds());FamilyAlbum.encode(reply.snapshot(),buf);}
+    public static AlbumCommands.Reply decodeReply(FriendlyByteBuf buf){return new AlbumCommands.Reply(buf.readUUID(),buf.readVarInt(),new RecoveryResult(buf.readEnum(RecoveryResult.Code.class),buf.readVarInt()),FamilyAlbum.decode(buf));}
     public static void reply(ServerPlayer p,AlbumCommands.Reply message){CHANNEL.send(PacketDistributor.PLAYER.with(()->p),message);}
     public static void recover(AlbumCommands.RecoveryCommand message){CHANNEL.sendToServer(message);}
     public static void handleCommand(ServerPlayer player,AlbumCommands.Command message){

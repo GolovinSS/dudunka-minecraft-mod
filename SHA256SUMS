@@ -1,3 +1,13 @@
+9ea5c4e50520cc7ce75b59a64fabe080f8a19e84aff4c4a9ae53fe8e098b4243  dist/dudunka-0.10.0-alpha.jar
+393226625ff71f86f482844f2f4ddeb419fccd0a51d15c747ad1177ba21bc18b  dist/dudunka-0.11.0-alpha.jar
+aacc8959999ff2a27906721a4bd6d426f760ce292a545973cb178ba2b6121f9d  dist/dudunka-0.12.0-alpha.jar
+f1fded2cd31142c9478a9de4496e068e9192067aa5a1bd1398118f688485d908  dist/dudunka-0.13.0-alpha.jar
+d43df3b1cc875444d6e4f05af1fa58b17ae347bf3dd00bcca1f0c1349ecf1529  dist/dudunka-0.14.0-alpha.jar
+add5d0ea42f8ebeb89ad231d612ebf187b9be8d63c4165dc59f93be9c9c8f13d  dist/dudunka-0.15.0-alpha.jar
+22b4fc6dee99e9fd054e2abb8bbbb53623b8e6b99f3ccd530f32d3cb855f9915  dist/dudunka-0.16.0-alpha.jar
+31261e48d397c64293c1032cb06cde20201d21ad1dec378e16d25097e499efba  dist/dudunka-0.17.0-alpha.jar
+60b10213853d92d4a86fd0ccc293acfeed7ee7e07b080b456423a44f20fe45cf  dist/dudunka-0.18.0-alpha.jar
+edee8c9aad65cd184bea9e77abd9465b1acc1182cddd0552403c442c144e510e  dist/dudunka-0.19.0-alpha.jar
 ad33b58afd16b48b52ff4710214834b42f1aedce00da28cb38737a0c19c164de  dist/dudunka-0.2.0-alpha.jar
 f972699d9ef4e02ea4bea43b192a4e0c5f010491d40542168e5fe56809808124  dist/dudunka-0.2.1-alpha.jar
 02e3436bb6202c17ddad518940515bdf11bb5dbd0a7d7059e4c3ac733cf6ec4b  dist/dudunka-0.3.0-alpha.jar
@@ -5,3 +15,7 @@ f972699d9ef4e02ea4bea43b192a4e0c5f010491d40542168e5fe56809808124  dist/dudunka-0
 b14a8ea384d913b7cfc1041ff15b3260c5903085031787bd87e238301fefaf4b  dist/dudunka-0.4.0-alpha.jar
 43f79dec6ae9b6ed9c0e04e32f75e2fdad2303444ab86c951a765eb77e0c8cef  dist/dudunka-0.5.0-alpha.jar
 949aa12c273913c1e5ad18773656914b5b7fa74360152c421c94fe1918176432  dist/dudunka-0.6.0-alpha.jar
+5a69c4f3319f1ba24a8413e0160e2a032a824fcf96998f6984e9b282fabd9c51  dist/dudunka-0.7.0-alpha.jar
+ddbae323ba74fca731f7d210e30fd0672635ac252edadb111c07e866937f0253  dist/dudunka-0.8.0-alpha.jar
+219effb8798e1e42cd38dcaaa7b6c380a6ae400fd1edf284727ec4a923422cc2  dist/dudunka-0.9.0-alpha.jar
+1054e7e6ccbfbb06a802fd04668744926c3d45b2c4b48fd1918ebbca5ad6c8c8  dist/dudunka-0.20.0-alpha.jar

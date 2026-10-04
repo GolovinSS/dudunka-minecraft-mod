@@ -1,0 +1,11 @@
+{
+  "type": "dudunka:trail_note",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "mvs:houses_flower"
+    }
+  ],
+  "page": 3,
+  "chance": 0.35
+}

@@ -37,21 +37,23 @@ public final class CarrierLedger extends SavedData {
         if(!matches(id,token,owner) || !data.hasUUID("UUID") || !id.equals(data.getUUID("UUID")) || !data.hasUUID("FamilyOwner") || !owner.equals(data.getUUID("FamilyOwner")) || !"dudunka:syusya".equals(data.getString("id")))return false;
         var t=tickets.get(id);if(t.backup()==null){tickets.put(id,new Ticket(token,owner,true,data.copy()));setDirty();}return true;
     }
-    public boolean reissue(net.minecraft.server.level.ServerPlayer player,UUID id){
-        var t=tickets.get(id);if(t==null || !t.carried() || !t.owner().equals(player.getUUID()) || t.backup()==null)return false;
-        for(var world:player.server.getAllLevels())if(world.getEntity(id)!=null)return false;
+    public boolean reissue(net.minecraft.server.level.ServerPlayer player,UUID id){return reissueResult(player,id).accepted();}
+    public RecoveryResult reissueResult(net.minecraft.server.level.ServerPlayer player,UUID id){
+        var t=tickets.get(id);if(t==null || !t.carried() || !t.owner().equals(player.getUUID()))return RecoveryResult.of(RecoveryResult.Code.REJECTED);
+        if(t.backup()==null)return RecoveryResult.of(RecoveryResult.Code.NO_BACKUP);
+        for(var world:player.server.getAllLevels())if(world.getEntity(id)!=null)return RecoveryResult.of(RecoveryResult.Code.REJECTED);
         int slot=-1;
         for(int i=0;i<player.getInventory().getContainerSize();i++){
             var stack=player.getInventory().getItem(i);
             if(stack.is(DudunkaMod.CARRIER.get()) && SyusyaCarrierItem.filled(stack)){
                 var root=stack.getTag();var data=root.getCompound("Companion");
-                if(data.hasUUID("UUID") && id.equals(data.getUUID("UUID")) && root.hasUUID("Ticket") && matches(id,root.getUUID("Ticket"),player.getUUID()))return false;
+                if(data.hasUUID("UUID") && id.equals(data.getUUID("UUID")) && root.hasUUID("Ticket") && matches(id,root.getUUID("Ticket"),player.getUUID()))return RecoveryResult.of(RecoveryResult.Code.CARRIER_EXISTS);
             }
             if(i<36 && stack.is(DudunkaMod.CARRIER.get()) && stack.getCount()==1 && !SyusyaCarrierItem.filled(stack))slot=i;
         }
-        if(slot<0)slot=player.getInventory().getFreeSlot();if(slot<0)return false;
+        if(slot<0)slot=player.getInventory().getFreeSlot();if(slot<0)return RecoveryResult.of(RecoveryResult.Code.NO_SLOT);
         UUID token=UUID.randomUUID();var stack=new net.minecraft.world.item.ItemStack(DudunkaMod.CARRIER.get());stack.getOrCreateTag().put("Companion",t.backup().copy());stack.getOrCreateTag().putUUID("Ticket",token);
-        tickets.put(id,new Ticket(token,t.owner(),true,t.backup()));setDirty();player.getInventory().setItem(slot,stack);player.getInventory().setChanged();return true;
+        tickets.put(id,new Ticket(token,t.owner(),true,t.backup()));setDirty();player.getInventory().setItem(slot,stack);player.getInventory().setChanged();player.inventoryMenu.broadcastChanges();return RecoveryResult.of(RecoveryResult.Code.CARRIER_RESTORED);
     }
     public static CarrierLedger load(CompoundTag tag) {
         var result=new CarrierLedger();var entries=tag.getList("Tickets",Tag.TAG_COMPOUND);

@@ -921,7 +921,7 @@ public class FamilyTests {
                 boolean found=false;
                 for(int seed=1;seed<=128;seed++){
                     var generated=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation(tables[i]),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),eggLootContext(h,tables[i],seed*982451653L));
-                    final Kind expected=kinds[i];h.assertTrue(generated.stream().allMatch(item->item.is(DudunkaMod.EGG_ITEMS.get(expected).get())),"Table must match only assigned kind: "+tables[i]);if(!generated.isEmpty()){found=true;break;}
+                    final Kind expected=kinds[i];h.assertTrue(generated.stream().filter(item->!(item.getItem() instanceof TrailNoteItem)).allMatch(item->item.is(DudunkaMod.EGG_ITEMS.get(expected).get())),"Table must match only assigned kind: "+tables[i]);if(generated.stream().anyMatch(item->item.is(DudunkaMod.EGG_ITEMS.get(expected).get()))){found=true;break;}
                 }
                 h.assertTrue(found,"Registered GLM must add an egg for verified ID "+tables[i]);
             }
@@ -1260,4 +1260,107 @@ public class FamilyTests {
         var open=AlbumCommands.open(owner);h.assertTrue(FamilyRecovery.start(owner,id,open.session(),0),"Stale record may trigger a bounded search");
         h.runAfterDelay(110,()->{h.assertTrue(!FamilyRecovery.pending(owner.server,owner.getUUID()) && h.getLevel().getEntity(id)==null,"Timeout must finish search without recreating a live entity");registry.forget(id);owner.discard();h.succeed();});
     }
+
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void returnReasonsKeepOwnershipAndSafety(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(5,2,5));var before=mob.position();
+        owner.setOnGround(false);h.assertTrue(FamilyRecovery.moveResult(owner,mob).code()==RecoveryResult.Code.OWNER_UNSAFE && mob.position().equals(before),"Unsafe owner must get actionable reason without movement");owner.setOnGround(true);
+        mob.setLeashedTo(owner,false);h.assertTrue(FamilyRecovery.moveResult(owner,mob).code()==RecoveryResult.Code.TETHERED,"Leash must report tethered");mob.dropLeash(false,false);
+        var stranger=recoveryOwner(h);h.assertTrue(FamilyRecovery.moveResult(stranger,mob).code()==RecoveryResult.Code.REJECTED,"Foreign player must not receive private detail");stranger.discard();
+        for(int x=-1;x<=5;x++)for(int z=-1;z<=5;z++)if(Math.max(Math.abs(x-2),Math.abs(z-2))>=2)for(int y=2;y<=5;y++)h.getLevel().setBlock(h.absolutePos(new BlockPos(x,y,z)),Blocks.STONE.defaultBlockState(),3);
+        h.assertTrue(FamilyRecovery.moveResult(owner,mob).code()==RecoveryResult.Code.NO_SPACE && mob.position().equals(before),"Blocked landing must explain no space and retain source");mob.discard();owner.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void carrierReasonsDoNotRotateRejectedTickets(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,4));var carrier=new net.minecraft.world.item.ItemStack(DudunkaMod.CARRIER.get());UUID id=mob.getUUID();SyusyaCarrierItem.capture(mob,owner,carrier);UUID ticket=carrier.getTag().getUUID("Ticket");var ledger=CarrierLedger.get(owner.server);
+        owner.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,carrier);
+        h.assertTrue(ledger.reissueResult(owner,id).code()==RecoveryResult.Code.CARRIER_EXISTS && ledger.matches(id,ticket,owner.getUUID()),"Offhand carrier rejection must not rotate token");owner.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,net.minecraft.world.item.ItemStack.EMPTY);
+        for(int i=0;i<36;i++)owner.getInventory().setItem(i,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COBBLESTONE,64));
+        h.assertTrue(ledger.reissueResult(owner,id).code()==RecoveryResult.Code.NO_SLOT && ledger.matches(id,ticket,owner.getUUID()),"Full inventory must explain slot without side effects");
+        var foreign=testOwner(h);h.assertTrue(ledger.reissueResult(foreign,id).code()==RecoveryResult.Code.REJECTED,"Foreign ticket details must remain private");
+        var legacy=new CarrierLedger();UUID old=UUID.randomUUID();legacy.capture(old,UUID.randomUUID(),owner.getUUID());h.assertTrue(legacy.reissueResult(owner,old).code()==RecoveryResult.Code.NO_BACKUP,"Legacy ticket must explain missing copy");
+        owner.getInventory().setItem(1,new net.minecraft.world.item.ItemStack(DudunkaMod.CARRIER.get()));h.assertTrue(ledger.reissueResult(owner,id).code()==RecoveryResult.Code.CARRIER_RESTORED && !ledger.matches(id,ticket,owner.getUUID()),"Success must report restoration and invalidate old token");owner.discard();foreign.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void recoveryCooldownReportsRemainingTime(GameTestHelper h){
+        var owner=recoveryOwner(h);var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(5,2,5));var open=AlbumCommands.open(owner);
+        h.assertTrue(FamilyRecovery.startResult(owner,mob.getUUID(),open.session(),0).accepted(),"Initial valid search should start");
+        h.assertTrue(FamilyRecovery.startResult(owner,mob.getUUID(),open.session(),0).code()==RecoveryResult.Code.BUSY,"Concurrent search must report busy");
+        AlbumCommands.open(owner); // Old job is cancelled on the next server tick.
+        h.runAfterDelay(3,()->{var next=AlbumCommands.open(owner);var result=FamilyRecovery.startResult(owner,mob.getUUID(),next.session(),0);h.assertTrue(result.code()==RecoveryResult.Code.COOLDOWN && result.retrySeconds()>0 && result.retrySeconds()<=10 && !FamilyRecovery.pending(owner.server,owner.getUUID()),"Cancelled attempt must release job and retain truthful cooldown");mob.discard();owner.discard();h.succeed();});
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void outcomeAndTrailCodecRoundTripAndRejectInvalidValues(GameTestHelper h){
+        var snapshot=new FamilyAlbum.Snapshot(0,java.util.List.of(),63,java.util.List.of(),0,5);
+        for(var code:RecoveryResult.Code.values()){
+            var original=new AlbumCommands.Reply(UUID.randomUUID(),7,new RecoveryResult(code,code==RecoveryResult.Code.COOLDOWN?7:0),snapshot);var buf=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+            try{AlbumNetwork.encodeReply(original,buf);h.assertTrue(original.equals(AlbumNetwork.decodeReply(buf)) && buf.readableBytes()==0,"Every reason, retry delay and private trail mask must round-trip");}finally{buf.release();}
+        }
+        var invalid=new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());try{FamilyAlbum.encode(snapshot,invalid);invalid.setByte(invalid.writerIndex()-1,255);boolean rejected=false;try{FamilyAlbum.decode(invalid);}catch(IllegalArgumentException e){rejected=true;}h.assertTrue(rejected,"Invalid trail mask must be rejected");}finally{invalid.release();}
+        boolean bad=false;try{new RecoveryResult(RecoveryResult.Code.COOLDOWN,11);}catch(IllegalArgumentException e){bad=true;}h.assertTrue(bad,"Retry payload must be bounded");h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void trailReadsOutOfOrderPersistsAndIsPrivate(GameTestHelper h){
+        var owner=testOwner(h);var stranger=testOwner(h);var note=new net.minecraft.world.item.ItemStack(DudunkaMod.TRAIL_ITEMS.get(3).get());owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,note);
+        DudunkaMod.TRAIL_ITEMS.get(3).get().use(h.getLevel(),owner,net.minecraft.world.InteractionHand.MAIN_HAND);
+        var progress=TrailProgress.get(owner.server);h.assertTrue(progress.mask(owner.getUUID())==4 && TrailProgress.unlocked(4)==0 && note.getCount()==1 && !note.hasTag(),"Reading final note early saves it, keeps the reusable item and hides later story");
+        h.assertTrue(!TrailNoteItem.read(owner,3),"Duplicate note must be idempotent");TrailNoteItem.read(owner,1);h.assertTrue(TrailProgress.unlocked(progress.mask(owner.getUUID()))==1,"Only contiguous discovered pages unlock");TrailNoteItem.read(owner,2);
+        var saved=TrailProgress.load(progress.save(new CompoundTag()));h.assertTrue(saved.mask(owner.getUUID())==7 && saved.mask(stranger.getUUID())==0 && TrailProgress.unlocked(7)==3,"All discovered pages must survive SavedData reload with owner separation");
+        h.assertTrue(FamilyAlbum.collect(owner).trailMask()==7 && FamilyAlbum.collect(stranger).trailMask()==0,"Real snapshot must contain only its reader's progress");
+        stranger.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,note.copy());DudunkaMod.TRAIL_ITEMS.get(3).get().use(h.getLevel(),stranger,net.minecraft.world.InteractionHand.MAIN_HAND);h.assertTrue(progress.mask(stranger.getUUID())==4 && progress.mask(owner.getUUID())==7,"Shared note changes only authenticated reader");
+        owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void trailPagesHideLockedStoryAndUseServerModFlags(GameTestHelper h){
+        var locked=EggGuide.page(8,63,4);h.assertTrue(locked.stream().noneMatch(c->c instanceof net.minecraft.network.chat.MutableComponent m && m.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals("trail.dudunka.step.2")),"Out-of-order notes must not reveal locked narrative");
+        var mvs=EggGuide.page(8,63,7);var vanilla=EggGuide.page(8,62,7);h.assertTrue(mvs.stream().anyMatch(c->c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith(".mvs")) && vanilla.stream().anyMatch(c->c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().endsWith(".vanilla")),"Server MVS flag must select truthful search route");
+        boolean setting=DudunkaMod.TRAIL_NOTES.get();try{DudunkaMod.TRAIL_NOTES.set(false);h.assertTrue((EggGuide.flags()&EggGuide.NOTES)==0,"Disabled notes must be conveyed by server flag");}finally{DudunkaMod.TRAIL_NOTES.set(setting);}h.succeed();
+    }
+    private static net.minecraft.world.level.storage.loot.LootContext trailContext(GameTestHelper h,String table,long seed,int coordinate){
+        var params=new net.minecraft.world.level.storage.loot.LootParams.Builder(h.getLevel()).withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN,new net.minecraft.world.phys.Vec3(coordinate*37,70,coordinate*101)).create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.CHEST);
+        return new net.minecraft.world.level.storage.loot.LootContext.Builder(params).withOptionalRandomSeed(seed).withQueriedLootTableId(new net.minecraft.resources.ResourceLocation(table)).create(null);
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void noteLootRoutesPreserveEggRollsAndExistingItems(GameTestHelper h){
+        String[] tables={"minecraft:chests/village/village_plains_house","minecraft:chests/village/village_desert_house","minecraft:chests/village/village_savanna_house","minecraft:chests/village/village_snowy_house","minecraft:chests/village/village_taiga_house","mvs:houses_common","mvs:houses_flower"};
+        boolean setting=DudunkaMod.TRAIL_NOTES.get();
+        try{for(String table:tables){int found=0;for(int i=1;i<=128;i++){
+            var baseline=trailContext(h,table,i*982451653L,i);var withNote=trailContext(h,table,i*982451653L,i);
+            var sample=new TrailLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0],1,1,false);
+            sample.apply(new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),withNote);
+            h.assertTrue(baseline.getRandom().nextLong()==withNote.getRandom().nextLong(),"Note rolls must not consume loot RNG: "+table);
+            var extra=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation(table),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),trailContext(h,table,i*982451653L,i));
+            for(var stack:extra)if(stack.getItem() instanceof TrailNoteItem){found++;if(table.equals("mvs:houses_common"))h.assertTrue(stack.is(DudunkaMod.TRAIL_ITEMS.get(2).get()),"Common MVS table must only add second note");if(table.equals("mvs:houses_flower"))h.assertTrue(stack.is(DudunkaMod.TRAIL_ITEMS.get(3).get()),"Flower table must only add final note");}
+        }h.assertTrue(found>0,"Registered note modifier must match verified table: "+table);}
+        var unrelated=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation("mvs:empty"),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),trailContext(h,"mvs:empty",1,1));h.assertTrue(unrelated.isEmpty(),"Unsupported table must not receive notes");
+        var modifier=new TrailLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0],1,1,false);var list=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();list.add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,3));modifier.apply(list,trailContext(h,tables[0],1,1));modifier.apply(list,trailContext(h,tables[0],1,1));h.assertTrue(list.size()==2 && list.get(0).getCount()==3,"Repeated note modifier preserves loot and deduplicates its own note");
+        DudunkaMod.TRAIL_NOTES.set(false);var disabled=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();modifier.apply(disabled,trailContext(h,tables[0],1,1));h.assertTrue(disabled.isEmpty(),"Disabled notes must not be added");
+        }finally{DudunkaMod.TRAIL_NOTES.set(setting);}h.succeed();
+    }
+
+
+    private static AlbumCommands.Reply latestAlbumReply(java.util.List<net.minecraft.network.protocol.Packet<?>> packets){
+        AlbumCommands.Reply result=null;
+        for(var packet:packets)if(packet instanceof net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket custom && custom.getIdentifier().toString().equals("dudunka:album")){
+            var buf=new net.minecraft.network.FriendlyByteBuf(custom.getData().copy());try{if(buf.readVarInt()==2)result=AlbumNetwork.decodeReply(buf);}finally{buf.release();}
+        }
+        return result;
+    }
+    @GameTest(template="empty",timeoutTicks=40)
+    public static void realRecoveryReplyExplainsLegacyAndKeepsSessionPrivate(GameTestHelper h){
+        var packets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();var owner=testOwner(h,null,packets);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));
+        var foreignPackets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();var stranger=testOwner(h,null,foreignPackets);
+        UUID id=UUID.randomUUID(),token=UUID.randomUUID();var ledger=CarrierLedger.get(owner.server);ledger.capture(id,token,owner.getUUID());var open=AlbumCommands.open(owner);packets.clear();foreignPackets.clear();
+        AlbumCommands.recover(owner,new AlbumCommands.RecoveryCommand(UUID.randomUUID(),id,1));h.assertTrue(latestAlbumReply(packets)==null,"Forged session must remain silent");
+        var command=new AlbumCommands.RecoveryCommand(open.session(),id,1);AlbumCommands.recover(owner,command);var reply=latestAlbumReply(packets);
+        h.assertTrue(reply!=null && reply.result().code()==RecoveryResult.Code.NO_BACKUP && reply.session().equals(open.session()) && reply.request()==1 && foreignPackets.isEmpty() && ledger.matches(id,token,owner.getUUID()),"Private legacy reply: result="+reply+", foreign packets="+foreignPackets.size()+", ticket="+ledger.matches(id,token,owner.getUUID()));
+        int sent=packets.size();AlbumCommands.recover(owner,command);h.assertTrue(packets.size()==sent,"Replay must not create extra replies");owner.discard();stranger.discard();h.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=180)
+    public static void realTimeoutReplyDoesNotClaimDeathOrCreateEntity(GameTestHelper h){
+        var packets=new java.util.ArrayList<net.minecraft.network.protocol.Packet<?>>();var owner=testOwner(h,null,packets);var p=h.absolutePos(new BlockPos(2,2,2));h.getLevel().setBlock(p.below(),Blocks.STONE.defaultBlockState(),3);owner.moveTo(p.getX()+.5,p.getY(),p.getZ()+.5,0,0);owner.setOnGround(true);owner.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(DudunkaMod.ALBUM.get()));
+        var marker=DudunkaMod.TYPES.get(Kind.DUDUNKA).get().create(h.getLevel());marker.initialize(owner.getUUID(),p);marker.moveTo(p.getX()+.5,p.getY(),p.getZ()+.5,0,0);UUID id=marker.getUUID();var registry=FamilyRegistry.get(owner.server);registry.observe(marker);var open=AlbumCommands.open(owner);AlbumCommands.recover(owner,new AlbumCommands.RecoveryCommand(open.session(),id,1));
+        h.runAfterDelay(110,()->{var reply=latestAlbumReply(packets);h.assertTrue(reply!=null && reply.result().code()==RecoveryResult.Code.NOT_FOUND && !FamilyRecovery.pending(owner.server,owner.getUUID()) && h.getLevel().getEntity(id)==null,"Timed-out real command must release search and send not-found without resurrection");registry.forget(id);owner.discard();h.succeed();});
+    }
+
 }

@@ -9,7 +9,10 @@ public final class AlbumCommands {
     public record Open(UUID session,FamilyAlbum.Snapshot snapshot) {}
     public record Command(UUID session,UUID member,boolean stay,int request) {}
     public record RecoveryCommand(UUID session,UUID member,int request) {}
-    public record Reply(UUID session,int request,boolean accepted,FamilyAlbum.Snapshot snapshot) {}
+    public record Reply(UUID session,int request,RecoveryResult result,FamilyAlbum.Snapshot snapshot) {
+        public Reply(UUID session,int request,boolean accepted,FamilyAlbum.Snapshot snapshot){this(session,request,RecoveryResult.of(accepted?RecoveryResult.Code.APPLIED:RecoveryResult.Code.REJECTED),snapshot);}
+        public boolean accepted(){return result.accepted();}
+    }
     private static final Map<ServerPlayer,Session> SESSIONS=new WeakHashMap<>();
     private static final class Session {
         final UUID id=UUID.randomUUID();final ResourceLocation dimension;
@@ -23,16 +26,22 @@ public final class AlbumCommands {
     }
     private static boolean held(ServerPlayer p){return p.getMainHandItem().is(DudunkaMod.ALBUM.get()) || p.getOffhandItem().is(DudunkaMod.ALBUM.get());}
     public static boolean recoveryValid(ServerPlayer p,UUID id,int request){var s=SESSIONS.get(p);return s!=null && s.id.equals(id) && s.request==request && p.level().getGameTime()<=s.expires && s.dimension.equals(p.level().dimension().location()) && held(p) && p.isAlive() && !p.isSpectator();}
-    public static void finishRecovery(ServerPlayer p,UUID id,int request,boolean accepted){if(!recoveryValid(p,id,request))return;var snapshot=FamilyAlbum.collect(p);SESSIONS.get(p).refresh(p,snapshot);AlbumNetwork.reply(p,new Reply(id,request,accepted,snapshot));}
+    public static void finishRecovery(ServerPlayer p,UUID id,int request,RecoveryResult result){if(!recoveryValid(p,id,request))return;var snapshot=FamilyAlbum.collect(p);SESSIONS.get(p).refresh(p,snapshot);AlbumNetwork.reply(p,new Reply(id,request,result,snapshot));}
     public static void recover(ServerPlayer p,RecoveryCommand command){
         if(p==null)return;var s=SESSIONS.get(p);long now=p.level().getGameTime();
-        if(s==null || !s.id.equals(command.session()) || command.request()<=s.request || command.request()<=0 || FamilyRecovery.pending(p.server,p.getUUID()))return;
+        if(s==null || !s.id.equals(command.session()) || command.request()<=s.request || command.request()<=0)return;
         if(now>s.expires || !s.dimension.equals(p.level().dimension().location())){SESSIONS.remove(p);return;}
+        // Keep the original job's request/session valid; a busy reply must not replace it.
+        if(FamilyRecovery.pending(p.server,p.getUUID())){
+            if(!recoveryValid(p,s.id,s.request) || s.lastCommand!=Long.MIN_VALUE && now-s.lastCommand<10)return;
+            s.lastCommand=now;AlbumNetwork.reply(p,new Reply(s.id,command.request(),RecoveryResult.of(RecoveryResult.Code.BUSY),FamilyAlbum.collect(p)));return;
+        }
         s.request=command.request();if(s.lastCommand!=Long.MIN_VALUE && now-s.lastCommand<10)return;s.lastCommand=now;
-        if(!recoveryValid(p,s.id,s.request) || !s.recovery.contains(command.member())){finishRecovery(p,s.id,s.request,false);return;}
+        if(!recoveryValid(p,s.id,s.request) || !s.recovery.contains(command.member())){finishRecovery(p,s.id,s.request,RecoveryResult.of(RecoveryResult.Code.REJECTED));return;}
         var ledger=CarrierLedger.get(p.server);
-        if(ledger.carried(command.member())){finishRecovery(p,s.id,s.request,ledger.reissue(p,command.member()));return;}
-        if(!FamilyRecovery.start(p,command.member(),s.id,s.request))finishRecovery(p,s.id,s.request,false);
+        if(ledger.carried(command.member())){finishRecovery(p,s.id,s.request,ledger.reissueResult(p,command.member()));return;}
+        var result=FamilyRecovery.startResult(p,command.member(),s.id,s.request);
+        if(!result.accepted())finishRecovery(p,s.id,s.request,result);
     }
     private AlbumCommands() {}
     public static Open open(ServerPlayer player) {

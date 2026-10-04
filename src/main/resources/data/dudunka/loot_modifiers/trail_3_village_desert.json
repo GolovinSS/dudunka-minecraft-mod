@@ -1,0 +1,12 @@
+{
+  "type": "dudunka:trail_note",
+  "conditions": [
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:chests/village/village_desert_house"
+    }
+  ],
+  "page": 3,
+  "chance": 0.15,
+  "without_mvs": true
+}
