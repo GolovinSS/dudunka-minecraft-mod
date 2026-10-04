@@ -20,4 +20,4 @@
 
 ![Проекции](DUDUNKA-AGES-PREVIEW.png)
 
-Для повторения: Gradle verifyModels экспортирует build/model-preview.json из реальных вершин, затем tools/preview_age_models.py строит проекции (Python, Pillow, numpy, matplotlib). Превью использует центральный UV цвет грани и не показывает всю фактуру/игровой свет. Нужно проверить натуральный вид, очки, тонкие детали, все жесты и позы в Minecraft/BMC4. Маруся и Сюся ждут своих возрастных референсов.
+Для повторения: Gradle verifyModels экспортирует build/model-preview.json из реальных вершин, затем tools/preview_age_models.py строит проекции (Python, Pillow, numpy, matplotlib). Превью использует центральный UV цвет грани и не показывает всю фактуру/игровой свет. Натуральный вид, очки, тонкие детали, все жесты и позы еще требуют художественной приемки в Minecraft/BMC4. Референсы и реализации Маруси и Сюси описаны в [MARUSYA-AGES.md](MARUSYA-AGES.md) и [SYUSYA-AGES.md](SYUSYA-AGES.md); для них также нужна игровая проверка движений, масштаба и фактуры.
