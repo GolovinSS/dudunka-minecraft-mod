@@ -176,7 +176,7 @@ public class Companion extends PathfinderMob {
         if(level().isClientSide) return;
         if(kind==Kind.SYUSYA && tickCount%10==0)updateFeelers();
         if(tickCount%20==0)observeHomecoming();
-        if(tickCount%100==0)FamilyRegistry.get(((ServerLevel)level()).getServer()).observe(this);
+        if(tickCount%100==0){FamilyRegistry.get(((ServerLevel)level()).getServer()).observe(this);FamilyMemories.observeNearby(this);}
         if(feedCooldown>0)feedCooldown--;
         if(petCooldown>0)petCooldown--;
         if(pettingTicks>0)pettingTicks--;
@@ -191,9 +191,10 @@ public class Companion extends PathfinderMob {
             if(target!=null && blockPosition().distSqr(target)>144)getNavigation().moveTo(target.getX()+.5,target.getY(),target.getZ()+.5,1);
         }
     }
-    private void updateStage() {
+    private void updateStage() { updateStage(true); }
+    private void updateStage(boolean remember) {
         int next=Math.min(2,growthTicks/(DudunkaMod.GROWTH_SECONDS.get()*20));
-        if(next!=stage()){entityData.set(STAGE,next);refreshDimensions(); if(next == 2 && !level().isClientSide) FamilyAchievements.award(this, "grown_" + kind.id);}
+        if(next!=stage()){if(remember && next>stage() && !level().isClientSide){if(stage()<1 && next>=1)FamilyMemories.record(this,FamilyMemories.Event.TEEN);if(next==2)FamilyMemories.record(this,FamilyMemories.Event.ADULT);}entityData.set(STAGE,next);refreshDimensions(); if(next == 2 && !level().isClientSide) FamilyAchievements.award(this, "grown_" + kind.id);}
     }
     @Override protected InteractionResult mobInteract(Player player,InteractionHand hand) {
         if(level().isClientSide) return InteractionResult.SUCCESS;
@@ -272,7 +273,7 @@ public class Companion extends PathfinderMob {
         homeDimension=t.getString("HomeDimension");homeIsMarker=t.getBoolean("HomeMarker");
         entityData.set(CHARACTER_VARIANT,CharacterMoments.bounded(t.getInt("CharacterVariant")));nextCharacterVariant=CharacterMoments.bounded(t.getInt("NextCharacterVariant"));entityData.set(FEELERS,CharacterMoments.Feelers.CALM.ordinal());
         homeMode=t.getBoolean("HomeMode") && !t.getBoolean("Staying");furniture=t.contains("Furniture")?BlockPos.of(t.getLong("Furniture")):null;furnitureDimension=t.getString("FurnitureDimension");
-        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;homecoming.reset();homeWelcomeRunning=false;homeSceneTarget=null;homeSceneCooldownUntil=0;openedChest=null;chestNoticeUntil=0;chestNoticeNext=0;refreshTrustSpeed();updateStage();
+        growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;homecoming.reset();homeWelcomeRunning=false;homeSceneTarget=null;homeSceneCooldownUntil=0;openedChest=null;chestNoticeUntil=0;chestNoticeNext=0;refreshTrustSpeed();updateStage(false);
     }
     private static class PettingGoal extends Goal {
         private final Companion mob;
