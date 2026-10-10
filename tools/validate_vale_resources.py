@@ -138,7 +138,7 @@ for path in decor:
         positions.add((x, y, z))
         block(piece['state']['Name'])
     placement = json.loads(resource('data/worldgen/placed_feature', 'dudunka:mushroom_vale/' + path.stem))
-    assert placement['placement'][0]['chance'] >= (8 if path.stem == 'bench' else 32)
+    assert placement['placement'][0]['chance'] >= (8 if path.stem == 'bench' else (28 if path.stem == 'lantern_post' else 32))
     assert placement['placement'][-1]['type'] == 'minecraft:biome'
 for path in biomes:
     refs = sum(json.loads(path.read_text())['features'], [])
@@ -178,7 +178,7 @@ for color in ['turquoise', 'violet', 'golden']:
     assert any(p['state']['Properties']['profile'] == '4' for p in value['config']['blocks'])
 for mood in ['glowing','memory','pink']:
     value = json.loads(resource('data/worldgen/configured_feature', 'dudunka:mushroom_vale/' + mood + '_small_mushrooms'))
-    assert value['config']['tries'] == (24 if mood == 'pink' else 32)
+    assert value['config']['tries'] == (30 if mood == 'pink' else 40)
 assert json.loads(resource('data/worldgen/placed_feature', 'dudunka:mushroom_vale/bench'))['placement'][0]['chance'] == 8
 bench = json.loads(resource('data/worldgen/configured_feature', 'dudunka:mushroom_vale/bench'))['config']['blocks']
 bed = json.loads(resource('data/worldgen/configured_feature', 'dudunka:mushroom_vale/flower_bed'))['config']['blocks']

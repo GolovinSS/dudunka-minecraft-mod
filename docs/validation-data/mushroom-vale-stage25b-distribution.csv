@@ -1,0 +1,10 @@
+seed,biome,columns,chunk_equivalent,red_mushroom,brown_mushroom,huge_red,huge_brown,small_turquoise_mushroom,small_violet_mushroom,small_golden_mushroom,lanterns,turquoise_detailed,violet_detailed,golden_detailed,turquoise_large,violet_large,golden_large,standalone_benches,bench_seats,planters
+-71021,glowing_mushroom_forest,150489,587.84765625,489,497,65,40,968,148,136,3,51,,32,4,,,25,73,6
+-71021,memory_forest,13172,51.453125,87,75,4,2,30,152,23,2,,8,,,,,4,13,5
+-71021,pink_meadows,32947,128.69921875,153,171,17,20,40,40,327,1,,,10,,,2,9,28,4
+0,glowing_mushroom_forest,104958,409.9921875,444,419,51,33,787,121,129,3,47,,32,7,,,18,54,14
+0,memory_forest,48741,190.39453125,335,343,28,18,75,624,77,,,35,,,1,,8,24,3
+0,pink_meadows,42909,167.61328125,235,195,27,22,58,51,443,2,,,16,,,1,7,21,5
+42,glowing_mushroom_forest,129438,505.6171875,506,523,68,52,911,139,152,4,57,,41,6,,,10,31,4
+42,memory_forest,27278,106.5546875,163,172,18,7,55,325,44,2,,15,,,2,,8,24,2
+42,pink_meadows,39892,155.828125,170,163,22,15,47,35,344,2,,,16,,,,4,12,1

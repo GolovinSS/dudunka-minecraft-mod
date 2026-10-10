@@ -76,7 +76,7 @@ and full BMC4 v55.5 acceptance remain **pending**.
    dimensions, and save/restart while seated: no invisible mounts should remain.
    Test repeated clicks and blocked overhead clearance. Marker/book interaction
    remains decorative. F3 block-light readings
-   should show light near lanterns/windows. Fixed noon can hide the effect:
+   should show light near lanterns/windows. Daylight can hide the effect:
    for a shaded comparison, `/fill 0 170 0 47 170 31 minecraft:stone`, then
    remove the temporary canopy with the same command using `minecraft:air`.
 6. Walk through/around each build and the one-block perimeter, including with
@@ -223,8 +223,8 @@ the graphical run needs them.
 4. With shaders/resource packs off, check all cap surfaces, gills, stems,
    cutout plants and item models for missing textures/black planes. All twelve
    blocks are in the Family creative tab with RU/EN names. Inspect vanilla
-   block light near caps/moss/flowers, including below caps: fixed noon and sky
-   light can mask the glow. Shader/bloom appearance is a separate BMC4 check.
+   block light near caps/moss/flowers, including below caps: daylight can mask
+   the glow. Check by day and night; shader/bloom appearance is a separate BMC4 check.
 5. Walk Survival routes in each biome and across borders, including low domed
    mushroom skirts, slopes, shores and landmark undersides. Plants must not
    obstruct or slow walking. In a separate navigation check bring a following
@@ -284,8 +284,8 @@ the same task/property). Allow the ordinary client asset task for this run.
    the glowing forest; open grass, pink petals/flowers and occasional cherry
    trees in the meadow; podzol, spaced spruce trees, mushrooms and darker
    violet/blue ambience in Memory Forest. Inspect each fog/water/sky palette
-   with shaders off first. Vanilla fixed noon can make lichen light subtle;
-   inspect nearby block light in F3. Confirm mooshrooms can spawn on clear
+   with shaders off first. Daylight can make lichen light subtle; inspect
+   nearby block light in F3. Confirm mooshrooms can spawn on clear
    mycelium under normal spawning rules; they need not appear immediately.
 4. Walk substantial Survival routes through all three biomes and their borders.
    Check standing clearance, open meadow space, hills, shorelines, working ponds
@@ -323,7 +323,7 @@ PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH \
    seed. Never use a Stage 1 save to judge new terrain. Leave companions at home
    and empty the carrier. Stand on safe dry ground; record departure coordinates.
 2. Enter with `/dudunka_dev mushroom_vale enter`. Check F3 dimension
-   `dudunka:mushroom_vale`, biome `minecraft:mushroom_fields`, fixed noon, and a
+   `dudunka:mushroom_vale`, biome `minecraft:mushroom_fields`, the normal day/night cycle, and a
    safe landing at the actual surface height. Arrival need not be Y=64. If the
    entire arrival chunk is water/unsafe, entry must refuse without moving the
    player, modifying blocks or losing an existing bookmark.
@@ -373,7 +373,7 @@ Use Minecraft 1.20.1 / Forge 47.4.13 / Java 17. Keep a backup of any existing wo
    the Overworld and empty the carrier. Stand on dry solid ground with headroom;
    record coordinates and the UUIDs/positions of any existing companions.
 4. Run `/dudunka_dev mushroom_vale enter`. F3 must show `dudunka:mushroom_vale`;
-   expect a flat mycelium plain at feet Y=64, fixed noon, and the vanilla mushroom
+   expect a flat mycelium plain at feet Y=64, the normal day/night cycle, and the vanilla mushroom
    fields biome. Check movement, lighting, and resource/log errors. No final
    forest, custom inhabitants, or portal is expected at this stage.
 5. Place a distinctive vanilla block, walk away from the entry, and **Save and
@@ -896,6 +896,17 @@ detailed mushroom and a Pink Meadows golden detailed mushroom. Run one teleport
 at a time. The bench itself is at `-1151 67 -523`; right-click a seat and Shift
 out. These coordinates come from the final natural census and require current
 worldgen in a clean seed-0 world. Other seeds use the survey's `SURVEY found` lines.
+
+## Stage 2.5b: mushroom and lantern distribution
+
+For current fresh-chunk rates and measured per-biome counts, see
+[VALIDATION-MUSHROOM-VALE-STAGE-2.5b.md](VALIDATION-MUSHROOM-VALE-STAGE-2.5b.md).
+Existing generated chunks retain their previous distribution. On a new world,
+walk ordinary routes in all three biomes with adult Syusya and check that the
+additional mushrooms leave useful walking lanes and do not obscure magical
+mushrooms. Check that lantern posts remain occasional accents and retain their
+approved model, warm appearance and light. Full BMC4 v55.5 visual acceptance
+remains a separate manual check.
 
 On a separate clear mycelium platform, compare medium detailed mushrooms:
 

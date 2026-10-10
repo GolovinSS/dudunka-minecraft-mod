@@ -87,10 +87,11 @@ biome spawning still applies, including mooshrooms. This technical test world
 establishes dimension loading and travel before the final landscapes are built.
 
 The separate dimension type has min Y=-64, height/logical height 384, coordinate
-scale 1, Overworld sky/effects/infiniburn, fixed noon (6000), skylight, no ceiling,
-normal temperature, zero ambient light, working beds, disabled respawn anchors,
-and disabled raids. Monster light limits use vanilla Overworld values (block
-light 0, uniform sky light threshold 0–7). The dimension and type IDs are stable
+scale 1, Overworld sky/effects/infiniburn, a normal day/night cycle, skylight,
+no ceiling, normal temperature, zero ambient light, working beds, disabled
+respawn anchors, and disabled raids. The Stage 1 prototype used fixed noon; that
+setting is no longer used. Monster light limits use vanilla Overworld values
+(block light 0, uniform sky light threshold 0–7). The dimension and type IDs are stable
 compatibility commitments. Generator settings are now recorded in world data:
 later terrain work must account for existing chunks and generator persistence;
 it must not silently rewrite generated terrain or assume `/reload` migrates it.
@@ -271,7 +272,8 @@ changing terrain density. Biome selection stays independent of height.
 Submerged surfaces retain gravel; all biomes retain dirt underneath and bedrock
 at the bottom. Water basins and rolling hills use the Stage 2.1 terrain contract.
 Biome colours tint vanilla grass/foliage, water, sky and fog; they do not change
-fog distance or add shaders. Fixed noon remains. Glow lichen emits vanilla
+fog distance or add shaders. The normal day/night cycle also changes sky light.
+Glow lichen emits vanilla
 block light; mushrooms themselves do not emit light. No textures, music or
 new mobs are introduced.
 
@@ -331,7 +333,7 @@ Stage 2.3 biome decoration/palettes and supporting tree frequency.
 Caps/stems reuse `HugeMushroomBlock` face states, with a cream/lilac stem and
 separate gill texture. Cap light is turquoise **10**, violet **6**, golden **9**;
 stem light is zero. Plants emit **3–6** block light. Light is vanilla lighting,
-without shader emissive maps or bloom. Fixed noon can hide much of the effect.
+without shader emissive maps or bloom. Check glow in daylight and at night.
 Ground plants have **no collision** and allow land pathfinding. Moss is a
 one-pixel overlay; the flowers, bushes and small mushrooms use cutout crossed
 planes. They survive on dirt-tag blocks (including mycelium/podzol/grass),
@@ -438,7 +440,7 @@ Both cottages have three-wide, three-high open entrances and a half-step porch
 leading to a plain floor. Shells are intentionally simple and unfurnished;
 Wise's scholarly details are outside. Benches/stools are ordinary decorative
 blocks without a sitting interaction. Markers have no text or guaranteed
-destination. Lanterns use ordinary vanilla block light under fixed noon.
+destination. Lanterns use ordinary vanilla block light under the normal day/night cycle.
 There are no NPCs, quests, final portal, audio playback or progression systems.
 
 Add future exteriors by creating another configured blueprint and a sparse
@@ -589,8 +591,8 @@ older mushroom shapes and frequencies.
 its porous frame explicitly block zero light; geometry, textures and emission
 stay intact. Normal Minecraft lighting owns propagation and removal. No
 invisible light blocks, auxiliary entities, custom ticking or unrelated lighting
-changes are introduced. Fixed noon can hide block light; check F3 **block**
-light or a roofed inspection area rather than combined sky brightness.
+changes are introduced. Daylight can hide block light; check F3 **block** light
+or use a roofed inspection area rather than combined sky brightness.
 
 The standalone bench feature still attempts 1/40, and flower beds 1/32. Bench
 content is three real `vale_bench` blocks, while flower beds contain planters
@@ -664,9 +666,20 @@ Lanterns and hanging cap profile 4 emit maximum Minecraft block light 15.
 Other cap profiles retain their color's 10/8/9 emission; porous landmark parts
 explicitly obstruct zero light. Light belongs to the visible block and vanilla
 updates/remove it. The actual engine regression checks 14/13 in adjacent air,
-10 one block above the walking surface, three blocks from a solid/fence post, sky light 0 and darkness
-after removal for all four source types. Fixed-noon Vale needs an enclosed
-space for a darkness check; its time setting is not changed.
+10 one block above the walking surface, three blocks from a solid/fence post,
+sky light 0 and darkness after removal for all four source types. Use a roofed
+space for darkness checks during daytime; the Vale day/night cycle continues.
+
+## Stage 2.5b: ordinary mushroom and lantern frequency
+
+Fresh chunks use 40 small-mushroom patch tries per forest chunk (up from 32)
+and 30 per Pink Meadows chunk (up from 24). Existing ordinary red/brown weights
+remain 4 each, preserving their balance against magical variants while raising
+all small mushroom opportunities by 25%. Lantern-post rarity changes from 1/32
+to 1/28 eligible chunk, a modest increase; the post blueprint, cozy-cluster and
+cottage lanterns, block light and approved visuals are unchanged. These remain
+attempt frequencies: site filters can reject placements, and existing chunks
+are not regenerated. See the [Stage 2.5b validation report](VALIDATION-MUSHROOM-VALE-STAGE-2.5b.md).
 
 Forge 47.4.13 has no situational-music selection event. Cached 1.20.1 sources
 show Creative selected before biome music, with replacement disabled and

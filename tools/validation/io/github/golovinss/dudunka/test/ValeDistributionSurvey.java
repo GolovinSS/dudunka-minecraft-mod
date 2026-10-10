@@ -60,6 +60,7 @@ public class ValeDistributionSurvey {
                             }
                         }
                         else if(name.equals("vale_planter"))category="planters";
+                        else if(name.equals("vale_lantern"))category="lanterns";
                         else if(name.equals("vale_landmark_stem") && state.getValue(MushroomValeLandmarks.PROFILE)==0){
                             // Both size classes have exactly one root, with their crown at root+6/8.
                             for(int up=3;up<=10;up++){

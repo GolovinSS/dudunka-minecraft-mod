@@ -68,7 +68,7 @@ public class MushroomValeTests {
         waitForLightThread(h,engine.lightChunk(level.getChunkAt(pos),true),()->{
             var ground=pos.east(3).below(2);
             h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.SKY,ground)==0,
-                "Fixture excludes daylight, including Vale's fixed noon");
+                "Roofed fixture excludes daylight at any time of day");
             h.assertTrue(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,pos.east())==14
                 && level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,pos.east(2))==13
                 && level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,ground)==10,
@@ -598,8 +598,8 @@ public class MushroomValeTests {
                 "Vale must use its own data-driven type without replacing the Overworld");
         h.assertTrue(vale.dimensionType().minY() == -64 && vale.dimensionType().height() == 384
                         && vale.dimensionType().coordinateScale() == 1 && vale.dimensionType().hasSkyLight()
-                        && vale.dimensionType().hasFixedTime() && vale.dimensionType().bedWorks(),
-                "Prototype type settings must match the documented contract");
+                        && !vale.dimensionType().hasFixedTime() && vale.dimensionType().bedWorks(),
+                "Vale type settings must match the documented day/night contract");
         h.assertTrue(vale.getChunkSource().getGenerator() instanceof NoiseBasedChunkGenerator,
                 "Vale must use vanilla noise terrain (use a fresh test world)");
         var generator = (NoiseBasedChunkGenerator) vale.getChunkSource().getGenerator();
