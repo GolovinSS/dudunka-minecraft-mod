@@ -367,5 +367,7 @@
   "block.dudunka.turquoise_landmark_cap": "Turquoise Landmark Cap",
   "block.dudunka.violet_landmark_cap": "Violet Landmark Cap",
   "block.dudunka.golden_landmark_cap": "Golden Landmark Cap",
-  "block.dudunka.vale_landmark_stem": "Fluted Landmark Stem"
+  "block.dudunka.vale_landmark_stem": "Fluted Landmark Stem",
+  "entity.dudunka.pufik": "Pufik",
+  "message.dudunka.pufik_greeting": "Pufik: Hello! The Vale feels cozier with you here."
 }

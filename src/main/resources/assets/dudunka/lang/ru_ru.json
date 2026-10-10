@@ -367,5 +367,7 @@
   "block.dudunka.turquoise_landmark_cap": "Бирюзовая шляпка гриба-великана",
   "block.dudunka.violet_landmark_cap": "Фиолетовая шляпка гриба-великана",
   "block.dudunka.golden_landmark_cap": "Золотистая шляпка гриба-великана",
-  "block.dudunka.vale_landmark_stem": "Ребристая ножка гриба-великана"
+  "block.dudunka.vale_landmark_stem": "Ребристая ножка гриба-великана",
+  "entity.dudunka.pufik": "Пуфик",
+  "message.dudunka.pufik_greeting": "Пуфик: Привет! С тобой в долине ещё уютнее."
 }

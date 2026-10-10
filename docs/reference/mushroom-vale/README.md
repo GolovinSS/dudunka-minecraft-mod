@@ -9,9 +9,9 @@ These images were approved as ART DIRECTION, not as production-ready Minecraft m
 3. `plants_and_flowers.png`: flower beds, accent plants, bioluminescent moss, and natural decoration.
 4. `world_overview.png`: environmental mood and composition; not a literal world map or biome distribution rule.
 
-## Later character work
+## Character work
 
-- `pufik.png`: Pufik's approved character turnaround and expressions.
+- `pufik.png`: primary Stage 3.1 reference for Pufik's original voxel model, pixel-art colors, turnaround and expressions.
 - `wise_fly_agaric.png`: Wise Fly Agaric's approved character concept.
 - `friendly_spider.png`: approved cute spider design inspired by the user-provided original; no hostile mechanics implied.
 - `creatures_and_props.png`: broader direction for fireflies, fluffy jumpers and related whimsical assets; verify specific designs with the owner when modeling.

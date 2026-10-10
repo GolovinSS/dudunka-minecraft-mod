@@ -945,3 +945,73 @@ nearby, walk more than 12 blocks away for at least 10 seconds, then return withi
 edges; modes and bindings must remain HOME. Move away, issue stay, change the
 home or introduce a threat to verify cancellation. Friendship must accrue only
 while genuinely settled together. Real Minecraft/BMC4 acceptance remains manual.
+
+## Stage 3.1: Pufik
+
+Use Java 17 and a **new world** for natural spawning. Existing generated chunks
+remain intact. In IntelliJ IDEA, open the Gradle tool window, set the Gradle
+JVM to Java 17, create a Gradle run configuration with **Tasks and arguments**
+`runClient -PmushroomValeDev=true`, then Run. Create a singleplayer Creative
+world with cheats enabled. Stand on safe solid ground and run:
+
+```text
+/dudunka_dev mushroom_vale enter
+/locate biome dudunka:glowing_mushroom_forest
+```
+
+Travel to the located forest coordinates in Creative or use `/tp X Y Z` with a
+safe surface Y. On a clear dry patch, inspect the model directly:
+
+```text
+/summon dudunka:pufik ~ ~ ~
+```
+
+Watch its idle breathing and cap movement, small walking steps, stopping and
+looking toward a player. Wait for the occasional happy hop or shy cap tilt;
+right-click for the localized greeting and happy pose. Inspect from front,
+side, behind and above in daylight and shade. Check that it stays on dry safe
+paths, avoids shorelines, lava and cliffs, and never attacks. Then roam newly
+generated glowing mushroom forest chunks at normal difficulty to assess
+natural groups of 1–2 and their frequency; `/summon` is only a visual fixture.
+Check that mooshrooms and existing flora remain present. Name one Pufik with a
+name tag, save and quit, restart the same world, and verify its name and
+identity remain. Ordinary unnamed Pufiks may despawn with vanilla creature
+rules. Use `/dudunka_dev mushroom_vale return` to leave.
+
+Repeat visual, pathfinding, interaction and natural-spawn acceptance in Better
+MC BMC4 v55.5. Automated Gradle and GameTests do not establish graphical
+quality, actual client animation timing or modpack spawn balance.
+
+### Pufik deterministic look-up preview
+
+Launch `./gradlew runClient -PmushroomValeDev=true` with Java 17, or use the
+same Tasks and arguments in IntelliJ's Gradle run configuration. The existing
+developer flag enables a client command; no extra launch property is needed.
+On a flat clear patch in a Creative world with cheats, create a stationary
+fixture two blocks south of yourself, facing you:
+
+```text
+/summon dudunka:pufik ~ ~ ~2 {NoAI:1b,Rotation:[180f,0f],Tags:["pufik_pose_fixture"]}
+/tp @s ~ ~ ~ 0 30
+/dudunka_pufik_pose rest
+/dudunka_pufik_pose look_up
+```
+
+`rest` and `look_up` force fixed rendered poses on **all visible Pufiks**, with
+idle, walking, emote, AI-look and proximity inputs bypassed for the preview.
+They change only this client's rendering. Compare the two from a normal
+standing camera at about 1–2.75 blocks; inspect both eyes, cheeks and smile,
+and check the cap/stem join from the side. The preview holds head yaw at zero,
+so approach the fixture from its front. At very close distances directly
+above the cap, some occlusion is expected.
+
+```text
+/dudunka_pufik_pose off
+```
+
+`off` restores all live visual animations, including smoothed tracking toward
+nearby player eyes. Approach and back away from the fixture to inspect the
+transition; this look-up also works with the fixture's AI disabled. Summon an
+ordinary Pufik separately to inspect walking, happy/right-click and shy poses
+alongside tracking. The preview commands are absent without the developer
+launch flag. No pose mode is saved in entity NBT or sent over the network.

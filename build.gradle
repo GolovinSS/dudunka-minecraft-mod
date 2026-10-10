@@ -227,3 +227,10 @@ tasks.register('verifyValeMusic', JavaExec) {
     mainClass = 'CheckValeMusic'
 }
 tasks.named('check').configure { dependsOn 'verifyValeMusic' }
+
+// Bake and inspect the independent Pufik model, UVs, texture, and locales.
+tasks.register('verifyPufik', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckPufikModel'
+}

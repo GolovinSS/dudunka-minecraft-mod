@@ -697,3 +697,39 @@ There are no new sounds, dependencies, packets, mixins or access transformers.
 Manual `/playsound` creates a separate sound and bypasses all automatic selection
 and scheduling; it confirms assets/decoding/category routing only. See
 [updated client commands and regression procedure](TESTING.md#stage-25a-final-environment-fixes-and-homecoming-regression).
+
+## Stage 3.1: Pufik
+
+`dudunka:pufik` is the first independent Vale inhabitant. Its 0.68-wide,
+0.62-high creature type, attributes and ground spawn placement are registered
+through Forge; it is not a `Kind` or `Companion`. The approved
+[character reference](reference/mushroom-vale/pufik.png) guides a dedicated
+43-part, layered voxel model and original 128×128 pixel-art atlas. The wide
+red cap has cream raised spots and a cream underside; the small body has a
+face, rosy cheeks, hands and tiny feet. Idle breathing, brisk steps, a happy
+hop and a shy cap tilt use bounded procedural part transforms and synchronized
+emote timing. Right-click sends a localized short greeting and triggers the
+happy pose. There is no ownership, growth, friendship, inventory or reward.
+
+The glowing mushroom forest biome adds Pufik to its existing creature list at
+weight 5, groups of 1–2. The spawn predicate requires both
+`dudunka:mushroom_vale` and `dudunka:glowing_mushroom_forest`, dry sturdy ground,
+standing clearance and a nearby floor without a two-block drop. Wander targets
+are chosen within five loaded blocks of the current position; normal ground
+navigation and water/fire path penalties guide travel. Named Pufiks resist
+ordinary distance despawning. Ordinary Pufiks retain vanilla creature despawn
+behavior and are not marked permanently persistent. Vanilla entity NBT saves
+identity, name and health. `/summon dudunka:pufik ~ ~ ~` remains available for
+inspection in any dimension; natural spawning is Vale-only.
+
+No dimension/worldgen IDs, existing entity IDs, family UUIDs, save formats,
+network protocol 9 or existing biome spawn entries change. The new biome entry
+is additive. See [testing steps](TESTING.md#stage-31-pufik) and
+[validation](VALIDATION-MUSHROOM-VALE-STAGE-3.1.md).
+
+Pufik's close-range look-up is a client pose on a shared stem/face/cap pivot.
+It tracks interpolated nearby player eyes with per-entity smoothing, fully
+engages within 2.5 blocks and eases out to 3.5 blocks. The cap moves slightly
+back and up to open the sightline beneath its brim. The existing developer
+launch flag enables `/dudunka_pufik_pose rest`, `look_up` and `off` for fixed
+pose comparison; see the deterministic preview steps in `TESTING.md`.

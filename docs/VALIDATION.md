@@ -94,3 +94,9 @@ Minecraft/BMC4 graphical, audible and old-save acceptance remains manual.
 
 [Root cause, exact distributions, intermediate failures and final evidence](VALIDATION-MUSHROOM-VALE-STAGE-2.5a.md).
 [Developer commands and acceptance](TESTING.md#stage-25a-final-environment-fixes-and-homecoming-regression).
+
+## Mushroom Vale Stage 3.1 — Pufik
+
+Independent Pufik entity, detailed model and texture, gentle behavior and
+forest-only natural spawning. [Stage 3.1 validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.1.md)
+records automated results and pending manual Minecraft/BMC4 acceptance.
