@@ -1,5 +1,128 @@
 # Приемка в Better MC v55.5
 
+## Редкие реплики Дюдюньки
+
+1. Запустите отдельный тестовый мир через IntelliJ **Gradle → `runClient`**. Возьмите свою Дюдюньку и оставайтесь рядом в обычном режиме; после редкой паузы она должна безопасно подойти, посмотреть на игрока, выполнить WAVE и отправить одну приватную реплику с именем.
+2. Проверьте русскую и английскую локализации. Без Маруси возможна реплика «Я уже большая!»; реплика про туалет допустима только когда живая загруженная Маруся того же владельца находится в пределах примерно 8 блоков.
+3. Для проверки приватности подключите второго игрока; сообщение должен получить только владелец Дюдюньки. Несколько его Дюдунек не должны дублировать реплику.
+4. Проверьте команды «Ждать» и «Дома», сон/режим наблюдателя, уход владельца, восстановление и уже идущую семейную сцену. Диалог не должен начинаться или должен сразу завершиться; путь должен обходить препятствия, а при недоступном пути не должно быть телепортации или сообщения.
+
+## Stage 2.1: Mushroom Vale natural terrain
+
+This checklist is pending manual acceptance. Use JDK 17, Minecraft 1.20.1 and
+Forge 47.4.13. In IntelliJ, set Project SDK and Gradle JVM to 17, then run the
+Gradle task `runClient -PmushroomValeDev=true`. From a shell:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH \
+./gradlew runClient -PmushroomValeDev=true
+```
+
+1. Create a **fresh** disposable Creative world with cheats enabled; record its
+   seed. Never use a Stage 1 save to judge new terrain. Leave companions at home
+   and empty the carrier. Stand on safe dry ground; record departure coordinates.
+2. Enter with `/dudunka_dev mushroom_vale enter`. Check F3 dimension
+   `dudunka:mushroom_vale`, biome `minecraft:mushroom_fields`, fixed noon, and a
+   safe landing at the actual surface height. Arrival need not be Y=64. If the
+   entire arrival chunk is water/unsafe, entry must refuse without moving the
+   player, modifying blocks or losing an existing bookmark.
+3. Explore at least 1024 blocks in each horizontal direction and repeat in
+   several fresh seeds (include 0, 42 and -71021). Inspect hills, valleys,
+   shoreline transitions, ponds/connected water, dirt/mycelium/gravel surfaces,
+   mushroom placement and chunk borders. Walk substantial routes in Survival:
+   hills and water should be easy to navigate, and local cave/canyon openings,
+   lava and dense mushroom patches should have reasonable ways around them.
+   Record coordinates/screenshots of excessively steep or unavoidable obstacles.
+   Automated base-column samples exclude carvers and features.
+4. Place a marker, save and quit inside Vale, stop/restart the client, and verify
+   the marker/player position. Return with `/dudunka_dev mushroom_vale return`;
+   verify departure, orientation, no fall damage, and retained companion UUIDs,
+   ownership and NBT. Repeat from another dimension. Repeat blocked arrival,
+   unsafe departure/return, fallback, operator permission and multiplayer
+   bookmark checks from the Stage 1 checklist below using actual surface Y.
+5. On a **copy** of a Stage 1 save, verify existing flat chunks, builds, travel,
+   bookmarks and player positions survive; inspect newly visited chunks without
+   assuming the saved generator has changed. Do not delete chunks or edit saved
+   dimension settings. Check Overworld, Nether, End and other installed dimensions.
+6. Repeat in a separate full BMC4 v55.5 profile and on a dedicated server with two
+   clients. Review biome modifications, structures, protection hooks, shaders,
+   worldgen warnings/errors and travel. Record these results separately from
+   automated Forge validation.
+
+Architecture and migration limits: [MUSHROOM-VALE.md](MUSHROOM-VALE.md#stage-21-natural-terrain-and-worldgen-architecture).
+Automated results: [Stage 2.1 validation](VALIDATION-MUSHROOM-VALE-STAGE-2.1.md).
+
+## Stage 1: Mushroom Vale in IntelliJ IDEA
+
+Historical flat-prototype checklist; for fresh Stage 2.1 worlds use the checklist
+above. The safety, multiplayer and persistence scenarios below still apply.
+
+This is a manual acceptance plan, not a report of a completed graphical run.
+Use Minecraft 1.20.1 / Forge 47.4.13 / Java 17. Keep a backup of any existing world.
+
+1. Open the repository as a Gradle project in IntelliJ IDEA. Set both Project SDK
+   and **Settings → Build Tools → Gradle → Gradle JVM** to JDK 17 and reload Gradle.
+2. Create an IntelliJ **Gradle** run configuration using this project, with
+   **Tasks and arguments**: `runClient -PmushroomValeDev=true`. Start it with Run.
+   It uses the existing ForgeGradle `runClient` task and `run/` working directory.
+   Alternatively, run `genIntellijRuns`, then edit the generated Java `runClient`
+   configuration and add `-Ddudunka.devMushroomVale=true` to its **VM options**.
+   A normal run without either opt-in must not expose `/dudunka_dev`.
+3. Create a disposable Creative world with cheats enabled. Leave companions in
+   the Overworld and empty the carrier. Stand on dry solid ground with headroom;
+   record coordinates and the UUIDs/positions of any existing companions.
+4. Run `/dudunka_dev mushroom_vale enter`. F3 must show `dudunka:mushroom_vale`;
+   expect a flat mycelium plain at feet Y=64, fixed noon, and the vanilla mushroom
+   fields biome. Check movement, lighting, and resource/log errors. No final
+   forest, custom inhabitants, or portal is expected at this stage.
+5. Place a distinctive vanilla block, walk away from the entry, and **Save and
+   Quit** while still in Vale. Stop and restart `runClient` with the same opt-in,
+   reopen the world, and verify the dimension, player location, and placed block.
+6. Run `/dudunka_dev mushroom_vale return`. Verify a safe landing near the saved
+   departure block, restored view direction, no fall damage, and no duplicated
+   companions. Inspect their UUIDs, ownership, homes, modes, trust, and age.
+   Repeat from the Nether to verify the recorded source dimension is used.
+7. Try entry while riding or with an occupied/unsafe arrival area. It must refuse
+   without changing terrain or bookmarks. Try entry twice, and return outside
+   Vale; both must refuse. Have a second operator obstruct the departure area
+   while the first player is away: return should use safe Overworld spawn and
+   report the fallback. If both areas are unsafe, clear a landing and retry.
+8. Repeat on a copy of a world made before this change. Check the Overworld,
+   Nether, and End, existing companion saves, and the new dimension after a full
+   restart. Merely reloading a datapack is not a dimension migration test.
+9. For multiplayer, run `runServer -PmushroomValeDev=true` from an IntelliJ Gradle
+   configuration (accept the Minecraft EULA for that development server first).
+   Set `level-name=mushroom_vale_manual` in `run/server.properties` to use a separate
+   disposable world rather than the generated GameTest world.
+   Use the same mod on each client. Two operators must retain separate departure
+   bookmarks across logout/server restart. A player without level-2 permission
+   and the server console must not be able to use this player-only route. On a
+   packaged server the opt-in is a Java VM option before `-jar`, not a game arg.
+10. Repeat acceptance in the separate Better MC BMC4 v55.5 profile, including
+    its worldgen, shaders, and protection mods. Record client/server logs and
+    explicit results; automated Forge checks do not establish BMC4 compatibility.
+
+The normal Gradle validation is:
+
+```bash
+./gradlew build verifyModels runGameTestServer
+```
+
+For a headless environment where client assets are unnecessary, the same checks
+can use `-x downloadAssets`. `MushroomValeTests` covers actual JSON world loading
+and noise settings, three-seed base terrain samples, command opt-in/permissions,
+travel with real ServerPlayer instances
+and a simulated network, unchanged companion instances/NBT, bookmark
+serialization, hazards/passengers, fallback, blocked entry, and Forge vetoes.
+The full suite also exercises the existing family, carrier, and album behavior.
+Graphical networking, disk/server restart with actual clients, pre-change world
+upgrade, and full BMC4 acceptance remain separate manual checks.
+
+Prototype settings and compatibility limits: [MUSHROOM-VALE.md](MUSHROOM-VALE.md#stage-1-prototype-contract).
+
+## Existing BMC4 acceptance checklist
+
 Использовать отдельный профиль и мир. Версия Forge в профиле 47.4.13. Этот список — план ручной проверки, не отчет о выполнении.
 
 - Клиент загружается; вкладка мода и три яйца есть; в latest.log нет ошибок ресурсов или регистрации dudunka.

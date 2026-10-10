@@ -84,10 +84,16 @@ minecraft {
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
+            if (project.findProperty('mushroomValeDev') == 'true') {
+                property 'dudunka.devMushroomVale', 'true'
+            }
         }
 
         server {
             property 'forge.enabledGameTestNamespaces', mod_id
+            if (project.findProperty('mushroomValeDev') == 'true') {
+                property 'dudunka.devMushroomVale', 'true'
+            }
             args '--nogui'
         }
 
@@ -96,6 +102,7 @@ minecraft {
         // The gametest system is also enabled by default for other run configs under the /test command.
         gameTestServer {
             property 'forge.enabledGameTestNamespaces', mod_id
+            property 'dudunka.devMushroomVale', 'true'
         }
 
         data {

@@ -55,6 +55,7 @@ public class Companion extends PathfinderMob {
         goalSelector.addGoal(9,new HomeTogetherGoal(this));
         goalSelector.addGoal(10,new HomeSceneGoal(this));
         goalSelector.addGoal(11,new StayHomeGoal(this));
+        goalSelector.addGoal(11,new DudunkaDialogueGoal(this));
         goalSelector.addGoal(12,new FamilyFollowGoal(this));
         goalSelector.addGoal(13,new WaterAvoidingRandomStrollGoal(this, .8) {
             @Override public boolean canUse() { if(staying() || homeMode && (homeAnchor()==null || blockPosition().distSqr(homeAnchor())>36))return false;
@@ -115,6 +116,8 @@ public class Companion extends PathfinderMob {
     }
     public void bindHome(BlockPos anchor) { home=anchor.immutable(); homeDimension=level().dimension().location().toString(); homeIsMarker=true;homecoming.reset(); }
     public boolean homeWelcomePending() { return homecoming.pending(level().getGameTime()); }
+    boolean recovering() { return recoveryTicks > 0; }
+    boolean beingPetted() { return pettingTicks > 0; }
     public boolean homeWelcomeEligible(){return homecoming.ready(level().getGameTime());}
     public boolean homeWelcomeRunning() { return homeWelcomeRunning; }
     public void beginHomeWelcome() { homecoming.consumeArrival(level().getGameTime());homeWelcomeRunning=true; }

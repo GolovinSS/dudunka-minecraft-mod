@@ -1,5 +1,13 @@
 # Проверка 0.26.0-alpha — 2026-10-05
 
+Дополнение от 2026-10-10: [Mushroom Vale, этап 1](VALIDATION-MUSHROOM-VALE-STAGE-1.md) —
+реализация прототипа, итоговые 150/150 GameTests, замечания о нестабильных прежних
+тестах и еще не выполненная ручная приемка. Ниже сохранен отчет 0.26.0.
+
+Дополнение от 2026-10-10: [Mushroom Vale, этап 2.1](VALIDATION-MUSHROOM-VALE-STAGE-2.1.md) —
+естественный рельеф, расширяемая конфигурация worldgen и ограничения старых миров.
+Ручная визуальная приемка и BMC4 проверяются отдельно.
+
 ## Подтверждено
 
 - Minecraft 1.20.1 / Forge 47.4.13 / JDK 17.0.20. build, verifyModels и полный GameTest успешны: **142/142 обязательных теста**, exit 0, phase26-test3.log. 134 прежних и 8 новых сценариев. Для headless-прогона использовано `build verifyModels runGameTestServer -x downloadAssets`.

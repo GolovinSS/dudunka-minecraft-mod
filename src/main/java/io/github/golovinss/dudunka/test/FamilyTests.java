@@ -1843,7 +1843,7 @@ public class FamilyTests {
         var owner=testOwner(h);var members=atmosphereHome(h,owner);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);for(var m:members){trust(m,30);m.setNoAi(false);}var start=owner.position();long returnedAt=h.getTick()+250;var greeted=java.util.EnumSet.noneOf(Kind.class);
         h.onEachTick(()->{if(h.getTick()>=returnedAt)for(var m:members)if(m.homeWelcomeRunning() && m.atHomeMode() && m.activity()==HomeAtmosphereScenes.greeting(m))greeted.add(m.kind);});
         h.runAfterDelay(25,()->owner.moveTo(start.add(20,0,0)));h.runAfterDelay(250,()->owner.moveTo(start));
-        h.runAfterDelay(420,()->{h.assertTrue(greeted.size()==3,"Each friend must actually arrive and greet after the real excursion: "+greeted);owner.moveTo(start.add(4,0,0));});
+        h.runAfterDelay(420,()->{String states=members.stream().map(m->m.kind+"{pos="+m.position()+", mode="+m.atHomeMode()+", idle="+m.isNoAi()+", eligible="+m.homeWelcomeEligible()+", running="+m.homeWelcomeRunning()+", activity="+m.activity()+", target="+m.homeSceneTarget()+"}").toList().toString();h.assertTrue(greeted.size()==3,"Each friend must actually arrive and greet after the real excursion: "+greeted+" states="+states);owner.moveTo(start.add(4,0,0));});
         h.runAfterDelay(430,()->{for(var m:members)h.assertTrue(!m.homeWelcomeRunning() && m.homeSceneTarget()==null && m.atHomeMode(),"Leaving greeting releases transient targets and preserves home mode");owner.discard();h.succeed();});});
     }
     @GameTest(template="empty",timeoutTicks=40)

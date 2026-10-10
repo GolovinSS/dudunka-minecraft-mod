@@ -155,7 +155,7 @@ public final class FamilyBehaviorGoal extends Goal {
         if(task!=Activity.ALERT && task!=Activity.SIT && WalkScenes.current(mob)!=null)return false;
         if (task == Activity.WAIT_FOR_SYUSYA) return targetEntity instanceof Companion snail && mob.sameFamily(snail)
                 && !snail.staying() && mob.distanceToSqr(snail) > 6.25 && mob.distanceToSqr(snail) < 225;
-        if (task == Activity.ALERT) return mob.distanceToSqr(targetEntity) < 144;
+        if (task == Activity.ALERT) return targetEntity != null && targetEntity.isAlive() && mob.distanceToSqr(targetEntity) < 144;
         if (targetBlock != null && !mob.level().hasChunkAt(targetBlock)) return false;
         if (task == Activity.SLEEP) return mob.level().isNight();
         if (task == Activity.SIT) return mob.level().isRaining();
