@@ -20,6 +20,9 @@ import java.util.*;
 @Mod(DudunkaMod.ID)
 public class DudunkaMod {
     public static final String ID="dudunka";
+    public static final DeferredRegister<net.minecraft.sounds.SoundEvent> SOUNDS=DeferredRegister.create(ForgeRegistries.SOUND_EVENTS,ID);
+    public static final RegistryObject<net.minecraft.sounds.SoundEvent> MUSHROOM_VALE_THEME=SOUNDS.register("music.mushroom_vale_theme",
+            ()->net.minecraft.sounds.SoundEvent.createVariableRangeEvent(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(ID,"music.mushroom_vale_theme")));
     public static final DeferredRegister<EntityType<?>> ENTITIES=DeferredRegister.create(ForgeRegistries.ENTITY_TYPES,ID);
     public static final DeferredRegister<Block> BLOCKS=DeferredRegister.create(ForgeRegistries.BLOCKS,ID);
     public static final DeferredRegister<Item> ITEMS=DeferredRegister.create(ForgeRegistries.ITEMS,ID);
@@ -32,6 +35,9 @@ public class DudunkaMod {
     public static final Map<Kind,RegistryObject<Block>> FURNITURE=new EnumMap<>(Kind.class);
     public static final Map<Kind,RegistryObject<Block>> HOMES=new EnumMap<>(Kind.class);
     public static final DeferredRegister<net.minecraft.world.level.levelgen.feature.Feature<?>> FEATURES=DeferredRegister.create(ForgeRegistries.FEATURES,ID);
+    public static final RegistryObject<EntityType<ValeBenchSeat>> VALE_BENCH_SEAT=ENTITIES.register("vale_bench_seat",()->EntityType.Builder.<ValeBenchSeat>of(ValeBenchSeat::new,MobCategory.MISC).sized(.01f,.01f).clientTrackingRange(8).noSave().noSummon().build(ID+":vale_bench_seat"));
+    public static final RegistryObject<MushroomValeDecorFeature> VALE_DECOR_FEATURE=FEATURES.register("mushroom_vale_decor",MushroomValeDecorFeature::new);
+    public static final RegistryObject<MushroomValeLandmarkFeature> VALE_LANDMARK_FEATURE=FEATURES.register("mushroom_vale_landmark",MushroomValeLandmarkFeature::new);
     public static final RegistryObject<SnailEggFeature> SNAIL_EGG_FEATURE=FEATURES.register("snail_egg",SnailEggFeature::new);
     public static final ForgeConfigSpec CONFIG;
     public static final ForgeConfigSpec.BooleanValue NATURAL_EGGS,FAMILY_CATCH_UP,TRAIL_NOTES;
@@ -67,10 +73,13 @@ public class DudunkaMod {
     public static final RegistryObject<Codec<FriendNoteLootModifier>> FRIEND_LOOT=LOOT.register("friend_notes",()->FriendNoteLootModifier.CODEC);
     public static final RegistryObject<Codec<TrailLootModifier>> TRAIL_LOOT=LOOT.register("trail_note",()->TrailLootModifier.CODEC);
     public static final RegistryObject<Codec<EggLootModifier>> EGG_LOOT=LOOT.register("egg",()->EggLootModifier.CODEC);
-    public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); FURNITURE.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); out.accept(ALBUM.get()); TRAIL_ITEMS.values().forEach(v->out.accept(v.get())); }).build());
+    public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); FURNITURE.values().forEach(v->out.accept(v.get())); MushroomValeVegetation.BLOCKS.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); out.accept(ALBUM.get()); TRAIL_ITEMS.values().forEach(v->out.accept(v.get())); }).build());
     public DudunkaMod() {
         IEventBus bus=FMLJavaModLoadingContext.get().getModEventBus();
-        ENTITIES.register(bus); BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus); TABS.register(bus); LOOT.register(bus); FEATURES.register(bus);
+        MushroomValeVegetation.register();
+        MushroomValeDecor.register();
+        MushroomValeLandmarks.register();
+        SOUNDS.register(bus); ENTITIES.register(bus); BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus); TABS.register(bus); LOOT.register(bus); FEATURES.register(bus);
         bus.addListener(this::attributes);
         AlbumNetwork.register();
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER,CONFIG);

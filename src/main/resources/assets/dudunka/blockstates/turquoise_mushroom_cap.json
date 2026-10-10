@@ -1,0 +1,110 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "dudunka:block/turquoise_mushroom_cap"
+      }
+    },
+    {
+      "when": {
+        "north": "false"
+      },
+      "apply": {
+        "model": "dudunka:block/vale_mushroom_inside"
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "dudunka:block/turquoise_mushroom_cap",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "false"
+      },
+      "apply": {
+        "model": "dudunka:block/vale_mushroom_inside",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "dudunka:block/turquoise_mushroom_cap",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "false"
+      },
+      "apply": {
+        "model": "dudunka:block/vale_mushroom_inside",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "dudunka:block/turquoise_mushroom_cap",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "false"
+      },
+      "apply": {
+        "model": "dudunka:block/vale_mushroom_inside",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "dudunka:block/turquoise_mushroom_cap",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "up": "false"
+      },
+      "apply": {
+        "model": "dudunka:block/vale_mushroom_inside",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "down": "true"
+      },
+      "apply": {
+        "model": "dudunka:block/turquoise_mushroom_cap",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "down": "false"
+      },
+      "apply": {
+        "model": "dudunka:block/vale_mushroom_inside",
+        "x": 90
+      }
+    }
+  ]
+}

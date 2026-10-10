@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "dudunka:block/vale_mushroom_table",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "dudunka:block/vale_mushroom_table",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "dudunka:block/vale_mushroom_table",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "dudunka:block/vale_mushroom_table",
+      "y": 270
+    }
+  }
+}

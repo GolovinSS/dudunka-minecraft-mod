@@ -219,3 +219,11 @@ tasks.register('verifyModels', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'CheckModels'
 }
+
+// Check the Vale-only client music scheduling policy without an audio device.
+tasks.register('verifyValeMusic', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckValeMusic'
+}
+tasks.named('check').configure { dependsOn 'verifyValeMusic' }

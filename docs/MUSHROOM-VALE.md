@@ -243,3 +243,444 @@ legacy behavior. Keep the dimension/type resources installed in existing saves.
 
 Manual steps: [TESTING.md](TESTING.md#stage-21-mushroom-vale-natural-terrain).
 Results: [VALIDATION-MUSHROOM-VALE-STAGE-2.1.md](VALIDATION-MUSHROOM-VALE-STAGE-2.1.md).
+
+## Stage 2.2: three independent biomes
+
+Historical Stage 2.2 decoration baseline; Stage 2.3 below defines current vegetation.
+
+Fresh worlds now select `dudunka:glowing_mushroom_forest`,
+`dudunka:pink_meadows` and `dudunka:memory_forest`. Stage 2.1's temporary
+`minecraft:mushroom_fields` selection and inherited features are historical.
+The dimension/type IDs, density function, hill noise, sea level, aquifers and
+travel code are unchanged. There is no Java generator or saved-world migration.
+
+The explicit multi-noise list partitions humidity: -1…-0.25 selects Pink
+Meadows, -0.25…0.25 selects Glowing Mushroom Forest, and 0.25…1 selects Memory
+Forest. Other axes span -1…1 with offset zero; boundary ties are harmless.
+The broad central region makes the mushroom forest the main environment.
+Only the vegetation climate channel's horizontal scale changes from 0.25 to
+1.0, allowing all environments within ordinary exploration distances without
+changing terrain density. Biome selection stays independent of height.
+
+| Biome | Dry ground | Vegetation and ambience |
+| --- | --- | --- |
+| Glowing Mushroom Forest | Mycelium with moss patches | Vanilla giant red/brown mushrooms, small mushrooms, floor glow lichen, warm pink fog and soft blue sky |
+| Pink Meadows | Grass over dirt | Pink petals, meadow flowers, grass, occasional cherry tree (one attempt per three chunks), bright sky and pale pink fog |
+| Memory Forest | Podzol over dirt | Four vanilla taiga-tree attempts per chunk, mushrooms, grass, subtle floor glow lichen, muted blue/violet fog and darker foliage |
+
+Submerged surfaces retain gravel; all biomes retain dirt underneath and bedrock
+at the bottom. Water basins and rolling hills use the Stage 2.1 terrain contract.
+Biome colours tint vanilla grass/foliage, water, sky and fog; they do not change
+fog distance or add shaders. Fixed noon remains. Glow lichen emits vanilla
+block light; mushrooms themselves do not emit light. No textures, music or
+new mobs are introduced.
+
+Each independent `worldgen/biome/*.json` explicitly lists features and spawns.
+Shared vanilla ores/disks are retained, excluding underwater magma. These
+biomes have no carvers, lava lakes/springs, dungeons or hostile spawn lists.
+Glowing Mushroom Forest retains vanilla mooshroom weight 8, group size 4–8,
+and mycelium suitable for vanilla spawning; moss/lichen patches reduce some
+available spawn surface. Meadows/Memory Forest reuse cherry-grove passive
+animals. This does not prevent commands, player-built spawners or modpack
+rules from introducing entities.
+
+Most features reuse vanilla placed features. Necessary custom placements live
+under `worldgen/placed_feature/mushroom_vale/`: sparse cherry trees, moderately
+spaced taiga trees, surface moss and surface glow lichen. The single custom
+configured feature adapts vanilla multiface growth to allow luminous lichen on
+mycelium, moss and podzol. Vanilla glow-lichen placement is underground and
+vanilla cherry placement attempts roughly ten trees per chunk; those would
+not meet this stage's surface light/open meadow requirements.
+
+Future biomes need their own biome resource, climate list entry and optional
+biome surface branch/features. No Java generator rewrite is required. These
+resources affect only Vale; there are no global biome modifiers, vanilla
+resource overrides, biome/structure tag additions or new dependencies.
+
+Existing chunks are never regenerated. Existing worlds may retain saved biome
+sources (including Stage 1 flat or Stage 2.1 mushroom fields), even in new
+chunks. `/reload` is not a migration mechanism. Use a **NEW world created with
+Stage 2.2 installed** for acceptance; test old-world loading separately on a
+backup. Do not remove chunks or edit `level.dat` to force this stage.
+
+Testing: [Stage 2.2 client checklist](TESTING.md#stage-22-three-mushroom-vale-biomes).
+Results: [Stage 2.2 validation](VALIDATION-MUSHROOM-VALE-STAGE-2.2.md).
+
+## Stage 2.3: signature vegetation and giant mushroom landmarks
+
+Stage 2.3 builds on the local Stage 2.2 resources. Dimension/type IDs, climate
+selection, terrain density, surface rules, water, travel/return, dialogue,
+companion identities, saved data and album protocol **9** are unchanged.
+Only the three Vale biomes reference the new decoration. There are no vanilla
+overrides, global modifiers/tags, dependencies, structures or inhabitants.
+
+### Blocks and assets
+
+`MushroomValeVegetation` adds twelve stable block/item IDs under `dudunka`:
+`turquoise_mushroom_cap`, `violet_mushroom_cap`, `golden_mushroom_cap`,
+`vale_mushroom_stem`, `glowing_moss`, `cyan_magic_flower`, `pink_magic_flower`,
+`violet_memory_flower`, `spore_bush`, `small_turquoise_mushroom`,
+`small_violet_mushroom`, and `small_golden_mushroom`.
+The existing deferred registers and Family creative tab expose these blocks.
+They have original 16×16 pixel textures, block/item models, self-drop loot and
+RU/EN names. `tools/generate_vale_vegetation.py` reproduces the checked-in
+resources with the existing Python/Pillow offline toolchain. The checked-in
+resources remain authoritative; running this tool intentionally rewrites the
+Stage 2.3 biome decoration/palettes and supporting tree frequency.
+
+Caps/stems reuse `HugeMushroomBlock` face states, with a cream/lilac stem and
+separate gill texture. Cap light is turquoise **10**, violet **6**, golden **9**;
+stem light is zero. Plants emit **3–6** block light. Light is vanilla lighting,
+without shader emissive maps or bloom. Fixed noon can hide much of the effect.
+Ground plants have **no collision** and allow land pathfinding. Moss is a
+one-pixel overlay; the flowers, bushes and small mushrooms use cutout crossed
+planes. They survive on dirt-tag blocks (including mycelium/podzol/grass),
+moss blocks and farmland, and break when support disappears. They do not grow,
+spread, damage, slow, feed, provide quests or play music. Creative/manual
+placement outside Vale is possible; natural placement is scoped to Vale.
+
+### Data-driven feature architecture
+
+Sixteen new configured/placed-feature pairs live under
+`worldgen/{configured_feature,placed_feature}/mushroom_vale/`:
+
+| Feature IDs (prefix `dudunka:mushroom_vale/`) | Codec and intended role |
+| --- | --- |
+| `giant_red`, `giant_brown` | Vanilla red/brown huge-mushroom codecs and blocks; red radius 2, brown radius 3 |
+| `giant_turquoise`, `giant_violet`, `giant_golden` | Vanilla huge-mushroom codecs with custom state providers; turquoise flat cap radius 3, violet domed radius 2, golden flat radius 2 |
+| `turquoise_landmark`, `violet_landmark`, `golden_landmark` | Flat huge-mushroom cap radius 4 (nine blocks across with clipped corners), one-block stem; placed-feature landmarks, not structures |
+| `glowing_moss`, `spore_bushes` | Vanilla random patches of support-checked, non-colliding custom plants |
+| `glowing_small_mushrooms`, `memory_small_mushrooms`, `pink_small_mushrooms` | Weighted random patches; dominant biome colour weight 8, other colours weight 1 each |
+| `glowing_flowers`, `memory_flowers`, `pink_flowers` | Cyan, violet and pink flower patches respectively |
+
+Huge mushrooms retain vanilla height selection: 4–6 blocks, with a 1/12 chance
+of doubling to 8–12. Landmarks have wider caps rather than guaranteed extra
+height; their flat canopy begins at least four blocks above the root. Domed
+red/violet caps can have low skirts, so they remain sparse. Collision/ground
+checks come from vanilla huge-mushroom features; no Java generator is added.
+New palette variants need blocks/assets and state providers; new distributions
+or biomes need configured/placed features and biome wiring.
+
+| Biome | Attempts per chunk (not successful placement counts) |
+| --- | --- |
+| Glowing Mushroom Forest | Turquoise ×2; red 1/3, brown 1/4, golden 1/4; turquoise landmark 1/12; moss, cyan flowers, turquoise-dominant small mushrooms and spore bushes; cyan/green fog and foliage |
+| Pink Meadows | Golden 1/4; golden landmark 1/24; cherry 1/3; pink magical flowers, pink petals, meadow flowers and golden-dominant small mushrooms; no spore bushes or moss patches |
+| Memory Forest | Violet ×1; red 1/3, brown 1/4; violet landmark 1/16; spruce reduced from four attempts to one; violet flowers, small mushrooms, moss and spore bushes; muted violet fog/sky/foliage |
+
+Giant/landmark placement uses in-square sampling, dry-surface filtering,
+`OCEAN_FLOOR` heightmap and biome filtering. All biomes list shared features in
+consistent relative order, with mushrooms before trees and ground flora, to
+avoid feature-sort cycles and keep decoration from blocking mushroom roots.
+Patch attempts are bounded (12–64 tries, spread four horizontally and two
+vertically); each plant needs empty air and valid support. Older surface moss
+and lichen features/IDs remain available. Meadows retain substantial open
+ground. Sparse stems, elevated broad canopies and passable flora help Syusya,
+but only manual walking can establish useful routes through a real landscape.
+Fog changes colour only, not distance or volumetric rendering.
+
+Use a **NEW world created with Stage 2.3 installed** for visual acceptance.
+Previously generated chunks are unchanged; saved generator/biome-source
+settings may remain from earlier stages. `/reload` does not migrate worlds.
+Keep the new block registrations installed once saved chunks contain them.
+
+Testing: [Stage 2.3 client checklist](TESTING.md#stage-23-signature-vegetation-and-landmarks).
+Results: [Stage 2.3 validation](VALIDATION-MUSHROOM-VALE-STAGE-2.3.md).
+
+## Stage 2.4: cozy decor and landmark cottages
+
+Baseline is the complete uncommitted local Stage 2.2/2.3 working tree. The user
+confirms both earlier stages have passed testing and visual acceptance; their
+original reports remain historical records. Stage 2.4 manual acceptance is
+tracked separately. Terrain, dimension/type and biome IDs, biome climate
+selection, water, travel/return, dialogue, UUIDs, saved data, existing registry
+IDs and album protocol **9** are unchanged.
+
+### Blueprint placement and extension points
+
+One additive Forge feature type, `dudunka:mushroom_vale_decor`, uses
+`MushroomValeDecorFeature.Blueprint`: `radius` (1–6), `height` (1–10), and
+`blocks` (a list of `offset: [x,y,z]` and vanilla `BlockState` JSON in `state`).
+Eight configured/placed-feature pairs live under `mushroom_vale/`. There are
+no new blocks, items, models, textures, entities, dependencies or network/save
+formats. Vanilla blocks plus existing Stage 2.3 plants provide the palette.
+
+The feature checks the **entire** square footprint plus a one-block halo:
+every floor block must be sturdy dirt-tag ground or moss at the same Y; every
+block above must be air or a BushBlock plant, without fluids. Occupied builds,
+trees/leaves, uneven ground, submerged sites, unavailable/unwritable chunks,
+world borders and build-height violations reject placement before any write.
+Blueprint offsets are bounded and unique; empty or oversized lists reject.
+Successful placement rotates positions and block states together to one of
+four cardinal orientations. Existing plants are replaced only at blueprint
+block positions. No terrain leveling, foundation fill, path carving, background
+search, forced chunks, global biome modifiers or vanilla overrides are used.
+
+| Feature ID suffix | Attempt frequency in eligible chunks | Appearance / footprint |
+| --- | --- | --- |
+| `lantern_post` | 1/32 | Red mushroom-capped wooden post with supported warm lantern; radius 1 |
+| `direction_marker` | 1/48 | Two contrasting wooden arrow shapes on a fence marker; radius 1 |
+| `bench` | 1/40 | Three-wide spruce slab seat and upright trapdoor back; radius 1 |
+| `mushroom_picnic` | 1/48 | Red mushroom table and two low crimson slab stools; radius 2 |
+| `flower_bed` | 1/32 | Raised moss/pink-flower bed with wooden edging; radius 1 |
+| `cozy_cluster` | 1/64 | Bench, lantern, potted mushroom and golden mushroom; radius 3 |
+| `pufik_cottage` | 1/48, Pink Meadows only | Small cream stem shell, spotted red dome, flowers, warm lanterns and low porch; radius 4, height 8 |
+| `wise_fly_agaric_cottage` | 1/64, Memory Forest only | Larger/taller red dome, amber windows, external bookshelves, empty lectern and reading bench; radius 6, height 9 |
+
+The six small props are shared by all three Vale biomes. Cottages precede
+props, then existing Stage 2.3 vegetation, in consistently ordered biome step
+9. Placed features use rarity, in-square sampling, `OCEAN_FLOOR_WG`, dry-surface
+filtering and biome filtering. Java also refuses every non-Vale dimension,
+including manual `/place feature` outside Vale. Frequencies are attempts,
+**not guaranteed builds**: the larger flat footprint can reject many cottage
+sites. Cottages are placed features, so `/locate structure` cannot find them.
+
+Both cottages have three-wide, three-high open entrances and a half-step porch
+leading to a plain floor. Shells are intentionally simple and unfurnished;
+Wise's scholarly details are outside. Benches/stools are ordinary decorative
+blocks without a sitting interaction. Markers have no text or guaranteed
+destination. Lanterns use ordinary vanilla block light under fixed noon.
+There are no NPCs, quests, final portal, audio playback or progression systems.
+
+Add future exteriors by creating another configured blueprint and a sparse
+placed feature, then adding it to eligible Vale biome lists in consistent
+order. `tools/generate_vale_decor.py` reproduces all eight pairs and idempotent
+biome wiring. If regenerating earlier vegetation, run the Stage 2.3 generator
+first, then this generator; the earlier tool rewrites biome vegetation lists.
+Checked-in JSON is authoritative. This bounded feature is intended for small
+exteriors; later large builds/interiors can use separate architecture without
+reinterpreting these stable IDs or adding gameplay to this placer.
+
+Previously generated chunks are unchanged. Use a **NEW world with Stage 2.4
+installed**; saved generators can retain older biome sources, and `/reload`
+does not migrate them. The halo and sparse attempts help traversal but do not
+prove connected routes or Syusya navigation through finished landscapes.
+
+Testing: [Stage 2.4 client checklist](TESTING.md#stage-24-cozy-decor-and-landmark-cottages).
+Results: [Stage 2.4 validation](VALIDATION-MUSHROOM-VALE-STAGE-2.4.md).
+
+
+## Stage 2.4a: original voxel decor and cottage exterior polish
+
+Supersedes the Stage 2.4 vanilla-only appearance above. The approved local
+`cottages_and_decor.png`, `giant_mushrooms.png` and `plants_and_flowers.png`
+were inspected as art direction; their pixels are not copied into assets.
+Twelve additive static blocks/items use original 16×16 pixel textures and
+cuboid JSON models. `MushroomValeDecor` registers them through existing Forge
+registers; `MushroomValeDecorShapes` is generated from the same model cuboids.
+Shapes, collision and block states rotate together. There are no ticking
+blocks, block entities, new interactions, recipes or dependencies.
+
+Stable new block/item IDs (all `dudunka:`): `vale_lantern`, `vale_bench`,
+`vale_signpost`, `vale_mushroom_table`, `vale_mushroom_stool`, `vale_planter`,
+`vale_cottage_window`, `vale_cottage_cap`, `vale_cottage_crown`,
+`vale_cottage_eave`, `vale_carved_wood`, `vale_book_stack`. Each has matching
+blockstate, block/item models, loot and RU/EN labels. Keep registrations once
+saved chunks use them. Old vanilla-block decor already in chunks remains intact.
+
+Slatted benches have feet and back rails; mushroom furniture has layered caps
+and cream stems; lanterns have wood/brass frames and amber chambers; two-board
+markers, planted boxes and stacked books strengthen small-cluster silhouettes.
+Lanterns emit light 14, window inserts 9, planters 4 and cream gilled eaves 3.
+Windows are opaque amber decorative inserts, not transparent glass. Lighting
+uses ordinary Minecraft block light under the unchanged fixed-noon dimension.
+
+Cottages keep their existing feature IDs, radius/height limits and biome
+eligibility. Tapered red caps, low rounded crowns and cream ribbed eaves sit
+above cream stem walls, carved timber bases/jambs and amber windows. Pufik
+remains smaller and welcoming; Wise has a larger cap and an exterior scholarly
+reading nook. Each three-wide vestibule now contains a working vanilla spruce
+door in its central two blocks and permanently clear side lanes. The interior
+remains a plain floor. No NPCs, quests, portals, music or progression were added.
+
+All eight placed-feature JSON files, rarity values and biome wiring are
+unchanged. The same full-site preflight, one-block halo, dimension boundary
+and cardinal rotation protect procedural generation. The shared
+`MushroomValeDecorFeature.placeBlueprint` is also used by the explicit developer
+preview: `/dudunka_dev mushroom_vale cottage pufik|wise X Y Z north|east|south|west`.
+This is available only with the existing JVM opt-in, operator permission level
+2 and an executing player in Vale. It checks loaded chunks and live occupants,
+then places at the exact requested floor origin or refuses before any writes.
+It never clears, levels, searches for, teleports to or increases the frequency
+of cottages. Preview biome/rarity filters are deliberately bypassed only for
+that explicit command. There is no persistent locator index or new saved data.
+
+`tools/generate_vale_polish.py` produces original textures/models, matching Java
+shapes, loot and labels. Run it before `tools/generate_vale_decor.py`; vegetation
+need not be regenerated. Optional `tools/preview_vale_decor.py` creates offline
+review sheets from those resources (vanilla blocks approximated). Checked-in
+resources remain authoritative. Manual Minecraft/BMC4 visual acceptance is
+separate from resource checks, model baking and placement GameTests.
+
+Testing: [IntelliJ and exact preview commands](TESTING.md#stage-24b-cottage-architecture-and-usable-benches-in-intellij-idea).
+Results: [Stage 2.4a validation](VALIDATION-MUSHROOM-VALE-STAGE-2.4a.md).
+
+
+## Stage 2.4b: complete cottages and functional benches
+
+Supersedes the Stage 2.4a entrance, plain-interior and non-interactive bench
+behavior above. Full cream/wood blocks close every exterior boundary, including
+recessed corners, jambs and lintels. Exactly one two-block spruce door opens
+each cottage. Ornamental amber windows now sit outside full glass wall blocks;
+a solid ceiling seals each stem below its spotted cap. Pufik keeps a compact
+rounded 21-block floor, low dome, flowers and small mushroom furniture. Wise
+has a 37-block elongated library floor with an asymmetric study bay, timber
+frame, covered entrance, taller offset crown, six interior bookshelves,
+lectern and warm interior lamp. Central aisles remain clear with standing
+headroom. Radius/height limits, eight feature IDs and natural frequencies stay
+unchanged. Previously generated cottages are not rewritten.
+
+Right-clicking an existing `vale_bench` mounts a transient `vale_bench_seat`
+entity using ordinary vanilla riding packets. One player fits each bench
+block; occupancy is checked on the server thread. Shift uses vanilla dismount
+controls with a nearby supported clear landing position. Removal of a bench
+ejects its rider immediately; empty, removed, dead or dimension-mismatched
+riders discard the mount on its next tick. Vanilla logout/dimension transfer
+unmount the player. The entity type cannot be saved or summoned, and explicitly
+rejects serialization. No occupancy map, block entity, custom packet or new
+dependency is needed. Bench and lantern geometry/textures remain unchanged.
+
+Tests exercise complete boundary walls, door halves/opening, safe floors and
+standing doorway/aisle clearance in all rotations, distinct floor plans and
+library furniture, plus right-click seating, facing/height, Shift input,
+occupancy, serialization refusal, breaking, actual logout and dimension
+transfer. Visual seating pose and full BMC4 multiplayer acceptance remain
+manual. [Exact development commands](TESTING.md#stage-24b-cottage-architecture-and-usable-benches-in-intellij-idea).
+[Validation results](VALIDATION-MUSHROOM-VALE-STAGE-2.4b.md).
+
+## Stage 2.5: magical atmosphere, music and environmental polish
+
+Supersedes the Stage 2.3 mushroom frequency/landmark geometry above. Existing
+feature IDs are retained. Ordinary huge mushrooms still use vanilla codecs;
+red and brown remain occasional accents. Attempts per eligible chunk now are:
+
+| Biome | Giant / landmark attempts |
+| --- | --- |
+| Glowing Mushroom Forest | turquoise 1/12, red 1/24, brown 1/32, golden 1/32; turquoise landmark 1/48 |
+| Memory Forest | violet 1/16, red 1/24, brown 1/32; violet landmark 1/56 |
+| Pink Meadows | golden 1/32; golden landmark 1/96 |
+
+Small-mushroom patches retain one attempt per chunk, with 12 internal tries in
+the forests and 8 in meadows (formerly 24/24/12). Weighted palettes also include
+occasional vanilla red/brown small mushrooms; vanilla support/light survival
+still applies. Other flora, supporting trees, terrain and cottages are unchanged.
+These values count attempts, not guaranteed mushrooms.
+
+The three stable `*_landmark` configured features now use additive feature type
+`dudunka:mushroom_vale_landmark`. It decodes the existing bounded Blueprint
+format, preflights the full above-ground volume plus a one-block halo, and
+requires sturdy dirt/moss only beneath the root. It never levels, clears,
+fills, forces chunks or partially places a rejected site. A blocked root,
+fluid, occupied canopy, border or unavailable chunk rejects the entire build.
+Biome/rarity/dry-surface filters still control natural placement.
+
+Four additive static blocks/items provide model-matched voxel collision:
+`turquoise_landmark_cap`, `violet_landmark_cap`, `golden_landmark_cap`, and
+`vale_landmark_stem` (all `dudunka:`). Integer `profile` 0–4 selects ribbed gills,
+spotted rims, stepped shoulders, low crowns, hanging luminous spores, and
+fluted stem/root/neck shapes. Original 16×16 cap/glow pixel textures coordinate
+with `giant_mushrooms.png`; earlier textures remain intact. Landmarks span nine
+blocks, rise nine blocks (violet ten), and keep broad caps/spores at least four
+blocks above ground. Cap light is turquoise 10, violet 8, golden 9. These are
+static non-ticking models without block entities or dependencies. New blocks
+must remain installed once saved chunks contain them. Earlier chunks retain
+older mushroom shapes and frequencies.
+
+`vale_lantern` was already a real registered block emitting 14. Stage 2.5 makes
+its porous frame explicitly block zero light; geometry, textures and emission
+stay intact. Normal Minecraft lighting owns propagation and removal. No
+invisible light blocks, auxiliary entities, custom ticking or unrelated lighting
+changes are introduced. Fixed noon can hide block light; check F3 **block**
+light or a roofed inspection area rather than combined sky brightness.
+
+The standalone bench feature still attempts 1/40, and flower beds 1/32. Bench
+content is three real `vale_bench` blocks, while flower beds contain planters
+and moss. They never substitute for one another. Standalone bench preflight
+now requires ground below its three seats rather than a perfectly flat 5×5
+halo. Full above-ground clearance, fluid, border, chunk and rotation checks
+remain. Other decorations and both cottage placement contracts are unchanged.
+The existing seating lifecycle and transient seat entity remain unchanged.
+The JVM-opt-in/permission-2/player/Vale preview route additionally accepts:
+`/dudunka_dev mushroom_vale decor bench|lantern_post X Y Z north|east|south|west`.
+It reuses the existing blueprint/occupant checks without raising worldgen rates.
+
+### Native soundtrack and transition limits
+
+Forge DeferredRegister registers `dudunka:music.mushroom_vale_theme` as a
+variable-range SoundEvent. `assets/dudunka/sounds.json` maps it to the existing
+unchanged `sounds/music/mushroom_vale_theme.ogg` with `stream: true`. Each Vale
+biome's `effects.music` selects that event, `min_delay: 1200`, `max_delay: 3600`
+(ticks, approximately 1–3 minutes at 20 TPS), and `replace_current_music: true`.
+There is no client audio controller, packet, dependency or custom music tick.
+Vanilla MusicManager uses the Music volume category and owns one background
+track, so moving between these three biomes does not restart/overlap copies.
+
+Local Minecraft 1.20.1 `Minecraft.getSituationalMusic()` and `MusicManager.tick()`
+are authoritative for limits: Creative flight/instabuild selects Creative music
+before biome music, so validate natural scheduling in **Survival**. Screens,
+End boss/End and underwater music can also take priority. On entry, a different
+managed background track is stopped and a delay of 0–600 ticks (up to about
+30 seconds) can precede the Vale theme. A first session can use vanilla's
+100-tick starting delay; 1–3 minutes describes ordinary inter-track gaps, not a
+strict entry guarantee. Outside Vale, destination selection resumes immediately,
+but a current Vale track may finish when the destination Music has replacement
+disabled (including ordinary GAME/CREATIVE music). No forced exit stop is added.
+Low TPS, pausing and Music volume zero affect perceived scheduling. Explicit
+`/playsound` copies and jukebox/modpack audio are outside MusicManager's single
+background slot; stop diagnostic audio before testing natural scheduling.
+
+Use a **NEW runClient world**. No saved-generator migration, old-chunk rewriting,
+terrain density/travel changes, cottage changes, companions/dialogue, quests,
+NPCs, final portal, saved-data changes or protocol changes are included.
+`tools/generate_vale_atmosphere.py` narrowly reproduces Stage 2.5 after older
+Vale generators; do not run older generators alone and expect these overrides
+to survive. Checked-in assets/configuration remain authoritative.
+
+See [Stage 2.5 commands and acceptance](TESTING.md#stage-25-magical-atmosphere-music-and-environmental-polish)
+and [validation report](VALIDATION-MUSHROOM-VALE-STAGE-2.5.md).
+
+
+## Stage 2.5a: environment fixes and automatic Creative music
+
+Supersedes Stage 2.5 frequencies and Creative/exit music limitations above.
+Stable IDs, cottage blueprints, approved decoration models/textures, small
+flower-bed decorations, terrain noise/density and album protocol 9 are retained.
+
+Ordinary huge red/brown mushrooms attempt 1/6 and 1/8 in all three biomes.
+Medium detailed turquoise/violet mushrooms attempt 1/4 in their forests;
+golden attempts 1/6 in Glowing Mushroom Forest and Pink Meadows. These medium
+features reuse the existing voxel cap/stem blocks, with seven-wide layered
+caps, hanging bulbs and ground clearance. The nine-wide large landmark attempts
+remain 1/48 turquoise, 1/56 violet, 1/96 golden. Placement now permits low dirt
+slopes in unused ground cells below the canopy; every actual piece, canopy,
+headroom, tree/building/fluid and chunk boundary remains preflighted. No terrain
+is cleared, leveled or filled. Forest small-mushroom patches use 32 tries,
+meadows 24; ordinary red/brown weights are 4 each. Standalone benches attempt
+1/8 rather than 1/40, retaining three real sittable seat blocks and support/
+clearance checks. Flower beds and cottages retain their configurations/rates.
+Attempts are not successful placement frequencies; measured counts are in the
+[Stage 2.5a validation report](VALIDATION-MUSHROOM-VALE-STAGE-2.5a.md).
+
+Lanterns and hanging cap profile 4 emit maximum Minecraft block light 15.
+Other cap profiles retain their color's 10/8/9 emission; porous landmark parts
+explicitly obstruct zero light. Light belongs to the visible block and vanilla
+updates/remove it. The actual engine regression checks 14/13 in adjacent air,
+10 one block above the walking surface, three blocks from a solid/fence post, sky light 0 and darkness
+after removal for all four source types. Fixed-noon Vale needs an enclosed
+space for a darkness check; its time setting is not changed.
+
+Forge 47.4.13 has no situational-music selection event. Cached 1.20.1 sources
+show Creative selected before biome music, with replacement disabled and
+12000–24000-tick gaps. `client/MushroomValeMusic` uses the existing native
+MusicManager slot: replace the old managed music and start the existing Vale
+event once on entry, then supply 1200–3600-tick gaps if Creative's scheduler
+has no Vale track. Native Survival scheduling can start the same track during
+a gap; the controller detects that slot and does not start another copy.
+Biome/mode changes during a track leave it running. On exit only a managed
+Vale track is stopped; normal destination scheduling resumes. Paused clients
+and screens with their own background music suspend starts/countdowns. Music
+volume, streaming, actual sound lifecycle and the one-track slot remain vanilla.
+There are no new sounds, dependencies, packets, mixins or access transformers.
+
+Manual `/playsound` creates a separate sound and bypasses all automatic selection
+and scheduling; it confirms assets/decoding/category routing only. See
+[updated client commands and regression procedure](TESTING.md#stage-25a-final-environment-fixes-and-homecoming-regression).

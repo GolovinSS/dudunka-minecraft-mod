@@ -1,0 +1,68 @@
+{
+  "type": "dudunka:mushroom_vale_decor",
+  "config": {
+    "radius": 1,
+    "height": 4,
+    "blocks": [
+      {
+        "offset": [
+          -1,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_log",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          1,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:spruce_fence"
+        }
+      },
+      {
+        "offset": [
+          0,
+          2,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:spruce_fence"
+        }
+      },
+      {
+        "offset": [
+          0,
+          3,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_lantern",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -7,8 +7,308 @@
 3. Для проверки приватности подключите второго игрока; сообщение должен получить только владелец Дюдюньки. Несколько его Дюдунек не должны дублировать реплику.
 4. Проверьте команды «Ждать» и «Дома», сон/режим наблюдателя, уход владельца, восстановление и уже идущую семейную сцену. Диалог не должен начинаться или должен сразу завершиться; путь должен обходить препятствия, а при недоступном пути не должно быть телепортации или сообщения.
 
+## Stage 2.4b: cottage architecture and usable benches in IntelliJ IDEA
+
+This supersedes the Stage 2.4/2.4a appearance and non-interactive bench checks below. Graphical Minecraft
+and full BMC4 v55.5 acceptance remain **pending**.
+
+1. IntelliJ: **Settings → Build, Execution, Deployment → Build Tools → Gradle
+   → Gradle JVM: Java 17**. Open **Run → Edit Configurations → + → Gradle**;
+   select this project and set **Tasks and arguments** to
+   `runClient -PmushroomValeDev=true`. Launch it with normal client assets
+   (do not use `-x downloadAssets`). Alternatively, the generated Minecraft
+   Client application configuration needs VM option
+   `-Ddudunka.devMushroomVale=true`; set it on the server JVM too for multiplayer.
+2. Create a **NEW disposable Creative world**, cheats ON, seed `42`. Leave
+   companions at home and the carrier empty. Stand on safe ground, then run
+   `/dudunka_dev mushroom_vale enter`. The commands require permission level 2
+   and the JVM opt-in; they are absent on ordinary servers. They do not add a
+   portal or move companions.
+3. For guaranteed inspection, explicitly create this temporary test platform
+   **inside Vale in that disposable world**. The fill commands change only
+   the requested test area; the cottage command itself never clears terrain:
+
+   ```text
+   /fill 0 159 0 47 159 31 minecraft:mycelium
+   /fill 0 160 0 47 169 31 minecraft:air
+   /tp @s 24 160 24
+   /dudunka_dev mushroom_vale cottage pufik 8 160 8 north
+   /dudunka_dev mushroom_vale cottage wise 32 160 8 north
+   ```
+
+   `X Y Z` is the cottage floor origin, not the ground beneath. Stand outside
+   its footprint. Both cottages now exist at known coordinates without
+   searching naturally rare flat sites. The direction is explicit:
+   `north`, `east`, `south`, or `west`. To inspect another rotation, clear the
+   same disposable platform with the second fill command and place again.
+   North faces negative Z. Collect any dropped items before repeating;
+   the preview refuses live entities, including dropped item entities.
+   Repeated placement over a cottage must refuse.
+   Preview placement bypasses biome eligibility/rarity but retains the entire
+   dry/level/clear footprint, border, build-height and loaded-chunk checks.
+   It also refuses any live entity in the footprint. No background search,
+   persistent chunk loading or normal frequency changes occur.
+4. Inspect Pufik's small spotted cap, rounded crown, gills, cream stem, carved
+   doorway, amber windows and flower porch. Open/close the ordinary spruce
+   door: only the central opening is passable, with full walls beside and above it.
+   Inspect Wise's elongated timber library, asymmetric study bay, taller offset
+   cap, covered porch, interior bookshelves, lectern and slatted reading bench.
+   Use shaders OFF first. Check missing textures, overlapping faces, rotation,
+   silhouette from all sides, inventory models and save/reload persistence.
+5. Inspect standalone props on the same platform:
+
+   ```text
+   /place feature dudunka:mushroom_vale/lantern_post 4 160 24
+   /place feature dudunka:mushroom_vale/direction_marker 10 160 24
+   /place feature dudunka:mushroom_vale/bench 16 160 24
+   /place feature dudunka:mushroom_vale/mushroom_picnic 30 160 24
+   /place feature dudunka:mushroom_vale/flower_bed 37 160 24
+   /place feature dudunka:mushroom_vale/cozy_cluster 43 160 24
+   ```
+
+   Move away from target footprints. These vanilla commands choose random
+   cardinal rotations. Check slats/feet, framed lanterns, spotted tables and
+   stools, two arrow boards, flower planters and book stacks. Right-click each
+   bench block to sit; Shift dismounts. Each block is one seat. With two clients,
+   attempt the same seat simultaneously, then adjacent seats. Check pelvis
+   height, initial facing, free looking, feet, and clear dismount positions in all
+   four directions. Break an occupied bench, disconnect/reconnect, change
+   dimensions, and save/restart while seated: no invisible mounts should remain.
+   Test repeated clicks and blocked overhead clearance. Marker/book interaction
+   remains decorative. F3 block-light readings
+   should show light near lanterns/windows. Fixed noon can hide the effect:
+   for a shaded comparison, `/fill 0 170 0 47 170 31 minecraft:stone`, then
+   remove the temporary canopy with the same command using `minecraft:air`.
+6. Walk through/around each build and the one-block perimeter, including with
+   Syusya using the existing supported companion mechanics. Test two clients:
+   non-operators cannot run the preview; operators can. Test no JVM opt-in,
+   placement outside Vale, occupied/wet/sloping sites and occupied entities.
+   Refusal must leave blocks intact. `/dudunka_dev mushroom_vale return`
+   retains the existing safe return behavior.
+7. Separately explore NEW natural chunks in all three biomes at seeds `42`,
+   `0`, `-71021`, then full BMC4 v55.5. Existing frequencies and cottage biome
+   restrictions are unchanged. `/locate structure` cannot find these placed
+   features; previews establish appearance only. Record natural density,
+   clipping, routes, save/reload, multiplayer and shader/resource-pack results.
+
+Regenerate with `python3 tools/generate_vale_polish.py`, then
+`python3 tools/generate_vale_decor.py`. Optional offline geometry sheets:
+`python3 tools/preview_vale_decor.py` → `build/reports/mushroom-vale-stage24a/`.
+They approximate vanilla blocks and lighting; they are not game screenshots.
+Results: [Stage 2.4b validation](VALIDATION-MUSHROOM-VALE-STAGE-2.4b.md).
+
+Shell equivalent for the dev client (Java 17, normal client assets):
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH \
+./gradlew runClient -PmushroomValeDev=true
+```
+
+For fixed standalone bench orientations (same disposable platform):
+
+```text
+/setblock 14 160 24 dudunka:vale_bench[facing=north]
+/setblock 16 160 24 dudunka:vale_bench[facing=east]
+/setblock 18 160 24 dudunka:vale_bench[facing=south]
+/setblock 20 160 24 dudunka:vale_bench[facing=west]
+```
+
+After every rider has dismounted (allow one server tick), this loaded-entity
+check should produce no message; while seated it should print one:
+
+```text
+/execute if entity @e[type=dudunka:vale_bench_seat] run say Bench seat exists
+```
+
+For cottage rotations, repeat the platform clearing command, collect door drops,
+then use the two cottage commands above with `east`, `south`, and `west`.
+Existing cottages in generated chunks retain their old blocks; newly placed
+cottages use the corrected blueprints. Existing `vale_bench` blocks gain sitting.
+
+## Stage 2.4: cozy decor and landmark cottages
+
+Stage 2.2/2.3 testing and visual acceptance are confirmed by the user. The
+following Stage 2.4 checks remain pending. Use Java 17 and ordinary client
+asset download (do not exclude `downloadAssets` for a graphical run):
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH \
+./gradlew runClient -PmushroomValeDev=true
+```
+
+In IntelliJ use the same Gradle task/arguments and Gradle JVM 17.
+
+1. Create a **NEW** Creative world with cheats and seed `42`; later sample `0`
+   and `-71021`. Start with companions at home and an empty carrier. From safe
+   ground record departure, then `/dudunka_dev mushroom_vale enter`.
+2. Use `/locate biome dudunka:pink_meadows`,
+   `/locate biome dudunka:memory_forest` and
+   `/locate biome dudunka:glowing_mushroom_forest`. Fly to results or use
+   `/execute in dudunka:mushroom_vale run tp @s X 140 Z` and descend.
+   Explore NEW chunks over several thousand blocks. Record seed/coordinates
+   and approximate feature counts: small props should be scattered, Pufik
+   cottages restricted to meadows, Wise cottages to memory forest. These are
+   rare features on flat dry ground; `/locate structure` cannot find them.
+3. For reliable close inspection, find an open, level, dry site. In Vale run
+   `/place feature dudunka:mushroom_vale/pufik_cottage X Y Z` with Y one above
+   ground. Repeat for `wise_fly_agaric_cottage`, `lantern_post`,
+   `direction_marker`, `bench`, `mushroom_picnic`, `flower_bed`, `cozy_cluster`.
+   Largest site needs a 15×15 level grass/mycelium/podzol/moss floor and nine
+   clear blocks above it; use a separate Creative test platform if needed.
+   Forced placement bypasses placed-feature rarity/biome filters, so it cannot
+   establish natural distribution. Placement outside Vale should refuse.
+4. Check recognizable red spotted mushroom domes, cream walls, amber windows,
+   warm lanterns, Pufik's small welcoming porch/flowers and Wise's larger roof,
+   external shelves, empty lectern and reading bench. Inspect each orientation,
+   supports, slab/trapdoor edges, lighting and missing textures with shaders
+   off, then with the target BMC4 resource/shader setup. No NPC, quests, music
+   or special sitting/marker interaction is expected.
+5. Walk around all props and cottages in Survival. Check the open perimeter,
+   porch half-steps and three-wide entrances; inspect neighboring vegetation,
+   shores and slopes for obstructions. In a separate companion test bring
+   Syusya with existing supported mechanics and walk routes around cottages,
+   benches and tables. Developer travel still moves only the player. Record
+   any inaccessible or overcrowded routes with seed/coordinates.
+6. Save/quit/restart beside a cottage. Verify geometry/light, unchanged
+   vegetation, safe travel/return and companion identity/state. Check an old
+   save BACKUP without deleting chunks or editing `level.dat`.
+7. Repeat natural density, traversal, save/reload and travel checks in full
+   Better MC BMC4 v55.5 and dedicated-server multiplayer. Record acceptance
+   separately from automated placement tests. Check logs for worldgen errors.
+
+Automated sequence: `python3 tools/validate_vale_resources.py`,
+`./gradlew build verifyModels -x downloadAssets`, then one final full
+`runGameTestServer` using a fresh unused working directory. Reference checks
+and character model baking do not establish visual quality of vanilla-block
+builds. See [Stage 2.4 results](VALIDATION-MUSHROOM-VALE-STAGE-2.4.md).
+
+## Stage 2.3: signature vegetation and landmarks
+
+Graphical Minecraft and full BMC4 v55.5 acceptance are pending. Use Java 17:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH \
+./gradlew runClient -PmushroomValeDev=true
+```
+
+In IntelliJ use Gradle task `runClient -PmushroomValeDev=true`, Gradle JVM 17,
+and allow ordinary client asset download. Headless validation excludes assets;
+the graphical run needs them.
+
+1. Create a **NEW**, separate Creative world with cheats and seed `42`; also
+   sample NEW worlds with `0` and `-71021`. Leave the family at home and empty
+   the carrier for the initial developer-route checks. Record departure, then
+   `/dudunka_dev mushroom_vale enter`. Check F3 dimension and safe arrival.
+2. Locate all three biomes from inside Vale:
+
+   ```text
+   /locate biome dudunka:glowing_mushroom_forest
+   /locate biome dudunka:pink_meadows
+   /locate biome dudunka:memory_forest
+   ```
+
+   Fly to the result or, in Creative, use
+   `/execute in dudunka:mushroom_vale run tp @s X 140 Z`, then descend.
+   Explore at least 2048 blocks in each direction and note seed/coordinates.
+3. Glowing forest: turquoise flat caps and small mushrooms, cyan flowers,
+   flecked glowing moss, spore bushes, red/brown giants, occasional warm golden
+   caps and broader turquoise landmarks. Memory forest: violet domed mushrooms,
+   broad violet landmarks, purple flowers/small mushrooms, sparse spruce and
+   soft violet fog. Meadows: open grass, pink flowers/petals, sparse cherry,
+   small golden mushrooms, rare golden giants and broad golden landmarks.
+   Rarity is attempts, so a small sample may contain no landmark.
+4. With shaders/resource packs off, check all cap surfaces, gills, stems,
+   cutout plants and item models for missing textures/black planes. All twelve
+   blocks are in the Family creative tab with RU/EN names. Inspect vanilla
+   block light near caps/moss/flowers, including below caps: fixed noon and sky
+   light can mask the glow. Shader/bloom appearance is a separate BMC4 check.
+5. Walk Survival routes in each biome and across borders, including low domed
+   mushroom skirts, slopes, shores and landmark undersides. Plants must not
+   obstruct or slow walking. In a separate navigation check bring a following
+   Syusya using existing supported travel/transport mechanics; verify she can
+   route around stems and through flora. Developer travel moves only the player.
+   Record any unavoidable blockage or excessively dense seed/coordinates.
+6. On spare ground test support removal, block breaking/drops and placement of
+   decorations on grass/mycelium/podzol/moss. These are environmental items:
+   no food effects, interactions, growth, mobs, quests or music are expected.
+   Optional controlled palette inspection: `/place feature
+   dudunka:mushroom_vale/turquoise_landmark` on clear dry ground; repeat for
+   `violet_landmark` and `golden_landmark`. Forced placement does not establish
+   natural frequency or biome filtering.
+7. Place markers beside all palettes; save/quit/restart and verify new blocks,
+   light, biome IDs, markers and `/dudunka_dev mushroom_vale return`. Repeat
+   the existing travel safety/permissions/fallback/multiplayer checks. On
+   backup copies of old saves, check retained builds, companions, bookmarks
+   and other dimensions without editing `level.dat` or deleting chunks.
+8. Repeat in full BMC4 v55.5 and on a dedicated server with two clients. Review
+   worldgen/registry logs, biome modifiers, resource packs/shaders, save/reload
+   and traversal. Record manual acceptance separately from automated tests.
+
+Offline preflight: `python3 tools/validate_vale_resources.py` (cached vanilla
+1.20.1 client-extra JAR, or pass `--vanilla-jar PATH`). Then `build verifyModels`,
+then one final `runGameTestServer`, with Java 17 and a fresh unused test world.
+`verifyModels` covers character models; the preflight checks block resource
+references, and client acceptance checks actual block rendering.
+
+Architecture: [Stage 2.3](MUSHROOM-VALE.md#stage-23-signature-vegetation-and-giant-mushroom-landmarks).
+Evidence: [Stage 2.3 validation](VALIDATION-MUSHROOM-VALE-STAGE-2.3.md).
+
+## Stage 2.2: three Mushroom Vale biomes
+
+Historical Stage 2.2 checklist; use Stage 2.3 above for current vegetation.
+
+Manual graphical and full BMC4 v55.5 acceptance are pending. Use Java 17 and
+`./gradlew runClient -PmushroomValeDev=true` (IntelliJ Gradle run arguments use
+the same task/property). Allow the ordinary client asset task for this run.
+
+1. Create a **NEW**, separate Creative world with cheats, initially seed `42`;
+   repeat with `0` and `-71021`. Leave companions at home and empty the carrier.
+   Record safe departure coordinates and use `/dudunka_dev mushroom_vale enter`.
+   Verify F3 dimension `dudunka:mushroom_vale` and a safe surface landing.
+2. From inside Vale, locate all three biomes:
+
+   ```text
+   /locate biome dudunka:glowing_mushroom_forest
+   /locate biome dudunka:pink_meadows
+   /locate biome dudunka:memory_forest
+   ```
+
+   Travel in Creative/spectator or fly to the reported X/Z. For a distant jump,
+   use `/execute in dudunka:mushroom_vale run tp @s X 140 Z`, then fly down in
+   Creative; do not teleport blindly onto ground in Survival. Record coordinates
+   and check F3 biome IDs. Explore within roughly 2048 blocks in each direction.
+3. Inspect mycelium, giant red/brown mushrooms, moss and ground glow lichen in
+   the glowing forest; open grass, pink petals/flowers and occasional cherry
+   trees in the meadow; podzol, spaced spruce trees, mushrooms and darker
+   violet/blue ambience in Memory Forest. Inspect each fog/water/sky palette
+   with shaders off first. Vanilla fixed noon can make lichen light subtle;
+   inspect nearby block light in F3. Confirm mooshrooms can spawn on clear
+   mycelium under normal spawning rules; they need not appear immediately.
+4. Walk substantial Survival routes through all three biomes and their borders.
+   Check standing clearance, open meadow space, hills, shorelines, working ponds
+   and water basins, tree/mushroom density and lack of exposed lava/ravines from
+   these biomes. Note seeds/coordinates/screenshots of obstructed routes. The
+   automated samples do not establish every route or aesthetic quality.
+5. Place markers in all three, save/quit and restart. Verify markers, positions,
+   biome IDs and developer return to the original departure. Check companion
+   identities/ownership and run the existing safety, fallback and multiplayer
+   travel checklist below. No portal, quests or music progression is expected.
+6. On backup copies of Stage 1/2.1 worlds, check retained chunks/builds, player
+   positions and travel/bookmarks. Legacy generators/biomes may remain. Do not
+   edit saved generator settings or remove chunks. Check other dimensions too.
+7. Repeat in full BMC4 v55.5 and on a dedicated server with two clients. Check
+   biome modifiers, modded hazards/structures, shaders and registry logs.
+   Record these separately from automated Forge results.
+
+Architecture: [Stage 2.2](MUSHROOM-VALE.md#stage-22-three-independent-biomes).
+Evidence: [Stage 2.2 validation](VALIDATION-MUSHROOM-VALE-STAGE-2.2.md).
+
 ## Stage 2.1: Mushroom Vale natural terrain
 
+Historical Stage 2.1 checklist; use Stage 2.2 above for current fresh worlds.
 This checklist is pending manual acceptance. Use JDK 17, Minecraft 1.20.1 and
 Forge 47.4.13. In IntelliJ, set Project SDK and Gradle JVM to 17, then run the
 Gradle task `runClient -PmushroomValeDev=true`. From a shell:
@@ -412,3 +712,225 @@ Prototype settings and compatibility limits: [MUSHROOM-VALE.md](MUSHROOM-VALE.md
 - Знакомство только с видимым другом владельца в шести блоках; общая сценка только после прибытия. Нет предметных наград и дополнительного начисления дружбы.
 - Сводка: следование/ожидание/дома, домашний режим вдали от дома, выгруженный друг, другое измерение, старая и новая переноска, действующая переноска при себе. Чтение не грузит чанки и не меняет билет.
 - RU/EN, длинные имена, пустые списки, 18 воспоминаний/32 члена семьи, GUI Scale и прокрутка. «Открыть друга» выбирает верную карточку. Протокол 9 на сервере и всех клиентах.
+
+## Stage 2.5: magical atmosphere, music and environmental polish
+
+**Updated by Stage 2.5a below:** Creative and Survival now use the Vale track,
+lanterns/bulbs emit 15, medium detailed mushrooms and standalone benches are
+more discoverable. The historical Stage 2.5 validation report is not current acceptance.
+
+Run Java 17 / Forge 47.4.13 / Minecraft 1.20.1:
+
+```bash
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH="$JAVA_HOME/bin:$PATH"
+python3 tools/validate_vale_resources.py
+./gradlew --offline build verifyModels -x downloadAssets
+python3 tools/validate_vale_resources.py --mod-jar build/libs/dudunka-0.26.0-alpha.jar
+./gradlew runClient -PmushroomValeDev=true
+```
+
+Create a **NEW world**, cheats enabled. Enter while standing safely on solid
+Overworld ground, with an empty carrier and companions left at home:
+
+```text
+/dudunka_dev mushroom_vale enter
+/gamemode creative
+/locate biome dudunka:glowing_mushroom_forest
+/locate biome dudunka:memory_forest
+/locate biome dudunka:pink_meadows
+```
+
+Use the returned biome positions to explore fresh chunks, checking moderately common
+red/brown mushrooms, medium turquoise/violet/golden detailed mushrooms,
+uncommon exceptionally large landmarks, separated benches/flower beds, open routes and natural terrain.
+`/locate structure` cannot find these placed-feature landmarks. Fixed benchmark
+coordinates in automated reports depend on that test world's random seed.
+
+For deterministic model/interaction inspection, explicitly build a temporary
+platform high above terrain in this disposable world (these `/fill` commands
+are test preparation, never production generation). Keep the player outside
+preview footprints:
+
+```text
+/fill 0 159 0 79 159 15 minecraft:mycelium
+/fill 0 160 0 79 175 15 minecraft:air
+/tp @s 56 160 14
+/place feature dudunka:mushroom_vale/turquoise_landmark 8 160 8
+/place feature dudunka:mushroom_vale/violet_landmark 24 160 8
+/place feature dudunka:mushroom_vale/golden_landmark 40 160 8
+/dudunka_dev mushroom_vale decor bench 56 160 8 north
+/dudunka_dev mushroom_vale decor lantern_post 64 160 8 north
+/place feature dudunka:mushroom_vale/giant_red 72 160 8
+```
+
+Inspect silhouettes from above/below: ribbed gills, hanging spores, raised
+spots, layered shoulders/crowns, cream fluted roots/stems, colored caps, real block
+light and four-block canopy clearance. At another clear supported site use
+`/place feature dudunka:mushroom_vale/giant_brown X Y Z`. Repeat bench/lantern
+previews at fresh supported positions with east/south/west. Crowded or uneven
+sites can refuse; move/clear the test platform explicitly. Right-click each
+bench seat; check facing, free looking, occupancy with a second real player,
+Shift dismount, breaking an occupied bench, logout/reconnect, dimension change
+and save/restart. Seating should match Stage 2.4b.
+
+For visible lantern lighting, roof the separate test corner and block skylight:
+
+```text
+/setblock 63 160 8 minecraft:air
+/fill 60 166 4 68 166 12 minecraft:stone
+/fill 60 160 4 60 165 12 minecraft:stone
+/fill 68 160 4 68 165 12 minecraft:stone
+/fill 60 160 4 68 165 4 minecraft:stone
+/fill 60 160 12 68 165 12 minecraft:stone
+/tp @s 64 160 10
+```
+
+Use F3 client **block light**, not sky/combined light. The lantern occupies
+`64 163 8`; adjacent clear air should receive 14 and two blocks away 13, unless
+another source contributes. Check east/west/up rather than the supporting
+post. Remove it, wait for normal lighting updates, and confirm darkness returns:
+
+```text
+/setblock 64 163 8 minecraft:air
+/setblock 64 163 8 dudunka:vale_lantern[facing=north]
+```
+
+For immediate asset/volume diagnosis only, set Music above zero and run:
+
+```text
+/playsound dudunka:music.mushroom_vale_theme music @s ~ ~ ~ 1 1
+/stopsound @s music
+/gamemode survival
+```
+
+Then close menus and enter Vale afresh to test **automatic** music, without
+`/playsound`. The theme starts on the first unpaused client tick in both
+Creative and Survival. Let the whole track finish: expect approximately 1–3
+minutes of silence at 20 TPS. Switch Creative/Survival and cross all three Vale
+biome borders during playback: no restart or doubled music. Test Music volume
+zero/restoration independently from other categories. Return from safe ground:
+
+```text
+/dudunka_dev mushroom_vale return
+```
+
+The Vale managed track stops on exit; ordinary Minecraft music resumes through
+its normal scheduler. Test Overworld/Nether travel, disconnect/reconnect,
+save/reload and two actual clients with different Music slider values.
+
+`/playsound ... music` proves registration, resource lookup, decoding and volume
+routing only. It creates a separate command sound, bypasses biome selection,
+Creative priority, MusicManager's current-track slot, delays and dimension exit.
+Stop command-created audio before testing automatic music; issuing `/stopsound`
+in mid-track can stop audible playback while MusicManager still temporarily
+owns that slot, so a fresh dimension entry is the clean scheduling check.
+
+Automated coverage includes configured mushroom placement/obstruction/clearance,
+sparse frequency and reference checks, actual threaded engine light propagation
+and removal, natural benches in finished chunks, preview permissions and existing
+seating lifecycle, loaded biome SoundEvent/delay/replacement configuration,
+OGG/resource/JAR checks. Full GameTests must use a fresh isolated working directory
+and run once after focused corrections. The recorded init scripts/logs live in
+`build/reports/mushroom-vale-stage25/`; choose an unused directory before rerunning.
+
+Manual Minecraft visual/audio acceptance and full **Better MC BMC4 v55.5**
+acceptance remain separate: shaders/resource packs, natural distribution over
+multiple seeds, companion walking routes, seat poses/multiplayer, old-save
+loading and real playback/transition timing require graphical testing.
+
+
+## Stage 2.5a: final environment fixes and homecoming regression
+
+Use Minecraft 1.20.1, Forge 47.4.13, Java 17 and a **new disposable world**.
+Existing chunks retain their mushrooms/decorations. No generator migration or
+terrain density change is performed. All previous Stage 2.2–2.5 work stays local.
+
+Reproducible offline checks (the script selects Java 17 and refuses reused worlds):
+
+```bash
+python3 tools/validate_vale_resources.py
+python3 tools/run_vale_stage25a_checks.py focused
+python3 tools/run_vale_stage25a_checks.py survey --seeds 0 42 -71021
+python3 tools/run_vale_stage25a_checks.py build
+python3 tools/run_vale_stage25a_checks.py full
+python3 tools/validate_vale_resources.py --mod-jar build/libs/dudunka-0.26.0-alpha.jar
+./gradlew runClient -PmushroomValeDev=true
+```
+
+`focused` includes six live three-character homecoming repetitions, deterministic
+bed-edge arrival, rain/homecoming sampling, real threaded lighting/removal,
+natural bench sitting and the existing decoration/preview/seating checks.
+`survey` scans normally generated FULL chunks without preview placement or
+modified worldgen probabilities. Reports include seeds, biome-column denominators,
+individual small mushrooms, complete mushroom roots by color/size, bench seats,
+standalone three-seat benches and first-found coordinates. Survey/helper classes
+are compiled only by the script's temporary init file and excluded from normal builds.
+Logs and init scripts: `build/reports/mushroom-vale-stage25a/`.
+
+Inspect natural scenery with the biome locate commands above. For reliable bench
+interaction/model inspection the existing guarded preview remains:
+
+```text
+/dudunka_dev mushroom_vale decor bench 56 160 8 north
+/dudunka_dev mushroom_vale decor lantern_post 64 160 8 north
+```
+
+Requires JVM opt-in `-PmushroomValeDev=true`, permission level 2, a player in
+Vale, a supported clear site and no live occupants. It refuses unsafe sites.
+This preview is separate from the survey's naturally generated benches.
+
+For naturally generated examples, create a **new seed `0` world with this build**,
+enter Vale, then use Creative inspection positions (no preview placement):
+
+```text
+/gamemode creative
+/tp @s -1153 69 -523 facing -1151 67 -523
+/tp @s -1146 82 -623 facing -1152 83 -629
+/tp @s -1127 76 -564 facing -1133 77 -570
+/tp @s -1074 79 -429 facing -1080 80 -435
+```
+
+These inspect, in order, a Memory bench, a turquoise detailed mushroom, a violet
+detailed mushroom and a Pink Meadows golden detailed mushroom. Run one teleport
+at a time. The bench itself is at `-1151 67 -523`; right-click a seat and Shift
+out. These coordinates come from the final natural census and require current
+worldgen in a clean seed-0 world. Other seeds use the survey's `SURVEY found` lines.
+
+On a separate clear mycelium platform, compare medium detailed mushrooms:
+
+```text
+/fill 0 159 32 55 159 47 minecraft:mycelium
+/fill 0 160 32 55 175 47 minecraft:air
+/place feature dudunka:mushroom_vale/giant_turquoise 8 160 40
+/place feature dudunka:mushroom_vale/giant_violet 24 160 40
+/place feature dudunka:mushroom_vale/giant_golden 40 160 40
+```
+
+The three nine-wide `*_landmark` commands above remain the uncommon large size.
+Check routes around stems and under the caps with adult Syusya. Preserve and
+inspect nearby flower beds, small mushrooms and cottages.
+
+For a hanging bulb independent of other light, use the roofed corner above:
+
+```text
+/setblock 64 163 8 dudunka:turquoise_landmark_cap[profile=4]
+/setblock 64 163 8 dudunka:violet_landmark_cap[profile=4]
+/setblock 64 163 8 dudunka:golden_landmark_cap[profile=4]
+/setblock 64 163 8 minecraft:air
+```
+
+Each visible bulb is its own level-15 source. Verify F3 block-light spread and
+removal, then check complete naturally generated mushrooms. Other cap parts
+also emit light, so removing one bulb from an intact glowing cap does not make
+the entire area dark. Vale's dimension type fixes the sky at noon: `/time set
+midnight` cannot produce a Vale night. Use a fully roofed/enclosed space with
+F3 sky light 0 for darkness; repeat the same source test in the Overworld at
+`/time set midnight` for a real night. No invisible light helper is installed.
+
+For homecoming, keep three valid personal markers loaded, choose HOME, wait
+nearby, walk more than 12 blocks away for at least 10 seconds, then return within
+8 blocks. Require WAVE/PURR/PEEK with trust >=25, including walking off bed/marker
+edges; modes and bindings must remain HOME. Move away, issue stay, change the
+home or introduce a threat to verify cancellation. Friendship must accrue only
+while genuinely settled together. Real Minecraft/BMC4 acceptance remains manual.

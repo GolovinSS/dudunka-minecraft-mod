@@ -1,0 +1,58 @@
+{
+  "type": "dudunka:mushroom_vale_decor",
+  "config": {
+    "radius": 1,
+    "height": 3,
+    "blocks": [
+      {
+        "offset": [
+          -1,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:small_golden_mushroom"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_log",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          1,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_signpost",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          2,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_lantern",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      }
+    ]
+  }
+}

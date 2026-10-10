@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "dudunka:block/small_violet_mushroom"
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "carvers": {},
+  "downfall": 0.6,
+  "effects": {
+    "fog_color": 16244461,
+    "sky_color": 11982842,
+    "water_color": 6929091,
+    "water_fog_color": 12770533,
+    "grass_color": 11128718,
+    "foliage_color": 12047516,
+    "music": {
+      "sound": "dudunka:music.mushroom_vale_theme",
+      "min_delay": 1200,
+      "max_delay": 3600,
+      "replace_current_music": true
+    }
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:ore_dirt",
+      "minecraft:ore_gravel",
+      "minecraft:ore_granite_upper",
+      "minecraft:ore_granite_lower",
+      "minecraft:ore_diorite_upper",
+      "minecraft:ore_diorite_lower",
+      "minecraft:ore_andesite_upper",
+      "minecraft:ore_andesite_lower",
+      "minecraft:ore_tuff",
+      "minecraft:ore_coal_upper",
+      "minecraft:ore_coal_lower",
+      "minecraft:ore_iron_upper",
+      "minecraft:ore_iron_middle",
+      "minecraft:ore_iron_small",
+      "minecraft:ore_gold",
+      "minecraft:ore_gold_lower",
+      "minecraft:ore_redstone",
+      "minecraft:ore_redstone_lower",
+      "minecraft:ore_diamond",
+      "minecraft:ore_diamond_large",
+      "minecraft:ore_diamond_buried",
+      "minecraft:ore_lapis",
+      "minecraft:ore_lapis_buried",
+      "minecraft:ore_copper",
+      "minecraft:disk_sand",
+      "minecraft:disk_clay",
+      "minecraft:disk_gravel"
+    ],
+    [],
+    [],
+    [
+      "dudunka:mushroom_vale/pufik_cottage",
+      "dudunka:mushroom_vale/lantern_post",
+      "dudunka:mushroom_vale/direction_marker",
+      "dudunka:mushroom_vale/bench",
+      "dudunka:mushroom_vale/mushroom_picnic",
+      "dudunka:mushroom_vale/flower_bed",
+      "dudunka:mushroom_vale/cozy_cluster",
+      "dudunka:mushroom_vale/golden_landmark",
+      "dudunka:mushroom_vale/giant_red",
+      "dudunka:mushroom_vale/giant_brown",
+      "dudunka:mushroom_vale/giant_golden",
+      "dudunka:mushroom_vale/cherry_trees",
+      "dudunka:mushroom_vale/pink_small_mushrooms",
+      "dudunka:mushroom_vale/pink_flowers",
+      "minecraft:flower_cherry",
+      "minecraft:flower_meadow",
+      "minecraft:patch_grass_plain"
+    ],
+    []
+  ],
+  "has_precipitation": true,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [
+      {
+        "type": "minecraft:bat",
+        "maxCount": 8,
+        "minCount": 8,
+        "weight": 10
+      }
+    ],
+    "axolotls": [],
+    "creature": [
+      {
+        "type": "minecraft:pig",
+        "maxCount": 2,
+        "minCount": 1,
+        "weight": 1
+      },
+      {
+        "type": "minecraft:rabbit",
+        "maxCount": 6,
+        "minCount": 2,
+        "weight": 2
+      },
+      {
+        "type": "minecraft:sheep",
+        "maxCount": 4,
+        "minCount": 2,
+        "weight": 2
+      }
+    ],
+    "misc": [],
+    "monster": [],
+    "underground_water_creature": [
+      {
+        "type": "minecraft:glow_squid",
+        "maxCount": 6,
+        "minCount": 4,
+        "weight": 10
+      }
+    ],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 0.6
+}

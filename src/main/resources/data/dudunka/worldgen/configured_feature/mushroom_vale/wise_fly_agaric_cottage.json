@@ -1,0 +1,3190 @@
+{
+  "type": "dudunka:mushroom_vale_decor",
+  "config": {
+    "radius": 6,
+    "height": 9,
+    "blocks": [
+      {
+        "offset": [
+          -3,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "west"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          2,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_window",
+          "Properties": {
+            "facing": "west"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          3,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_window",
+          "Properties": {
+            "facing": "west"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          5,
+          -3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          5,
+          -2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          5,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          5,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          5,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          5,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -3,
+          5,
+          3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          0,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          0,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          0,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          0,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          0,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          0,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_log",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          -4
+        ],
+        "state": {
+          "Name": "minecraft:spruce_fence"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          1,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_log",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_lantern",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:glass"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          2,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          3,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_log",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          3,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          3,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          3,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          3,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          3,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:glass"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          3,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          3,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          4,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:spruce_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          4,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          4,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          4,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          4,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          4,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          4,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          4,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -2,
+          5,
+          4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          6,
+          -2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          6,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          6,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          6,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -2,
+          6,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:birch_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          -4
+        ],
+        "state": {
+          "Name": "minecraft:birch_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          5
+        ],
+        "state": {
+          "Name": "dudunka:vale_bench",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          1,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          1,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:bookshelf"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          1,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:bookshelf"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          1,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:bookshelf"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          1,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          2,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          2,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:bookshelf"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          2,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:bookshelf"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          2,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:bookshelf"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          2,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          3,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          3,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          4,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:spruce_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          4,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          4,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          5,
+          4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          6,
+          -3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          6,
+          -2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          6,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          6,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          6,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          6,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          6,
+          3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:birch_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          -4
+        ],
+        "state": {
+          "Name": "minecraft:birch_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          4
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "south"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          5
+        ],
+        "state": {
+          "Name": "dudunka:vale_bench",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          1,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:spruce_door",
+          "Properties": {
+            "facing": "north",
+            "half": "lower",
+            "hinge": "left",
+            "open": "false",
+            "powered": "false"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          1,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          2,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:spruce_door",
+          "Properties": {
+            "facing": "north",
+            "half": "upper",
+            "hinge": "left",
+            "open": "false",
+            "powered": "false"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          2,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:glass"
+        }
+      },
+      {
+        "offset": [
+          0,
+          2,
+          4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_window",
+          "Properties": {
+            "facing": "south"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          3,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_window",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          3,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:glass"
+        }
+      },
+      {
+        "offset": [
+          0,
+          3,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          4,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:spruce_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          4,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          4,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          0,
+          5,
+          4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          6,
+          -3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          6,
+          -2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          6,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          6,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          6,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          6,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          6,
+          3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          7,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          7,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          7,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:birch_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          -4
+        ],
+        "state": {
+          "Name": "minecraft:birch_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          5
+        ],
+        "state": {
+          "Name": "dudunka:vale_bench",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          1,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          1,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:lectern",
+          "Properties": {
+            "facing": "west",
+            "has_book": "false",
+            "powered": "false"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          1,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_book_stack",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          1,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          2,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          2,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          3,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          3,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_lantern",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          3,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          4,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:spruce_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          4,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          4,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          1,
+          5,
+          4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          6,
+          -3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          6,
+          -2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          6,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          6,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          6,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          6,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          6,
+          3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          7,
+          -2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          7,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          7,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          7,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          7,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          8,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_crown",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          8,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_crown",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          8,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_crown",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          2,
+          1,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_log",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          1,
+          -4
+        ],
+        "state": {
+          "Name": "minecraft:spruce_fence"
+        }
+      },
+      {
+        "offset": [
+          2,
+          1,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          1,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          1,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          1,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          1,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          2,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_log",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          2,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_lantern",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          2,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          2,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          2,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          2,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          2,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          3,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_log",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          3,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          3,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          3,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          3,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          3,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          4,
+          -5
+        ],
+        "state": {
+          "Name": "minecraft:spruce_slab",
+          "Properties": {
+            "type": "bottom"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          4,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          4,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          4,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          4,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          4,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          -4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          -3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          -2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          -1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          2
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          3
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          2,
+          5,
+          4
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          6,
+          -2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          6,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          6,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          6,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          6,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          7,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          7,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          7,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_cap",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          3,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:birch_planks"
+        }
+      },
+      {
+        "offset": [
+          3,
+          1,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          1,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          2,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:glass"
+        }
+      },
+      {
+        "offset": [
+          3,
+          2,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          3,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          3,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_birch_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          4,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          4,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:stripped_spruce_wood",
+          "Properties": {
+            "axis": "y"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          5,
+          -3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          5,
+          -2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          5,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          5,
+          0
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          3,
+          5,
+          1
+        ],
+        "state": {
+          "Name": "minecraft:red_mushroom_block"
+        }
+      },
+      {
+        "offset": [
+          3,
+          5,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          3,
+          5,
+          3
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_eave",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          4,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "east"
+          }
+        }
+      },
+      {
+        "offset": [
+          4,
+          2,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_cottage_window",
+          "Properties": {
+            "facing": "east"
+          }
+        }
+      }
+    ]
+  }
+}

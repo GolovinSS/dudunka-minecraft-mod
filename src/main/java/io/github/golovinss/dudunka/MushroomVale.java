@@ -41,7 +41,9 @@ public final class MushroomVale {
         dispatcher.register(Commands.literal("dudunka_dev").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("mushroom_vale")
                         .then(Commands.literal("enter").executes(context -> enter(context.getSource())))
-                        .then(Commands.literal("return").executes(context -> leave(context.getSource())))));
+                        .then(Commands.literal("return").executes(context -> leave(context.getSource())))
+                        .then(MushroomValeCottagePreview.command())
+                        .then(MushroomValeCottagePreview.decorCommand())));
     }
 
     private static CommandSyntaxException error(String message) {

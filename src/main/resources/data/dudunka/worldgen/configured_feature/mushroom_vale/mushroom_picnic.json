@@ -1,0 +1,61 @@
+{
+  "type": "dudunka:mushroom_vale_decor",
+  "config": {
+    "radius": 2,
+    "height": 2,
+    "blocks": [
+      {
+        "offset": [
+          -2,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_mushroom_stool",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_mushroom_table",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          2
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          2,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_mushroom_stool",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_single_face",
+  "textures": {
+    "texture": "dudunka:block/golden_mushroom_cap"
+  }
+}

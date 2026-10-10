@@ -1,0 +1,59 @@
+{
+  "type": "minecraft:random_patch",
+  "config": {
+    "tries": 32,
+    "xz_spread": 4,
+    "y_spread": 2,
+    "feature": {
+      "feature": {
+        "type": "minecraft:simple_block",
+        "config": {
+          "to_place": {
+            "type": "minecraft:weighted_state_provider",
+            "entries": [
+              {
+                "data": {
+                  "Name": "dudunka:small_violet_mushroom"
+                },
+                "weight": 8
+              },
+              {
+                "data": {
+                  "Name": "dudunka:small_turquoise_mushroom"
+                },
+                "weight": 1
+              },
+              {
+                "data": {
+                  "Name": "dudunka:small_golden_mushroom"
+                },
+                "weight": 1
+              },
+              {
+                "data": {
+                  "Name": "minecraft:red_mushroom"
+                },
+                "weight": 4
+              },
+              {
+                "data": {
+                  "Name": "minecraft:brown_mushroom"
+                },
+                "weight": 4
+              }
+            ]
+          }
+        }
+      },
+      "placement": [
+        {
+          "type": "minecraft:block_predicate_filter",
+          "predicate": {
+            "type": "minecraft:matching_blocks",
+            "blocks": "minecraft:air"
+          }
+        }
+      ]
+    }
+  }
+}

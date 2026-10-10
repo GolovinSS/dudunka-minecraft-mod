@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "dudunka:block/vale_cottage_crown",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "dudunka:block/vale_cottage_crown",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "dudunka:block/vale_cottage_crown",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "dudunka:block/vale_cottage_crown",
+      "y": 270
+    }
+  }
+}

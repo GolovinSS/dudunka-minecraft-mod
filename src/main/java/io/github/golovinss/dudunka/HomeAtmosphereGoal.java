@@ -24,8 +24,20 @@ public final class HomeAtmosphereGoal extends Goal {
             HomeAtmosphereScenes.friendship(mob,scene);return;
         }
         mob.setActivity(Activity.CURIOUS);FamilyFriendships.pause(mob);
-        if(mob.getNavigation().isDone() && mob.distanceToSqr(target)<=1){var delta=target.subtract(mob.position());var step=delta.scale(Math.min(mob.kind==Kind.SYUSYA?.02:.04,delta.length())/delta.length());
-            if(FurnitureScenes.safeRest(mob,mob.position().add(step))){mob.setDeltaMovement(Vec3.ZERO);mob.move(MoverType.SELF,step);return;}}
+        if(mob.getNavigation().isDone() && mob.distanceToSqr(target)<=1){
+            var delta=target.subtract(mob.position());double speed=mob.kind==Kind.SYUSYA?.02:.04;
+            var step=delta.normalize().scale(Math.min(speed,delta.length()));
+            // A finished vanilla path can leave feet on the edge of a bed/marker.
+            // A diagonal step down intersects that support forever. Walk off at
+            // the current height first; normal entity gravity supplies the drop.
+            if(delta.y<0 && !FurnitureScenes.safeRest(mob,mob.position().add(step))){
+                var horizontal=new Vec3(delta.x,0,delta.z);
+                step=horizontal.normalize().scale(Math.min(speed,horizontal.length()));
+            }
+            if(step.lengthSqr()>0 && FurnitureScenes.safeRest(mob,mob.position().add(step))){
+                mob.setDeltaMovement(new Vec3(0,mob.getDeltaMovement().y,0));mob.move(MoverType.SELF,step);return;
+            }
+        }
         if(mob.tickCount%10==0){var path=mob.getNavigation().createPath(scene.spots().get(mob.getUUID()),0);if(!HomeAtmosphereScenes.safePath(mob,path)){stop();return;}mob.getNavigation().moveTo(path,1);}
     }
     @Override public void stop(){HomeAtmosphereScenes.cancel(mob);FamilyFriendships.pause(mob);mob.endHomeWelcome();mob.reserveHomeScene(null);mob.getNavigation().stop();mob.setActivity(Activity.IDLE);mob.pauseHomeScenes();scene=null;nextCheck=mob.level().getGameTime()+200;}

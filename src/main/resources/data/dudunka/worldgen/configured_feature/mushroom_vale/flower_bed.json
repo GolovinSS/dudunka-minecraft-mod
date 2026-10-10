@@ -1,0 +1,108 @@
+{
+  "type": "dudunka:mushroom_vale_decor",
+  "config": {
+    "radius": 1,
+    "height": 2,
+    "blocks": [
+      {
+        "offset": [
+          -1,
+          0,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:glowing_moss"
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          -1,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:glowing_moss"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:glowing_moss"
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:glowing_moss"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          -1
+        ],
+        "state": {
+          "Name": "dudunka:glowing_moss"
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_planter",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          1
+        ],
+        "state": {
+          "Name": "dudunka:glowing_moss"
+        }
+      }
+    ]
+  }
+}

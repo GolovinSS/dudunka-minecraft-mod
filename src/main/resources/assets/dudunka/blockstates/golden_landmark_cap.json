@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "profile=0": {
+      "model": "dudunka:block/golden_landmark_cap_0"
+    },
+    "profile=1": {
+      "model": "dudunka:block/golden_landmark_cap_1"
+    },
+    "profile=2": {
+      "model": "dudunka:block/golden_landmark_cap_2"
+    },
+    "profile=3": {
+      "model": "dudunka:block/golden_landmark_cap_3"
+    },
+    "profile=4": {
+      "model": "dudunka:block/golden_landmark_cap_4"
+    }
+  }
+}

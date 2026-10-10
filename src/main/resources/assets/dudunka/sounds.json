@@ -1,0 +1,10 @@
+{
+  "music.mushroom_vale_theme": {
+    "sounds": [
+      {
+        "name": "dudunka:music/mushroom_vale_theme",
+        "stream": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "dudunka:block/violet_mushroom_cap"
+  }
+}

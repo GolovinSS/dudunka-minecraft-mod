@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "dudunka:block/golden_mushroom_cap"
+  }
+}

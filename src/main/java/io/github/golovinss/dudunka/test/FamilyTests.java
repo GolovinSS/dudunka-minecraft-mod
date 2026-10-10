@@ -1838,10 +1838,54 @@ public class FamilyTests {
         h.runAfterDelay(200,()->{var scene=HomeAtmosphereScenes.current(d);h.assertTrue(scene!=null,"Real rainy AI must have a current scene");for(var m:members)h.assertTrue(HomeAtmosphereScenes.settled(m,scene),"Live arrival: "+m.kind+" pos="+m.position()+" target="+scene.spots().get(m.getUUID())+" pose="+m.activity());h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);});
         h.runAfterDelay(210,()->{for(var m:members)h.assertTrue(m.atHomeMode() && m.homeSceneTarget()==null && HomeAtmosphereScenes.current(m)==null,"Rain ending returns friend to original home routine");owner.discard();h.succeed();});});
     }
+    @GameTest(template="empty",timeoutTicks=100,batch="isolated_welcomeoffbed")
+    public static void welcomeWalksOffLowFurnitureBeforeFinalArrival(GameTestHelper h){
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);
+        h.startSequence().thenIdle(40).thenExecute(()->{
+            readyAtmosphere(h,owner,members);var mob=members.get(0);
+            members.get(1).discard();members.get(2).discard();trust(mob,30);excursion(h,java.util.List.of(mob));
+            var goal=new HomeAtmosphereGoal(mob);h.assertTrue(goal.canUse(),"Actual return selects a welcome");goal.start();
+            var scene=HomeAtmosphereScenes.current(mob);var spot=scene.spots().get(mob.getUUID());
+            int side=spot.east().equals(mob.homeAnchor())?-1:1;var bed=side==1?spot.east():spot.west();
+            // A real bed edge supports feet at 9/16, beside a clear floor destination.
+            h.getLevel().setBlock(bed,Blocks.RED_BED.defaultBlockState(),18);
+            var target=net.minecraft.world.phys.Vec3.atBottomCenterOf(spot);
+            mob.moveTo(target.add(side*.447,9.0/16,0));mob.setOnGround(true);mob.getNavigation().stop();
+            var diagonal=target.subtract(mob.position()).normalize().scale(.04);
+            h.assertTrue(FurnitureScenes.safeRest(mob,target) && !FurnitureScenes.safeRest(mob,mob.position().add(diagonal)),
+                "Fixture reproduces the clear goal but blocked diagonal descent from a bed");
+            h.onEachTick(goal::tick);
+            h.runAfterDelay(40,()->{
+                h.assertTrue(HomeAtmosphereScenes.settled(mob,scene) && mob.activity()==Activity.WAVE
+                    && mob.homeWelcomeRunning() && mob.atHomeMode(),"Must physically walk off furniture, arrive and greet in HOME mode: "+mob.position());
+                goal.stop();owner.discard();h.succeed();
+            });
+        });
+    }
     @GameTest(template="empty",timeoutTicks=540,batch="isolated_liveallfriendswelcome")
     public static void realExcursionGetsAllThreeWalkingGreetingsWithoutChangingModes(GameTestHelper h){
-        var owner=testOwner(h);var members=atmosphereHome(h,owner);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);for(var m:members){trust(m,30);m.setNoAi(false);}var start=owner.position();long returnedAt=h.getTick()+250;var greeted=java.util.EnumSet.noneOf(Kind.class);
-        h.onEachTick(()->{if(h.getTick()>=returnedAt)for(var m:members)if(m.homeWelcomeRunning() && m.atHomeMode() && m.activity()==HomeAtmosphereScenes.greeting(m))greeted.add(m.kind);});
+        var owner=testOwner(h);var members=atmosphereHome(h,owner);h.startSequence().thenIdle(40).thenExecute(()->{readyAtmosphere(h,owner,members);h.getLevel().setWeatherParameters(6000,0,false,false);h.getLevel().setRainLevel(0);for(var m:members){
+            trust(m,30);
+            // This fixture tests the live welcome scheduler, not random idle roaming
+            // during the 250-tick excursion. Roaming can put a cat mid-jump on a
+            // marker at selection, or add a long bed detour for the slow snail.
+            // Keep every competing home/family/dialogue goal and real navigation.
+            for(var wrapped:m.goalSelector.getAvailableGoals().stream().toList())
+                if(wrapped.getGoal() instanceof net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal)
+                    m.goalSelector.removeGoal(wrapped.getGoal());
+            m.setNoAi(false);
+        }var start=owner.position();long returnedAt=h.getTick()+250;var greeted=java.util.EnumSet.noneOf(Kind.class);
+        h.onEachTick(()->{if(h.getTick()>=returnedAt)for(var m:members){
+            if(m.homeWelcomeRunning() && m.atHomeMode() && m.activity()==HomeAtmosphereScenes.greeting(m))greeted.add(m.kind);
+            if(Boolean.getBoolean("dudunka.traceHomecoming") && h.getTick()%10==0){
+                var path=m.getNavigation().getPath();var target=m.homeSceneTarget();
+                System.out.println("Homecoming tick="+h.getTick()+" kind="+m.kind+" pos="+m.position()+" target="+target+" activity="+m.activity()
+                    +" path="+(path==null?null:path.getNextNodeIndex()+"/"+path.getNodeCount()+" end="+path.getEndNode())
+                    +" safeTarget="+(target!=null && FurnitureScenes.safeRest(m,net.minecraft.world.phys.Vec3.atBottomCenterOf(target)))
+                    +" ground="+m.onGround()+" collision="+m.horizontalCollision+" velocity="+m.getDeltaMovement()
+                    +" goals="+m.goalSelector.getRunningGoals().map(g->g.getPriority()+":"+g.getGoal().getClass().getSimpleName()).toList());
+            }
+        }});
         h.runAfterDelay(25,()->owner.moveTo(start.add(20,0,0)));h.runAfterDelay(250,()->owner.moveTo(start));
         h.runAfterDelay(420,()->{String states=members.stream().map(m->m.kind+"{pos="+m.position()+", mode="+m.atHomeMode()+", idle="+m.isNoAi()+", eligible="+m.homeWelcomeEligible()+", running="+m.homeWelcomeRunning()+", activity="+m.activity()+", target="+m.homeSceneTarget()+"}").toList().toString();h.assertTrue(greeted.size()==3,"Each friend must actually arrive and greet after the real excursion: "+greeted+" states="+states);owner.moveTo(start.add(4,0,0));});
         h.runAfterDelay(430,()->{for(var m:members)h.assertTrue(!m.homeWelcomeRunning() && m.homeSceneTarget()==null && m.atHomeMode(),"Leaving greeting releases transient targets and preserves home mode");owner.discard();h.succeed();});});

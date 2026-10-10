@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_single_face",
+  "textures": {
+    "texture": "dudunka:block/vale_mushroom_inside"
+  }
+}

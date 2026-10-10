@@ -1,0 +1,48 @@
+{
+  "type": "dudunka:mushroom_vale_decor",
+  "config": {
+    "radius": 1,
+    "height": 2,
+    "blocks": [
+      {
+        "offset": [
+          -1,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_bench",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_bench",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      },
+      {
+        "offset": [
+          1,
+          0,
+          0
+        ],
+        "state": {
+          "Name": "dudunka:vale_bench",
+          "Properties": {
+            "facing": "north"
+          }
+        }
+      }
+    ]
+  }
+}

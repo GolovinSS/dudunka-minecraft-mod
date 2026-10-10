@@ -8,7 +8,26 @@
 естественный рельеф, расширяемая конфигурация worldgen и ограничения старых миров.
 Ручная визуальная приемка и BMC4 проверяются отдельно.
 
+Дополнение от 2026-10-10: [Mushroom Vale, этап 2.2](VALIDATION-MUSHROOM-VALE-STAGE-2.2.md) —
+три отдельных биома, распределение по нескольким seed и проверка новых чанков.
+Ручная визуальная приемка и полный BMC4 остаются отдельными проверками.
+
+Дополнение от 2026-10-10: пользователь подтвердил успешные тесты и визуальную
+приемку локальных этапов 2.2 и 2.3; прежние отчеты сохранены как история.
+[Mushroom Vale, этап 2.4](VALIDATION-MUSHROOM-VALE-STAGE-2.4.md) — уютный декор,
+редкие экстерьеры домиков Пуфика и Мудрого Мухомора. Ручная приемка новых
+построек, плотности генерации, маршрутов Сюси и BMC4 проверяется отдельно.
+
+Дополнение от 2026-10-10: [Mushroom Vale, этап 2.4a](VALIDATION-MUSHROOM-VALE-STAGE-2.4a.md) —
+оригинальные модели/текстуры декора, грибные домики и ограниченная команда
+предпросмотра. Результаты автоматических проверок и нерешенный прежний тест
+приветствий описаны отдельно от еще не выполненной визуальной приемки/BMC4.
+
 ## Подтверждено
+
+Дополнение от 2026-10-10: [Mushroom Vale, этап 2.3](VALIDATION-MUSHROOM-VALE-STAGE-2.3.md) —
+фирменная растительность, светящиеся грибы и редкие грибные ориентиры.
+Ручная визуальная приемка, навигация Сюси и полный BMC4 проверяются отдельно.
 
 - Minecraft 1.20.1 / Forge 47.4.13 / JDK 17.0.20. build, verifyModels и полный GameTest успешны: **142/142 обязательных теста**, exit 0, phase26-test3.log. 134 прежних и 8 новых сценариев. Для headless-прогона использовано `build verifyModels runGameTestServer -x downloadAssets`.
 - Воспоминания: приватность владельцев, сохранение первых дат, предел 18 событий, исключение самознакомства и отрицательных дат. Настоящие тики роста записывают подростка и взрослого; загрузка NBT и восстановление сущности не выдумывают вылупление и не дублируют историю.
@@ -34,3 +53,44 @@
 Механика и ручная приемка: [ALBUM-MEMORIES.md](ALBUM-MEMORIES.md). Предыдущая проверка: [0.25.0-alpha](VALIDATION-0.25.0.md).
 
 Артефакт: `dudunka-0.26.0-alpha.jar`, SHA-256 `8ddb64254615a856de35a5da409684f1636ad973d59d2c711148d7e56b7110cb`. Сборка, модели и полный GameTest: phase26-test3.log, BUILD SUCCESSFUL, exit 0.
+
+
+## Mushroom Vale Stage 2.4b — 2026-10-10
+
+Complete cottage walls/doors, distinct rounded Pufik and timber library Wise
+blueprints, and functional transient bench seating. Final `build verifyModels`
+passes; final full suite **162/162 required tests PASS**, including **14/14 Vale**.
+Preview fixture chunk-readiness race corrected; no remaining intermittent
+failures in the final run. Minecraft/BMC4 visual and real-client multiplayer
+acceptance remain pending. [Detailed results and preservation evidence](VALIDATION-MUSHROOM-VALE-STAGE-2.4b.md).
+
+## Mushroom Vale Stage 2.5 — atmosphere, music and environmental polish
+
+Stage 2.2–2.4b local work remains preserved and uncommitted. Stage 2.5 adds rare
+voxel mushroom landmarks, reduced mushroom attempts, porous level-14 lantern
+lighting, standalone bench support/preview improvements and native streamed
+biome music. Build, resource/JAR, focused and full GameTest evidence plus manual
+Minecraft/BMC4 status are in
+[VALIDATION-MUSHROOM-VALE-STAGE-2.5.md](VALIDATION-MUSHROOM-VALE-STAGE-2.5.md).
+Exact new-world client commands are in
+[TESTING.md](TESTING.md#stage-25-magical-atmosphere-music-and-environmental-polish).
+
+
+## Mushroom Vale Stage 2.5a — final environment fixes
+
+Preserved the uncommitted Stage 2.2–2.5 tree, all IDs/save formats and album
+protocol 9. Fixed a confirmed bed-edge arrival deadlock and isolated random
+idle roaming in the live homecoming fixture without changing assertions or
+its time budget. More ordinary/medium detailed mushrooms and natural benches;
+visible lantern/bulb block light 15; automatic native-slot music in Creative
+and Survival with dimension exit cleanup.
+
+Final focused **16/16**, including six live greeting repetitions; **build**,
+**verifyModels** and **verifyValeMusic PASS**; one final full suite **166/166**.
+Real generation census: **2304 FULL chunks**, seeds **0/42/-71021**, all intended
+medium colors in every biome sample, **91 standalone bench groups** and only
+**21 large landmarks**. All **363/363** packaged resources match source.
+Minecraft/BMC4 graphical, audible and old-save acceptance remains manual.
+
+[Root cause, exact distributions, intermediate failures and final evidence](VALIDATION-MUSHROOM-VALE-STAGE-2.5a.md).
+[Developer commands and acceptance](TESTING.md#stage-25a-final-environment-fixes-and-homecoming-regression).
