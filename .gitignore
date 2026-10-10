@@ -29,3 +29,6 @@ run-data/
 mcmodsrepo/
 *.log
 .DS_Store
+
+# Local Codex settings
+.codex/
