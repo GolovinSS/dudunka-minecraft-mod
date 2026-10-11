@@ -1,0 +1,250 @@
+{
+  "method": {
+    "seeds": [
+      0,
+      42,
+      2026
+    ],
+    "ticks_per_route": 4800,
+    "route_blocks": 352,
+    "samples_per_route": 220,
+    "view_and_simulation_chunks": 8,
+    "visibility": "distance <64, vertical difference <=8, player line of sight",
+    "births": "unique EntityJoinLevelEvent UUIDs, excluding disk reloads; CG and NATURAL separated",
+    "production_source_sha256": {
+      "src/main/java/io/github/golovinss/dudunka/ValeSpider.java": "b04f575e6b002ee3c988076290fecff2a8627414cc31386e8061075735cd84b4",
+      "src/main/java/io/github/golovinss/dudunka/client/ValeSpiderModel.java": "0f0324e962acef8346f8cbf9a59a9ec3f061357b4c44bffcbe1a0b959ca8ccb4"
+    }
+  },
+  "routes": [
+    {
+      "seed": 0,
+      "starting_biome": "memory_forest",
+      "report": "build/reports/mushroom-vale-stage33/survey-0-20261011-121919/gametest.log",
+      "log_sha256": "495f92f00ab599f6855a29b2666fafbbfa4bb0d618a94d110e6574dcc1fc97a3",
+      "raw": "VALE33_POPULATION seed=0 biome=memory_forest start=BlockPos{x=8512, y=80, z=7840} ticks=4800 routeBlocks=352 positionChecks=0 births=[CHUNK_GENERATION:21] competitors128Peak={dudunka:pufik=5, minecraft:mooshroom=12} proximity64Samples=140 proximity32Samples=61 birthBiomes={glowing_mushroom_forest:CHUNK_GENERATION=7, memory_forest:CHUNK_GENERATION=14} visible64Mean=0.15 visible64Max=1 visibleSamples=33 pufik128Max=5 population128Max=6 nonSoilSamples=29 highLowSamples=261 spiderSamples=619 mooshrooms128Max=12 capFullSamples=210 samples=220 spawnChunks=289 caps={CREATURE=>18}",
+      "ticks": 4800,
+      "routeBlocks": 352,
+      "positionChecks": 0,
+      "visible64Max": 1,
+      "visibleSamples": 33,
+      "population128Max": 6,
+      "pufik128Max": 5,
+      "mooshrooms128Max": 12,
+      "capFullSamples": 210,
+      "samples": 220,
+      "spawnChunks": 289,
+      "proximity64Samples": 140,
+      "proximity32Samples": 61,
+      "highLowSamples": 261,
+      "spiderSamples": 619,
+      "nonSoilSamples": 29,
+      "visible64Mean": 0.15,
+      "chunk_generation_births": 21,
+      "runtime_natural_births": 0,
+      "competitors128Peak": {
+        "dudunka:pufik": 5,
+        "minecraft:mooshroom": 12
+      },
+      "birthBiomes": {
+        "glowing_mushroom_forest:CHUNK_GENERATION": 7,
+        "memory_forest:CHUNK_GENERATION": 14
+      },
+      "saved_world_seed": 0
+    },
+    {
+      "seed": 0,
+      "starting_biome": "glowing_mushroom_forest",
+      "report": "build/reports/mushroom-vale-stage33/survey-0-20261011-121919/gametest.log",
+      "log_sha256": "495f92f00ab599f6855a29b2666fafbbfa4bb0d618a94d110e6574dcc1fc97a3",
+      "raw": "VALE33_POPULATION seed=0 biome=glowing_mushroom_forest start=BlockPos{x=12384, y=80, z=8064} ticks=4800 routeBlocks=352 positionChecks=1 births=[NATURAL:1, CHUNK_GENERATION:16] competitors128Peak={dudunka:pufik=6, minecraft:mooshroom=5} proximity64Samples=369 proximity32Samples=55 birthBiomes={glowing_mushroom_forest:CHUNK_GENERATION=3, glowing_mushroom_forest:NATURAL=1, memory_forest:CHUNK_GENERATION=13} visible64Mean=0.5636363636363636 visible64Max=2 visibleSamples=96 pufik128Max=6 population128Max=16 nonSoilSamples=19 highLowSamples=271 spiderSamples=1430 mooshrooms128Max=5 capFullSamples=173 samples=220 spawnChunks=289 caps={CREATURE=>18}",
+      "ticks": 4800,
+      "routeBlocks": 352,
+      "positionChecks": 1,
+      "visible64Max": 2,
+      "visibleSamples": 96,
+      "population128Max": 16,
+      "pufik128Max": 6,
+      "mooshrooms128Max": 5,
+      "capFullSamples": 173,
+      "samples": 220,
+      "spawnChunks": 289,
+      "proximity64Samples": 369,
+      "proximity32Samples": 55,
+      "highLowSamples": 271,
+      "spiderSamples": 1430,
+      "nonSoilSamples": 19,
+      "visible64Mean": 0.5636363636363636,
+      "chunk_generation_births": 16,
+      "runtime_natural_births": 1,
+      "competitors128Peak": {
+        "dudunka:pufik": 6,
+        "minecraft:mooshroom": 5
+      },
+      "birthBiomes": {
+        "glowing_mushroom_forest:CHUNK_GENERATION": 3,
+        "glowing_mushroom_forest:NATURAL": 1,
+        "memory_forest:CHUNK_GENERATION": 13
+      },
+      "saved_world_seed": 0
+    },
+    {
+      "seed": 42,
+      "starting_biome": "memory_forest",
+      "report": "build/reports/mushroom-vale-stage33/survey-42-20261011-122047/gametest.log",
+      "log_sha256": "80b1f32251430825b048444b08f7e2edc7b971684bda69107c2781ec1b0d53e0",
+      "raw": "VALE33_POPULATION seed=42 biome=memory_forest start=BlockPos{x=7648, y=80, z=8832} ticks=4800 routeBlocks=352 positionChecks=0 births=[CHUNK_GENERATION:31] competitors128Peak={dudunka:pufik=2, minecraft:mooshroom=11, minecraft:rabbit=1} proximity64Samples=412 proximity32Samples=160 birthBiomes={glowing_mushroom_forest:CHUNK_GENERATION=11, memory_forest:CHUNK_GENERATION=20} visible64Mean=0.8181818181818182 visible64Max=4 visibleSamples=80 pufik128Max=2 population128Max=10 nonSoilSamples=34 highLowSamples=247 spiderSamples=1201 mooshrooms128Max=11 capFullSamples=204 samples=220 spawnChunks=289 caps={CREATURE=>24}",
+      "ticks": 4800,
+      "routeBlocks": 352,
+      "positionChecks": 0,
+      "visible64Max": 4,
+      "visibleSamples": 80,
+      "population128Max": 10,
+      "pufik128Max": 2,
+      "mooshrooms128Max": 11,
+      "capFullSamples": 204,
+      "samples": 220,
+      "spawnChunks": 289,
+      "proximity64Samples": 412,
+      "proximity32Samples": 160,
+      "highLowSamples": 247,
+      "spiderSamples": 1201,
+      "nonSoilSamples": 34,
+      "visible64Mean": 0.8181818181818182,
+      "chunk_generation_births": 31,
+      "runtime_natural_births": 0,
+      "competitors128Peak": {
+        "dudunka:pufik": 2,
+        "minecraft:mooshroom": 11,
+        "minecraft:rabbit": 1
+      },
+      "birthBiomes": {
+        "glowing_mushroom_forest:CHUNK_GENERATION": 11,
+        "memory_forest:CHUNK_GENERATION": 20
+      },
+      "saved_world_seed": 42
+    },
+    {
+      "seed": 42,
+      "starting_biome": "glowing_mushroom_forest",
+      "report": "build/reports/mushroom-vale-stage33/survey-42-20261011-122047/gametest.log",
+      "log_sha256": "80b1f32251430825b048444b08f7e2edc7b971684bda69107c2781ec1b0d53e0",
+      "raw": "VALE33_POPULATION seed=42 biome=glowing_mushroom_forest start=BlockPos{x=12128, y=80, z=8352} ticks=4800 routeBlocks=352 positionChecks=0 births=[CHUNK_GENERATION:1] competitors128Peak={dudunka:pufik=6, minecraft:bee=2, minecraft:mooshroom=5, minecraft:pig=4, minecraft:rabbit=7, minecraft:sheep=9} proximity64Samples=60 proximity32Samples=0 birthBiomes={glowing_mushroom_forest:CHUNK_GENERATION=1} visible64Mean=0.0 visible64Max=0 visibleSamples=0 pufik128Max=6 population128Max=1 nonSoilSamples=2 highLowSamples=12 spiderSamples=81 mooshrooms128Max=5 capFullSamples=140 samples=220 spawnChunks=289 caps={CREATURE=>31}",
+      "ticks": 4800,
+      "routeBlocks": 352,
+      "positionChecks": 0,
+      "visible64Max": 0,
+      "visibleSamples": 0,
+      "population128Max": 1,
+      "pufik128Max": 6,
+      "mooshrooms128Max": 5,
+      "capFullSamples": 140,
+      "samples": 220,
+      "spawnChunks": 289,
+      "proximity64Samples": 60,
+      "proximity32Samples": 0,
+      "highLowSamples": 12,
+      "spiderSamples": 81,
+      "nonSoilSamples": 2,
+      "visible64Mean": 0.0,
+      "chunk_generation_births": 1,
+      "runtime_natural_births": 0,
+      "competitors128Peak": {
+        "dudunka:pufik": 6,
+        "minecraft:bee": 2,
+        "minecraft:mooshroom": 5,
+        "minecraft:pig": 4,
+        "minecraft:rabbit": 7,
+        "minecraft:sheep": 9
+      },
+      "birthBiomes": {
+        "glowing_mushroom_forest:CHUNK_GENERATION": 1
+      },
+      "saved_world_seed": 42
+    },
+    {
+      "seed": 2026,
+      "starting_biome": "memory_forest",
+      "report": "build/reports/mushroom-vale-stage33/survey-2026-20261011-122217/gametest.log",
+      "log_sha256": "28c96b1366078c0a0a283f950b83b8cdcdf457c1c7f1740e683aad1edb7f75cb",
+      "raw": "VALE33_POPULATION seed=2026 biome=memory_forest start=BlockPos{x=7424, y=80, z=8160} ticks=4800 routeBlocks=352 positionChecks=5 births=[NATURAL:5, CHUNK_GENERATION:23] competitors128Peak={dudunka:pufik=3, minecraft:mooshroom=4, minecraft:rabbit=4, minecraft:sheep=3} proximity64Samples=130 proximity32Samples=40 birthBiomes={glowing_mushroom_forest:CHUNK_GENERATION=5, memory_forest:CHUNK_GENERATION=18, memory_forest:NATURAL=5} visible64Mean=0.13636363636363635 visible64Max=1 visibleSamples=30 pufik128Max=3 population128Max=13 nonSoilSamples=30 highLowSamples=415 spiderSamples=1116 mooshrooms128Max=4 capFullSamples=120 samples=220 spawnChunks=289 caps={CREATURE=>15}",
+      "ticks": 4800,
+      "routeBlocks": 352,
+      "positionChecks": 5,
+      "visible64Max": 1,
+      "visibleSamples": 30,
+      "population128Max": 13,
+      "pufik128Max": 3,
+      "mooshrooms128Max": 4,
+      "capFullSamples": 120,
+      "samples": 220,
+      "spawnChunks": 289,
+      "proximity64Samples": 130,
+      "proximity32Samples": 40,
+      "highLowSamples": 415,
+      "spiderSamples": 1116,
+      "nonSoilSamples": 30,
+      "visible64Mean": 0.13636363636363635,
+      "chunk_generation_births": 23,
+      "runtime_natural_births": 5,
+      "competitors128Peak": {
+        "dudunka:pufik": 3,
+        "minecraft:mooshroom": 4,
+        "minecraft:rabbit": 4,
+        "minecraft:sheep": 3
+      },
+      "birthBiomes": {
+        "glowing_mushroom_forest:CHUNK_GENERATION": 5,
+        "memory_forest:CHUNK_GENERATION": 18,
+        "memory_forest:NATURAL": 5
+      },
+      "saved_world_seed": 2026
+    },
+    {
+      "seed": 2026,
+      "starting_biome": "glowing_mushroom_forest",
+      "report": "build/reports/mushroom-vale-stage33/survey-2026-20261011-122217/gametest.log",
+      "log_sha256": "28c96b1366078c0a0a283f950b83b8cdcdf457c1c7f1740e683aad1edb7f75cb",
+      "raw": "VALE33_POPULATION seed=2026 biome=glowing_mushroom_forest start=BlockPos{x=12256, y=80, z=8160} ticks=4800 routeBlocks=352 positionChecks=1 births=[NATURAL:1, CHUNK_GENERATION:9] competitors128Peak={dudunka:pufik=6, minecraft:bee=5, minecraft:mooshroom=5, minecraft:pig=4, minecraft:rabbit=14, minecraft:sheep=4} proximity64Samples=135 proximity32Samples=20 birthBiomes={glowing_mushroom_forest:CHUNK_GENERATION=6, glowing_mushroom_forest:NATURAL=1, memory_forest:CHUNK_GENERATION=3} visible64Mean=0.0 visible64Max=0 visibleSamples=0 pufik128Max=6 population128Max=6 nonSoilSamples=12 highLowSamples=177 spiderSamples=559 mooshrooms128Max=5 capFullSamples=152 samples=220 spawnChunks=289 caps={CREATURE=>7}",
+      "ticks": 4800,
+      "routeBlocks": 352,
+      "positionChecks": 1,
+      "visible64Max": 0,
+      "visibleSamples": 0,
+      "population128Max": 6,
+      "pufik128Max": 6,
+      "mooshrooms128Max": 5,
+      "capFullSamples": 152,
+      "samples": 220,
+      "spawnChunks": 289,
+      "proximity64Samples": 135,
+      "proximity32Samples": 20,
+      "highLowSamples": 177,
+      "spiderSamples": 559,
+      "nonSoilSamples": 12,
+      "visible64Mean": 0.0,
+      "chunk_generation_births": 9,
+      "runtime_natural_births": 1,
+      "competitors128Peak": {
+        "dudunka:pufik": 6,
+        "minecraft:bee": 5,
+        "minecraft:mooshroom": 5,
+        "minecraft:pig": 4,
+        "minecraft:rabbit": 14,
+        "minecraft:sheep": 4
+      },
+      "birthBiomes": {
+        "glowing_mushroom_forest:CHUNK_GENERATION": 6,
+        "glowing_mushroom_forest:NATURAL": 1,
+        "memory_forest:CHUNK_GENERATION": 3
+      },
+      "saved_world_seed": 2026
+    }
+  ],
+  "full_suite": {
+    "report": "build/reports/mushroom-vale-stage33/full-default-20261011-122418/gametest.log",
+    "required_tests": 187,
+    "passed": 187,
+    "saved_world_seed": -5916914642405697938
+  }
+}

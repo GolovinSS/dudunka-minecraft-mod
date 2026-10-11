@@ -1,4 +1,4 @@
-# Dudunka Family — 0.26.0 alpha
+# Dudunka Family — 0.27.0 alpha
 
 Целевая сборка: **Better MC [FORGE] BMC4, Minecraft 1.20.1, v55.5, Forge 47.4.13**.
 Версия Forge подтверждена в manifest.json официального архива v55.5 (CurseForge file 7443284).
@@ -21,6 +21,7 @@
 
 | Версия | Что добавлено | Проверки | Скачать |
 |---|---|---|---|
+| **0.27.0-alpha** | Грибная долина: три биома, волшебные грибы, домики, музыка, Пуфик, светлячки и добрый паучок | [Проверки](docs/VALIDATION-MUSHROOM-VALE-STAGE-3.3.md) | [Скачать JAR](dist/dudunka-0.27.0-alpha.jar) |
 | **0.26.0-alpha** | Личные воспоминания о первых событиях и сводка всей семьи с текущими/последними режимами, переноской и возвратом | [Проверки](docs/VALIDATION.md) · [Как попробовать](docs/ALBUM-MEMORIES.md) | [JAR 0.26.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.26.0-alpha.jar) |
 | **0.25.0-alpha** | Приветствия после путешествия для всех друзей, реакции по доверию и общая встреча; домашние сценки у окна и горшка в дождь | [Проверки](docs/VALIDATION-0.25.0.md) · [Как попробовать](docs/HOME-ATMOSPHERE.md) | [JAR 0.25.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.25.0-alpha.jar) |
 | **0.24.0-alpha** | Совместные прогулки у цветов и необязательные просьбы; памятные подарки, воспоминания и сохранение прогресса | [Проверки](docs/VALIDATION-0.24.0.md) · [Как попробовать](docs/WALKS-AND-REQUESTS.md) | [JAR 0.24.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.24.0-alpha.jar) |
@@ -29,7 +30,7 @@
 | **0.22.0-alpha** | Три рисунка Дюдюньки, три позы отдыха Маруси, реакции усиков Сюси; шесть новых записок и две личные истории; исправлен повторный подход к мебели | [102/102 GameTests и проверки девяти возрастных моделей](docs/VALIDATION-0.22.1.md) | [JAR 0.22.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.22.0-alpha.jar) |
 | **0.21.0-alpha** | Новые модели и текстуры домашних мест; столик, лежанка с когтеточкой и домик с листочком; назначение мебели через альбом, режим «Дома» и занятия друзей | [95/95 GameTests](docs/VALIDATION-0.21.0.md) | [JAR 0.21.0-alpha](https://github.com/GolovinSS/dudunka-minecraft-mod/raw/refs/heads/main/dist/dudunka-0.21.0-alpha.jar) |
 
-**Текущая версия — 0.26.0-alpha**; она включает предыдущие изменения. Протокол альбома **9 — текущий**: обнови сервер и все клиенты вместе, оставив в `mods` один файл Dudunka Family. Старые миры, привязки и воспоминания сохраняются. Игровая приемка в полной BMC4 остается открыта.
+**Текущая версия — 0.27.0-alpha**; она включает предыдущие изменения. Протокол альбома **9 — текущий**: обнови сервер и все клиенты вместе, оставив в `mods` один файл Dudunka Family. Старые миры, привязки и воспоминания сохраняются. Игровая приемка в полной BMC4 остается открыта.
 
 ## Сборка
 
@@ -48,7 +49,7 @@ Windows PowerShell:
 .\gradlew.bat build
 ```
 
-Результат: `build/libs/dudunka-0.26.0-alpha.jar`. Использовать обычный JAR, не sources и не dev.
+Результат: `build/libs/dudunka-0.27.0-alpha.jar`. Использовать обычный JAR, не sources и не dev.
 
 ## Установка
 

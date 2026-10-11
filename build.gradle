@@ -242,3 +242,11 @@ tasks.register('verifyValeFirefly', JavaExec) {
     mainClass = 'CheckValeFirefly'
 }
 tasks.named('check').configure { dependsOn 'verifyValeFirefly' }
+
+// Bake the independent spider and verify its original atlas, anatomy and rigid poses.
+tasks.register('verifyValeSpider', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckValeSpider'
+}
+tasks.named('check').configure { dependsOn 'verifyValeSpider' }

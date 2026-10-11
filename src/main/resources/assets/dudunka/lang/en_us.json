@@ -370,5 +370,7 @@
   "block.dudunka.golden_landmark_cap": "Golden Landmark Cap",
   "block.dudunka.vale_landmark_stem": "Fluted Landmark Stem",
   "entity.dudunka.pufik": "Pufik",
-  "message.dudunka.pufik_greeting": "Pufik: Hello! The Vale feels cozier with you here."
+  "message.dudunka.pufik_greeting": "Pufik: Hello! The Vale feels cozier with you here.",
+  "entity.dudunka.vale_spider": "Vale Spider",
+  "message.dudunka.vale_spider_greeting": "Hello, friend! What a lovely day for a little wander."
 }

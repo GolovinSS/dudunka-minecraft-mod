@@ -370,5 +370,7 @@
   "block.dudunka.golden_landmark_cap": "Золотистая шляпка гриба-великана",
   "block.dudunka.vale_landmark_stem": "Ребристая ножка гриба-великана",
   "entity.dudunka.pufik": "Пуфик",
-  "message.dudunka.pufik_greeting": "Пуфик: Привет! С тобой в долине ещё уютнее."
+  "message.dudunka.pufik_greeting": "Пуфик: Привет! С тобой в долине ещё уютнее.",
+  "entity.dudunka.vale_spider": "Паучок Грибной долины",
+  "message.dudunka.vale_spider_greeting": "Привет, друг! Какой чудесный день для прогулки!"
 }

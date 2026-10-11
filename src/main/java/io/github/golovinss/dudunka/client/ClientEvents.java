@@ -11,9 +11,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 @Mod.EventBusSubscriber(modid=DudunkaMod.ID,bus=Mod.EventBusSubscriber.Bus.MOD,value=Dist.CLIENT)
 public class ClientEvents {
-    @SubscribeEvent public static void layers(EntityRenderersEvent.RegisterLayerDefinitions e){e.registerLayerDefinition(PufikModel.LAYER,PufikModel::create);e.registerLayerDefinition(ValeFireflyModel.LAYER,ValeFireflyModel::create);for(Kind k:Kind.values())e.registerLayerDefinition(FamilyModel.layer(k),()->FamilyModel.create(k));
+    @SubscribeEvent public static void layers(EntityRenderersEvent.RegisterLayerDefinitions e){e.registerLayerDefinition(ValeSpiderModel.LAYER,ValeSpiderModel::create);e.registerLayerDefinition(PufikModel.LAYER,PufikModel::create);e.registerLayerDefinition(ValeFireflyModel.LAYER,ValeFireflyModel::create);for(Kind k:Kind.values())e.registerLayerDefinition(FamilyModel.layer(k),()->FamilyModel.create(k));
         for(Kind kind:Kind.values())if(FamilyModel.hasAgeModels(kind))for(int stage=1;stage<=2;stage++){final int age=stage;e.registerLayerDefinition(FamilyModel.layer(kind,age),()->FamilyModel.create(kind,age));}}
-    @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers e){e.registerEntityRenderer(DudunkaMod.VALE_BENCH_SEAT.get(),net.minecraft.client.renderer.entity.NoopRenderer::new);e.registerEntityRenderer(DudunkaMod.PUFIK.get(),PufikRenderer::new);e.registerEntityRenderer(DudunkaMod.VALE_FIREFLY.get(),ValeFireflyRenderer::new);for(Kind k:Kind.values())e.registerEntityRenderer(DudunkaMod.TYPES.get(k).get(),c->new FamilyRenderer(c,k));}
+    @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers e){e.registerEntityRenderer(DudunkaMod.VALE_BENCH_SEAT.get(),net.minecraft.client.renderer.entity.NoopRenderer::new);e.registerEntityRenderer(DudunkaMod.VALE_SPIDER.get(),ValeSpiderRenderer::new);e.registerEntityRenderer(DudunkaMod.PUFIK.get(),PufikRenderer::new);e.registerEntityRenderer(DudunkaMod.VALE_FIREFLY.get(),ValeFireflyRenderer::new);for(Kind k:Kind.values())e.registerEntityRenderer(DudunkaMod.TYPES.get(k).get(),c->new FamilyRenderer(c,k));}
     private static class FamilyRenderer extends MobRenderer<Companion,FamilyModel>{
         private final FamilyModel[] ages;
         FamilyRenderer(EntityRendererProvider.Context c,Kind k){

@@ -1349,3 +1349,96 @@ Survey baseline is pinned to published `65ac290`; instrumentation/seed hooks
 are compiled only in the isolated runner and removed afterward. Never package
 survey helpers. Run the ordinary build after surveys and verify the packaged JAR
 with `python3 tools/validate_vale_stage32d.py --jar build/libs/dudunka-<version>.jar`.
+
+## Stage 3.3 friendly magical spider
+
+Use Java 17, Minecraft 1.20.1 and Forge 47.4.13. From the repository root:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew runClient -PmushroomValeDev=true
+```
+
+The Gradle property enables the existing permission-2 developer travel commands;
+there is no new portal. Create a new world with cheats, stand on safe ground,
+and enter Vale:
+
+```mcfunction
+/dudunka_dev mushroom_vale enter
+/summon dudunka:vale_spider ~ ~ ~
+```
+
+For a named visual specimen that stays across ordinary despawning:
+
+```mcfunction
+/summon dudunka:vale_spider ~ ~ ~ {CustomName:'{"text":"Little Vale friend"}',PersistenceRequired:1b}
+```
+
+Inspect at ground level from front, sides, back, and a standing player's normal
+camera at about 1–3 blocks. Check the ivory stepped silhouette, rust-red cap,
+eight separate short legs, large highlighted eyes, rosy cheeks, smile and texture
+seams. Watch gentle breathing, coordinated walking and the curious upward look.
+Right-click with an empty main hand: a short localized greeting and single-leg
+wave should appear in English and Russian. Observe occasional autonomous greetings
+and approaches; sprint close to it, then stop, to observe a short shy dip/retreat
+and recovery (cooldown about eight seconds). Confirm smooth animation, readable
+eyes beneath the brim, stable feet and no stretching, flicker or disconnected
+geometry. Use ordinary lighting and BMC4 shaders/settings. Check no targeting,
+bites, webs, block destruction, taming, trading or progression UI. Test name,
+UUID and health across save/reload. A summon works outside Vale for inspection;
+natural spawning remains restricted to the two Vale forests.
+
+For **natural acceptance**, use separate fresh worlds with seeds `0`, `42` and
+`2026`, view/simulation distance 8, a non-spectator player, and ordinary spawning:
+
+```mcfunction
+/gamerule doMobSpawning true
+/time set day
+/locate biome dudunka:memory_forest
+/locate biome dudunka:glowing_mushroom_forest
+```
+
+Descend to dry soil and explore fresh terrain, pausing to observe at ground
+level. Do not summon specimens, manufacture spawn floors, remove competitors or
+change caps in these worlds. A reproducible Memory-start route in seed `42`
+begins near **7648, 8832** (X,Z) and runs 352 blocks east. From inside Vale, use
+`/tp @s 7648 110 8832`, descend safely to soil, then walk and pause over about
+four minutes. Natural outcomes vary. The server surveys include generated
+animals and ordinary despawning: runtime spawning alone can stop when the
+creature cap is full, and foliage/hills can obscure nearby spiders. Rare secondary
+forest encounters and zero-encounter routes are retained in the report.
+
+Read-only inspection of loaded residents:
+
+```mcfunction
+/execute as @e[type=dudunka:vale_spider,distance=..128] run data get entity @s Pos
+```
+
+Repeat at night with the existing fireflies, with two players, and in BMC4 v55.5.
+Check Pufik greetings/movement, firefly flight/palettes, music, companions/album
+and old-save UUID/data compatibility. Previously generated terrain must remain
+intact. New biome entries do not guarantee that an already cap-filled old area
+will produce a spider. Return using `/dudunka_dev mushroom_vale return`.
+
+Reproducible offline/server checks, each server run in an isolated fresh world:
+
+```bash
+python3 tools/run_vale_stage33_checks.py focused
+python3 tools/run_vale_stage33_checks.py survey --seeds 0 42 2026
+python3 tools/run_vale_stage33_checks.py full
+python3 tools/run_vale_stage33_checks.py build
+python3 tools/preview_vale_spider.py
+python3 tools/validate_vale_resources.py --mod-jar build/libs/dudunka-0.26.0-alpha.jar
+python3 tools/validate_vale_stage33.py --jar build/libs/dudunka-0.26.0-alpha.jar
+```
+
+The build mode runs `build`, `verifyModels`, `verifyPufik` and `verifyValeSpider`;
+`check` also runs the existing firefly/music checks. `verifyValeSpider` bakes the
+client model and validates anatomy, original atlas, UVs, locales, renderer/layer
+references and bounded rigid poses. The dedicated-server GameTests cover entity
+registration, actual registered spawn rules, both habitats and excluded biomes,
+hazards/fluids/clearance/cliffs, non-hostile behavior, localized interaction,
+vanilla NBT round-trip, shared creature caps and ordinary/protected despawning.
+Survey code and seed hooks live outside production sources, are opt-in, and are
+removed from build outputs before ordinary packaging. A final JAR audit verifies
+this. Automated checks and offline preview do not replace Minecraft/BMC4 visual,
+multiplayer or old-world acceptance; see the [validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.3.md).

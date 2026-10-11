@@ -1,0 +1,7 @@
+seed,starting_biome,chunk_generation_births,runtime_natural_births,positionChecks,visible64Mean,visible64Max,visibleSamples,population128Max,pufik128Max,mooshrooms128Max,capFullSamples,samples,proximity64Samples,proximity32Samples
+0,memory_forest,21,0,0,0.15,1,33,6,5,12,210,220,140,61
+0,glowing_mushroom_forest,16,1,1,0.5636363636363636,2,96,16,6,5,173,220,369,55
+42,memory_forest,31,0,0,0.8181818181818182,4,80,10,2,11,204,220,412,160
+42,glowing_mushroom_forest,1,0,0,0.0,0,0,1,6,5,140,220,60,0
+2026,memory_forest,23,5,5,0.13636363636363635,1,30,13,3,4,120,220,130,40
+2026,glowing_mushroom_forest,9,1,1,0.0,0,0,6,6,5,152,220,135,20

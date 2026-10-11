@@ -146,3 +146,21 @@ old-save upgrade acceptance remain manual.
 
 [Exact measurements, rejection rates, file list and evidence](VALIDATION-MUSHROOM-VALE-STAGE-3.2D.md).
 [Natural-world runClient instructions](TESTING.md#stage-32d-natural-landmarks-and-pufik-acceptance).
+
+## Mushroom Vale Stage 3.3 — friendly magical spider
+
+Added the independent peaceful `dudunka:vale_spider`, matching the approved
+ivory/red-cap concept with eight short paws, original pixel atlas, procedural
+animations, lightweight server AI and bilingual right-click greetings. Memory
+Forest is the primary habitat; Glowing Mushroom Forest has a lower spawn weight.
+Existing entity behavior, worldgen/music, IDs, saves and protocol 9 are preserved.
+
+Focused **5/5**, one full suite **187/187**, build/model/resource/JAR checks PASS.
+Six fresh-world routes across actual seeds **0/42/2026** recorded **108 completed
+births (101 CG / 7 runtime)**. All three primary routes had visible encounters;
+two secondary routes had none. Vanilla creature-cap competition and dense terrain
+remain measurable encounter limits. Minecraft/BMC4 visual, multiplayer, save/restart
+and old-world acceptance remain manual. No commit or push.
+
+[Exact results, evidence, limitations and changed files](VALIDATION-MUSHROOM-VALE-STAGE-3.3.md).
+[runClient and summon instructions](TESTING.md#stage-33-friendly-magical-spider).

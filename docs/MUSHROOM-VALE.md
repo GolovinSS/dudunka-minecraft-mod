@@ -861,3 +861,54 @@ completed `CHUNK_GENERATION` births from runtime `NATURAL` births, placement
 attempts from successful sites, and server visibility proxies from manual client
 acceptance. [Natural exploration instructions](TESTING.md#stage-32d-natural-landmarks-and-pufik-acceptance)
 cover fresh worlds and unvisited terrain. Fireflies and music are unchanged.
+
+## Stage 3.3: friendly magical spider
+
+`dudunka:vale_spider` is an independent peaceful `PathfinderMob`, category
+`CREATURE`, width 0.8 and height 0.5 blocks. It follows the inspected approved
+[friendly spider reference](reference/mushroom-vale/friendly_spider.png): stepped
+rounded ivory body, eight short paws, large highlighted eyes, rosy cheeks,
+a little smile and a layered rust-red cap. Its dedicated vanilla model/renderer
+and original 128×64 pixel atlas add no dependency. The atlas is reproducible with
+`tools/generate_vale_spider.py`. The [offline geometry preview](VALE-SPIDER-PREVIEW.png)
+uses actual baked vertices and sampled texture pixels; client visual acceptance
+remains separate.
+
+Small rigid transforms animate breathing, all eight walking legs, a curious
+look up toward nearby player eyes, a single front-leg greeting and a brief shy
+body dip. Client look smoothing is per entity; server-synchronized emote type and
+start time provide a 32-tick envelope. No existing network packet or protocol
+changes. Emotes/social cooldowns are transient; vanilla entity NBT retains UUID,
+name, health and ordinary entity state without family tags.
+
+Server AI chooses at most eight nearby loaded columns, checking same-height and
+one-step ground candidates with the existing `Pufik.safeGround` safety helper
+and ordinary reachable ground paths. Paths expire after a short interval, avoid
+water/fire and drops, and occasionally approach a player while keeping room.
+A nearby sprinting player can prompt a brief shy retreat at normal stroll speed,
+with an eight-second cooldown. Nearby relaxed players sometimes receive a wave.
+Right-click sends an English/Russian friendly greeting and waves. It cannot set
+an attack target, perform a melee attack, trample farmland, create webs or modify
+blocks. There is no taming, trading, inventory, quest or progression system.
+
+Natural spawning adds **weight 32 / group 1–2 in Memory Forest**, and
+**weight 6 / group 1–2 in Glowing Mushroom Forest**. Pink Meadows receives no entry.
+The predicate requires the Vale dimension AND an intended biome, loaded dry
+sturdy ground, body/head clearance, safe neighboring floors without two-block
+drops, the world border, and dirt/mycelium or moss soil within twelve blocks of
+the surface heightmap. Mushroom understory is eligible; roofs, mushroom-cap
+floors and deep caves are excluded. Existing animals, Pufik/firefly entries,
+worldgen, music and all prior registry IDs remain intact. Vanilla chunk-generation
+births and 400-tick runtime creature spawning apply; the shared creature cap is
+still ten. Ordinary distance/idle despawning applies, with names, persistence
+and Forge vetoes protected. No additional population is created outside vanilla
+spawning, and existing animals can prevent runtime replenishment.
+
+The [Stage 3.3 validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.3.md) records
+completed births, competing animals, caps and visibility across three actual
+world seeds, including routes without an observed encounter. Terrain/foliage
+and the small creature silhouette affect sightlines; measured births are not a
+promise of encounters at every location. Existing Companion UUIDs/save code,
+Pufik/firefly implementations, dimension/biome IDs and album protocol **9** are
+preserved. [Exact commands and manual checks](TESTING.md#stage-33-friendly-magical-spider)
+cover client, BMC4, multiplayer and existing saves.
