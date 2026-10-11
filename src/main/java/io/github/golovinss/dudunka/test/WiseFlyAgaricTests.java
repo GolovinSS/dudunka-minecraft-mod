@@ -76,8 +76,10 @@ public class WiseFlyAgaricTests {
             int weight=biome.equals("memory_forest")?10:0;
             h.assertTrue(entries.stream().filter(e->e.type==DudunkaMod.WISE_FLY_AGARIC.get()).allMatch(e->e.getWeight().asInt()==weight && e.minCount==1 && e.maxCount==1)
                     && entries.stream().anyMatch(e->e.type==DudunkaMod.WISE_FLY_AGARIC.get())==(weight>0),"Additive habitat weights and single group: "+biome);
-            var existing=biome.equals("glowing_mushroom_forest")?EntityType.MOOSHROOM:EntityType.RABBIT;
-            h.assertTrue(entries.stream().anyMatch(e->e.type==existing),"Existing biome inhabitants retained");
+            h.assertTrue(entries.stream().noneMatch(e ->
+                    "minecraft".equals(net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES
+                            .getKey(e.type).getNamespace())),
+                    "Vanilla passive creatures do not naturally spawn in Vale");
             BlockPos site=null;
             search:for(int radius=0;radius<=4096;radius+=64)for(int x=-radius;x<=radius;x+=64)for(int z=-radius;z<=radius;z+=64) {
                 if(Math.max(Math.abs(x),Math.abs(z))!=radius)continue;

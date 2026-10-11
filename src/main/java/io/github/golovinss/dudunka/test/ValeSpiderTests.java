@@ -45,11 +45,10 @@ public class ValeSpiderTests {
         for(String biome:List.of("memory_forest","glowing_mushroom_forest","pink_meadows")) {
             var key=ResourceLocation.fromNamespaceAndPath("dudunka",biome);
             var entries=level.registryAccess().registryOrThrow(Registries.BIOME).get(key).getMobSettings().getMobs(MobCategory.CREATURE).unwrap();
-            int weight=biome.equals("memory_forest")?44:biome.equals("glowing_mushroom_forest")?12:0;
+            int weight=biome.equals("memory_forest")?44:biome.equals("glowing_mushroom_forest")?20:0;
             h.assertTrue(entries.stream().filter(e->e.type==DudunkaMod.VALE_SPIDER.get()).allMatch(e->e.getWeight().asInt()==weight && e.minCount==1 && e.maxCount==2)
                     && entries.stream().anyMatch(e->e.type==DudunkaMod.VALE_SPIDER.get())==(weight>0),"Additive habitat weights and 1–2 group: "+biome);
-            var existing=biome.equals("glowing_mushroom_forest")?EntityType.MOOSHROOM:EntityType.RABBIT;
-            h.assertTrue(entries.stream().anyMatch(e->e.type==existing),"Existing biome inhabitants retained");
+            h.assertTrue(entries.stream().noneMatch(e->net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(e.type).getNamespace().equals("minecraft")),"No vanilla passive creature competes in Vale");
             BlockPos site=null;
             search:for(int radius=0;radius<=4096;radius+=64)for(int x=-radius;x<=radius;x+=64)for(int z=-radius;z<=radius;z+=64) {
                 if(Math.max(Math.abs(x),Math.abs(z))!=radius)continue;

@@ -62,8 +62,8 @@ public class FluffyJumperTests {
             var key=ResourceLocation.fromNamespaceAndPath("dudunka",biome);
             var entries=level.registryAccess().registryOrThrow(Registries.BIOME).get(key).getMobSettings().getMobs(MobCategory.CREATURE).unwrap();
             h.assertTrue(entries.stream().filter(e->e.type==type).count()==(biome.equals("pink_meadows")?1:0),"Only Pink Meadows adds this creature");
-            if(biome.equals("pink_meadows"))h.assertTrue(entries.stream().anyMatch(e->e.type==type && e.getWeight().asInt()==8 && e.minCount==2 && e.maxCount==4),"Moderate weight, normal creature cap, 2–4 group");
-            h.assertTrue(entries.stream().anyMatch(e->e.type==(biome.equals("glowing_mushroom_forest")?EntityType.MOOSHROOM:EntityType.RABBIT)),"Existing inhabitants retained");
+            if(biome.equals("pink_meadows"))h.assertTrue(entries.stream().anyMatch(e->e.type==type && e.getWeight().asInt()==24 && e.minCount==2 && e.maxCount==3),"Regular weight, normal creature cap, playful 2–3 group");
+            h.assertTrue(entries.stream().noneMatch(e->net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(e.type).getNamespace().equals("minecraft")),"No vanilla passive creature competes in Vale");
             BlockPos site=null;
             search:for(int r=0;r<=4096;r+=64)for(int x=-r;x<=r;x+=64)for(int z=-r;z<=r;z+=64) {
                 if(Math.max(Math.abs(x),Math.abs(z))!=r)continue;

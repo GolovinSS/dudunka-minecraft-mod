@@ -58,9 +58,9 @@ public class PufikTests {
         var entries = forest.getMobSettings().getMobs(MobCategory.CREATURE).unwrap();
         h.assertTrue(entries.stream().anyMatch(e -> e.type == DudunkaMod.PUFIK.get()
                         && e.minCount == 1 && e.maxCount == 2 && e.getWeight().asInt() == 40),
-                "Forest adds a small 1–2 Pufik group without replacing mooshrooms");
-        h.assertTrue(entries.stream().anyMatch(e -> e.type == net.minecraft.world.entity.EntityType.MOOSHROOM),
-                "Existing forest inhabitants remain");
+                "Forest adds a regular 1–2 Pufik group");
+        h.assertTrue(entries.stream().noneMatch(e -> net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(e.type).getNamespace().equals("minecraft")),
+                "Vale creature spawning is reserved for its intended magical inhabitants");
         BlockPos site = null;
         // Resolve the generated biome directly; the selected column must match the actual spawn predicate.
         outer: for (int x = 32; x < 160; x += 16) for (int z = 32; z < 160; z += 16) {

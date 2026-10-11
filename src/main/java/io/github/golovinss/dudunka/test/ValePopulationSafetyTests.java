@@ -82,6 +82,8 @@ public class ValePopulationSafetyTests {
         var state=NaturalSpawner.createState(289,mobs,(key,consumer)->consumer.accept(chunk),local);
         h.assertTrue(MobCategory.CREATURE.getMaxInstancesPerChunk()==10 && state.getMobCategoryCounts().getInt(MobCategory.CREATURE)==10,
                 "Both populations count against the unchanged creature cap of ten");
+        h.assertTrue(ValeWildlifePopulation.underPopulationLimits(new int[]{0,0,0,0},DudunkaMod.PUFIK.get()),
+                "Vale assistance retains independent local capacity even when the shared vanilla creature cap is full");
         var canSpawn=state.getClass().getDeclaredMethod("canSpawnForCategory",MobCategory.class,ChunkPos.class);canSpawn.setAccessible(true);
         h.assertTrue(!(boolean)canSpawn.invoke(state,MobCategory.CREATURE,chunk.getPos()),"A full cap rejects further creature spawning");
         mobs.forEach(net.minecraft.world.entity.Entity::discard);

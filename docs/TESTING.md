@@ -1767,3 +1767,60 @@ permission. This does not authorize publishing or modifying a production save.
 
 Automated results, real-client/BMC4 acceptance and publication are separate
 statuses in [the Stage 3.5 validation record](VALIDATION-MUSHROOM-VALE-STAGE-3.5.md).
+
+## Stage 3.6: Living Mushroom Vale
+
+Run the focused population tests and complete required validation from the
+repository root with Java 17:
+
+```bash
+./tools/test.sh all
+```
+
+`ValeWildlifePopulationTests` checks all three biome creature lists, absence of
+vanilla creature competitors, exact magical habitats/weights/groups, independent
+species and total limits, cooldown behavior, `doMobSpawning=false`, and the
+Mushroom Vale dimension gate. Existing Pufik, Vale Spider, Fluffy Jumper,
+firefly, Wise residence, Pufik residence, and shared creature-cap assertions
+remain in their existing GameTests. The entity-specific spawn tests continue to
+exercise safe ground, headroom, hazards, cliffs, and dimension restrictions.
+
+### Manual Survival encounters (no `/summon`)
+
+Use a fresh disposable world first and a copy of an existing save second. Keep
+view and simulation distances at ordinary values (8 chunks is the test target),
+leave `doMobSpawning` enabled, and explore on foot at normal speed. Do not use
+commands, spawn eggs, artificial spawn floors, or spectator mode to create the
+observed wildlife.
+
+1. Locate Glowing Mushroom Forest and walk across several dry forest regions.
+   Look for Pufik regularly and Vale Spiders occasionally. Follow the route into
+   Memory Forest and verify spiders appear there as well.
+2. Walk through open Pink Meadows and look for Fluffy Jumpers in small groups.
+   Confirm their colors vary and their short playful hops remain safe on the
+   terrain. Keep moving between observations; idle players should not trigger
+   population assistance.
+3. Repeat in Survival in both fresh terrain and already generated terrain. In
+   the existing save, check that mooshrooms, rabbits, sheep, pigs, and other
+   animals already present remain alive and unchanged. Explore for several
+   minutes so the bounded assistance can run under normal conditions.
+4. Repeat with two players walking through overlapping areas. Confirm the Vale
+   population grows gradually rather than producing duplicate bursts. Then set
+   `/gamerule doMobSpawning false`, continue moving, and confirm no new wildlife
+   appears; restore the gamerule afterward.
+5. Check all three biomes' magical habitats, fireflies, cottages and Wise/Pufik
+   residents. Ensure no newly spawned vanilla passive animals appear in Vale
+   while Overworld animal spawning remains normal. Save, quit and reload, then
+   confirm existing entity identities and cottage resident UUIDs remain intact.
+
+New chunks get exclusive magical creature lists during generation. Existing
+chunks retain all terrain and already living vanilla animals; future natural
+rolls use the updated biome settings, and exploration assistance has a separate
+nearby wildlife budget so a pre-existing full vanilla creature cap does not
+permanently prevent encounters. Assisted spawns remain stochastic and require
+safe loaded terrain. Record the time, biome, player count, simulation distance,
+and visible/nearby counts in each world. Automated GameTests do not replace this
+Survival/BMC4 acceptance.
+
+The short implementation record is
+[VALIDATION-MUSHROOM-VALE-STAGE-3.6.md](VALIDATION-MUSHROOM-VALE-STAGE-3.6.md).

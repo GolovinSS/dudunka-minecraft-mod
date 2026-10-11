@@ -1076,18 +1076,14 @@ target, trampling, taming, inventory, breeding, trading, quest or companion
 ownership. External pushes and blocks changed during flight remain subject to
 ordinary Minecraft physics.
 
-Pink Meadows alone adds a standard `creature` spawn entry, weight **8**, group
-**2–4**, using `ON_GROUND` placement and the normal creature population cap.
-The previous competing entries remain pig 1, rabbit 2 and sheep 2; adding a
-new weighted entry shares future creature rolls and capacity with them.
-Existing Pufik, Spider, Firefly and Wise Fly Agaric entries/frequencies are
-unchanged. Spawn candidates require dry supported soil (dirt-family ground or
-moss), local headroom, safe adjacent ground, the Vale dimension and Pink Meadows
-biome. Roofs, leaves, slabs, caves more than four blocks below the heightmap,
-water edges and cliffs are refused. Ordinary exploration in newly generated
-open meadows offers the best chance of finding a small group. No custom/global
-spawner is added. Existing finished chunks keep their generated populations;
-loaded biome spawn data also applies to future ordinary spawn attempts there.
+Pink Meadows alone adds a standard `creature` spawn entry, weight **24**, group
+**2–3**, using `ON_GROUND` placement. Stage 3.6 removes vanilla passive animals
+from all three Vale creature lists. Pufik remains weight **40 / 1–2** in Glowing
+Mushroom Forest; Vale Spider is **44 / 1–2** in Memory Forest and **20 / 1–2**
+in Glowing Mushroom Forest. Wise Fly Agaric, magical fireflies, and cottage
+residents keep their existing entries and behavior. Spawn candidates keep the
+existing dimension, habitat, ground, headroom, neighboring support, and hazard
+checks.
 
 Right-click with the main hand gives a short localized friendly message and
 cheerful sway, and schedules an excited hop if a safe route exists. A 40-tick
@@ -1104,6 +1100,45 @@ Set `FluffyColor` to 1 or 2 for lavender or blue. See
 [Stage 3.5 acceptance and commands](TESTING.md#stage-35-fluffy-jumpers-and-residencytravel-regressions),
 [offline model preview](FLUFFY-JUMPER-PREVIEW.png) and
 [validation evidence](VALIDATION-MUSHROOM-VALE-STAGE-3.5.md).
+
+## Stage 3.6: Living Mushroom Vale
+
+The three Vale biomes reserve the natural `CREATURE` lists for magical wildlife
+and the Wise Fly Agaric. Mooshrooms, pigs, rabbits, sheep, and any other vanilla
+creature entries no longer naturally spawn there. This changes only future
+natural spawning: existing animals are never killed, replaced, despawned by the
+mod, or rewritten, and other dimensions retain their original animal lists.
+Decor, cottages, landmarks, vegetation, fireflies (`AMBIENT`), and Wise cottage
+residency are unchanged.
+
+Prior surveys separated the causes. Stage 3.3 recorded **101 chunk-generation
+births versus 7 runtime natural births** across six routes; the shared creature
+cap was full in **999/1,320 (75.7%)** snapshots. The 400-tick runtime attempt
+and broad vertical sampling limit eligible candidates, while rolling terrain,
+foliage, and small silhouettes reduce line-of-sight sightings. Stage 3.2d also
+observed a cap full in 100/100 snapshots on one forest route. Chunk-generation
+spawns are distinct from runtime cap-limited attempts. Removing passive animals
+improves future generated populations, but cannot free capacity in old chunks
+where those animals are already alive.
+
+For those existing-world cases, `ValeWildlifePopulation` provides a small,
+server-side exploration assist in Mushroom Vale. It checks one moving
+non-spectator player per Vale level at most once per 400 ticks, samples up to 12
+positions in already-loaded chunks, and creates at most one nearby pack (up to
+three members) per successful cycle. The path respects `doMobSpawning`, the
+original biome spawn predicates, Forge placement/position/finalize hooks,
+collision, player clearance, and the world border. Its local 48-block budget is
+4 Pufiks, 4 Vale Spiders, 6 Fluffy Jumpers, and 12 total. Existing named or
+persistent creatures count toward those limits and are never altered. It does
+not use the shared category cap, change entity categories, or load chunks.
+Normal biome spawning remains active too; these limits bound only assistance.
+
+New chunks use the exclusive lists and revised weights/groups. Already generated
+chunks keep terrain and existing animals, but use the revised biome spawn data
+for later normal rolls and can receive bounded assistance while players explore.
+Idle players do not trigger replenishment. Full GameTests and natural encounters
+in Survival/BMC4 remain pending for this stage; see
+[Stage 3.6 verification](TESTING.md#stage-36-living-mushroom-vale).
 
 Stage 3.4b doorway correction: a block-centered 0.68-wide resident body clipped
 the open spruce door panel by approximately 0.0074 blocks in the measured failing
