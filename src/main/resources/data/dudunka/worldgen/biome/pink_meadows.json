@@ -110,6 +110,12 @@
         "maxCount": 4,
         "minCount": 2,
         "weight": 2
+      },
+      {
+        "type": "dudunka:fluffy_jumper",
+        "weight": 8,
+        "minCount": 2,
+        "maxCount": 4
       }
     ],
     "misc": [],

@@ -1,0 +1,140 @@
+{
+  "baseline": "ae81ad4",
+  "routes": [
+    {
+      "seed": 0,
+      "chunk_generation_births": 0,
+      "runtime_natural_births": 0,
+      "visible_samples": 0,
+      "samples": 220,
+      "visible64_mean": 0.0,
+      "visible64_max": 0,
+      "population128_max": 0,
+      "proximity32_samples": 0,
+      "cap_full_samples": 207,
+      "position_checks": 0
+    },
+    {
+      "seed": 2026,
+      "chunk_generation_births": 4,
+      "runtime_natural_births": 0,
+      "visible_samples": 0,
+      "samples": 220,
+      "visible64_mean": 0.0,
+      "visible64_max": 0,
+      "population128_max": 3,
+      "proximity32_samples": 0,
+      "cap_full_samples": 164,
+      "position_checks": 0
+    },
+    {
+      "seed": 42,
+      "chunk_generation_births": 5,
+      "runtime_natural_births": 0,
+      "visible_samples": 80,
+      "samples": 220,
+      "visible64_mean": 0.36363636363636365,
+      "visible64_max": 1,
+      "population128_max": 3,
+      "proximity32_samples": 60,
+      "cap_full_samples": 220,
+      "position_checks": 0
+    }
+  ],
+  "evidence": {
+    "survey-0-20261011-131245": {
+      "path": "build/reports/mushroom-vale-stage34/survey-0-20261011-131245/gametest.log",
+      "sha256": "a681b1a4e8042584278f7f9daccb44d062b840848ceae5412eb8b6248358e7d8",
+      "success": false
+    },
+    "survey-2026-20261011-131524": {
+      "path": "build/reports/mushroom-vale-stage34/survey-2026-20261011-131524/gametest.log",
+      "sha256": "52ad1677943f4b974b840b0838709f67563eba33dbc75409b8b84bc94598529f",
+      "success": true
+    },
+    "survey-42-20261011-131411": {
+      "path": "build/reports/mushroom-vale-stage34/survey-42-20261011-131411/gametest.log",
+      "sha256": "63f83202731582a5ce6e22885f4a55b9faa9c00a361cb419d2991c005583339b",
+      "success": true
+    }
+  },
+  "checks": {
+    "build/reports/mushroom-vale-stage34/build-default-20261011-132035": {
+      "log_sha256": "d0db58f3a8fc06f30df942482de7573ad6009c7d9e50a0c55807e7eee59af4ba",
+      "gradle_success": true,
+      "server_startup_error": false,
+      "tests_complete": null,
+      "required_passed": null,
+      "required_failed": null
+    },
+    "build/reports/mushroom-vale-stage34/focused-0-20261011-131004": {
+      "log_sha256": "b5f5f4395b009e0182498f6cf4bda6d659595513be6ef60b540812c66e88a82b",
+      "gradle_success": true,
+      "server_startup_error": false,
+      "tests_complete": 5,
+      "required_passed": 5,
+      "required_failed": 0
+    },
+    "build/reports/mushroom-vale-stage34/focused-0-20261011-131114": {
+      "log_sha256": "661c7a6933c4a22b160168f0d068e4da046d03d5dfec0a3aadb89f2dd9e3ea52",
+      "gradle_success": true,
+      "server_startup_error": false,
+      "tests_complete": 6,
+      "required_passed": 6,
+      "required_failed": 0
+    },
+    "build/reports/mushroom-vale-stage34/full-default-20261011-131641": {
+      "log_sha256": "db727e94ff737ce8b2d66eee67f300e2ae86d65fdab4c611190f825fe6388677",
+      "gradle_success": false,
+      "server_startup_error": false,
+      "tests_complete": 193,
+      "required_passed": 192,
+      "required_failed": 1
+    },
+    "build/reports/mushroom-vale-stage34/survey-0-20261011-131245": {
+      "log_sha256": "a681b1a4e8042584278f7f9daccb44d062b840848ceae5412eb8b6248358e7d8",
+      "gradle_success": false,
+      "server_startup_error": false,
+      "tests_complete": 1,
+      "required_passed": 0,
+      "required_failed": 1
+    },
+    "build/reports/mushroom-vale-stage34/survey-2026-20261011-131524": {
+      "log_sha256": "52ad1677943f4b974b840b0838709f67563eba33dbc75409b8b84bc94598529f",
+      "gradle_success": true,
+      "server_startup_error": false,
+      "tests_complete": 1,
+      "required_passed": 1,
+      "required_failed": 0
+    },
+    "build/reports/mushroom-vale-stage34/survey-42-20261011-131411": {
+      "log_sha256": "63f83202731582a5ce6e22885f4a55b9faa9c00a361cb419d2991c005583339b",
+      "gradle_success": true,
+      "server_startup_error": false,
+      "tests_complete": 1,
+      "required_passed": 1,
+      "required_failed": 0
+    },
+    "build/reports/mushroom-vale-stage34-firefly-diagnostic/focused--4853257702107486027-20261011-132018": {
+      "log_sha256": "2dbae4caff984ca0c3afbccb86ae4213ea0bd99b2981f8d11a638873127009a1",
+      "gradle_success": true,
+      "server_startup_error": true,
+      "tests_complete": null,
+      "required_passed": null,
+      "required_failed": null
+    },
+    "build/reports/mushroom-vale-stage34-firefly-diagnostic/focused--4853257702107486027-20261011-132159": {
+      "log_sha256": "4b0f50a90b26c23a5ac9a7812ca88db6c4889be60be10bdd8587402a90a2f7f3",
+      "gradle_success": true,
+      "server_startup_error": false,
+      "tests_complete": 1,
+      "required_passed": 1,
+      "required_failed": 0
+    }
+  },
+  "artifact": {
+    "path": "build/libs/dudunka-0.27.0-alpha.jar",
+    "sha256": "c71f146459eaa695ab07a8f220b9d42ae2b0a751a762b71e2d8a26a52435aaf7"
+  },
+  "full_build_current_production_hashes_match": true
+}

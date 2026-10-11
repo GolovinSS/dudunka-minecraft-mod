@@ -1442,3 +1442,328 @@ Survey code and seed hooks live outside production sources, are opt-in, and are
 removed from build outputs before ordinary packaging. A final JAR audit verifies
 this. Automated checks and offline preview do not replace Minecraft/BMC4 visual,
 multiplayer or old-world acceptance; see the [validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.3.md).
+
+## Stage 3.4: Wise Fly Agaric
+
+In IntelliJ, select Java 17 for Project SDK and Gradle JVM. Create a **Gradle**
+Run Configuration targeting this project, Tasks and arguments:
+`runClient -PmushroomValeDev=true --offline -Dnet.minecraftforge.gradle.check.certs=false`.
+Run it. Alternatively, run `genIntellijRuns` and add
+`-Ddudunka.devMushroomVale=true` to the generated Java `runClient` VM options.
+The property must be present in the integrated server JVM. Terminal equivalent:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew runClient -PmushroomValeDev=true --offline -Dnet.minecraftforge.gradle.check.certs=false
+```
+
+Use a fresh Creative world with commands enabled for inspection:
+
+```mcfunction
+/dudunka_dev mushroom_vale enter
+/summon dudunka:wise_fly_agaric ~ ~ ~
+```
+
+On dry open ground, stand 1, 1.5, 2 and 3 blocks in front, then circle him.
+Compare the red cap/spots, eyes, mouth, beard, cloak, pouch, staff and lantern
+against `reference/mushroom-vale/wise_fly_agaric.png`. Check face visibility,
+texture seams, feet contact and actual scale. Right-click with an empty main
+hand: verify a gentle localized line and wave/bow; clicking repeatedly within
+four seconds must not spam dialogue. Switch between English and Russian.
+Observe idle breathing, walking, thought and reading pauses. Approach while
+standing to check LOOK_UP; use two elders/players to check independent poses
+and multiplayer synchronization. Check no attacks, item pickup or terrain edits.
+Save/restart and check UUID, name and health. Summoning is also permitted outside
+Vale; natural spawning remains restricted.
+
+For ordinary natural encounters, use separate fresh seeds `0`, `42`, `2026`,
+view/simulation distance 8, a non-spectator player and ordinary mob spawning:
+
+```mcfunction
+/gamerule doMobSpawning true
+/time set day
+/locate biome dudunka:memory_forest
+```
+
+Explore new dry forest terrain and pause at ground level. Do not summon, remove
+competitors, manufacture floors or change caps in natural-acceptance worlds.
+Read-only inspection of loaded elders:
+
+```mcfunction
+/execute as @e[type=dudunka:wise_fly_agaric,distance=..128] run data get entity @s Pos
+```
+
+Cottages have no automatic residents in this stage. Existing populated chunks
+can remain cap-filled; new exploration supplies chunk-generation opportunities.
+Repeat in BMC4 v55.5, with shaders and multiplayer, and check Pufik, spiders,
+fireflies, companions, album, cottages and music. Preserve old terrain and saves.
+Return with `/dudunka_dev mushroom_vale return`.
+
+Reproducible checks (isolated disposable worlds; Java 17 and cached Forge):
+
+```bash
+python3 tools/run_vale_stage34_checks.py focused
+python3 tools/run_vale_stage34_checks.py survey --seeds 0 42 2026
+python3 tools/run_vale_stage34_checks.py full
+python3 tools/run_vale_stage34_checks.py build
+python3 tools/preview_wise_fly_agaric.py
+python3 tools/validate_vale_resources.py --mod-jar build/libs/dudunka-0.27.0-alpha.jar
+python3 tools/validate_vale_stage34.py --jar build/libs/dudunka-0.27.0-alpha.jar
+```
+
+`verifyWiseFlyAgaric` bakes anatomy and checks atlas, UVs, localized lines,
+renderer wiring, rigid poses, prop/reset behavior and triangle camera sightlines.
+Focused GameTests cover registration/attributes, all biome/dimension exclusions,
+hazard/clearance/cliff spawn rules, actual AI movement, dialogue cooldown,
+non-hostility, NBT round-trip, unchanged cap and protected despawning. The opt-in
+survey records completed engine births and standing-observer sightline proxies;
+its helpers are excluded from the shipped JAR. Automated NBT and geometry checks
+are separate from full client save/restart and visual acceptance.
+
+Stage 3.4 survey commands require at least one completed birth per measured
+route and return nonzero for zero-birth routes (seed 0 did so in validation).
+Keep those negative results. Seed 42's measured encounter route starts near
+X=7648, Z=8832 and continues 352 blocks east. The current full-suite report
+includes one unchanged firefly takeoff failure; see the dedicated validation
+report before treating this stage as full regression acceptance.
+
+## Stage 3.4a: Wise cottage residency
+
+Use Java 17, a disposable world/copy, and the existing developer opt-in:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew --offline -Dnet.minecraftforge.gradle.check.certs=false -PmushroomValeDev=true runClient -x downloadAssets
+```
+
+Enter with `/dudunka_dev mushroom_vale enter`. For a discovered cottage, find its
+floor origin (the blueprint center at the floor block Y) and use
+`/dudunka_dev mushroom_vale resident X Y Z`. This read-only developer command
+reports recognition, rotation, issued UUID, home and whether that UUID is loaded.
+`loaded=false` deliberately does not distinguish unload from removal.
+Cottages are features: `/locate structure` cannot find them. Natural discovery:
+`/locate biome dudunka:memory_forest`, then explore on foot.
+
+For a repeatable **disposable** fixture, first stand nearby to load the area,
+then prepare the platform, select Memory Forest, and stand outside the footprint:
+
+```mcfunction
+/tp @s 32 161 24
+/fill 20 159 -4 44 159 20 minecraft:mycelium
+/fill 20 160 -4 44 171 20 minecraft:air
+/fillbiome 16 144 -16 47 175 31 dudunka:memory_forest
+/dudunka_dev mushroom_vale cottage wise 32 160 8 north
+/dudunka_dev mushroom_vale resident 32 160 8
+```
+
+Stay nearby in Creative/Survival (not Spectator) for the nine-slot scan (up to
+nine seconds for one visitor; more visitors share the bounded scan). Inspect:
+
+```mcfunction
+/dudunka_dev mushroom_vale resident 32 160 8
+/execute as @e[type=dudunka:wise_fly_agaric,distance=..32] if data entity @s WiseCottageOrigin run data get entity @s UUID
+/execute as @e[type=dudunka:wise_fly_agaric,distance=..32] if data entity @s WiseCottageOrigin run data get entity @s WiseCottageOrigin
+/execute as @e[type=dudunka:wise_fly_agaric,distance=..32] if data entity @s WiseCottageOrigin run data get entity @s WiseCottageRotation
+/execute as @e[type=dudunka:wise_fly_agaric,distance=..32] if data entity @s WiseCottageOrigin run data get entity @s PersistenceRequired
+```
+
+The command prints the precise resident UUID; `/data get entity UUID` with that
+printed UUID shows its complete NBT even if independent elders are nearby.
+Do not summon a second elder to test automatic residency. Observe a few trips:
+he should walk through the door, descend the porch, explore nearby, return and
+sometimes think/read. The approved appearance and all six English/Russian
+interaction messages should remain intact. Verify player access, door operation,
+water/cliff avoidance and no teleporting in all four cottage rotations.
+
+Record the UUID, leave beyond simulation distance, return, then save/quit and
+restart the same world. Reinspect the same origin; the UUID must remain identical.
+Repeat with two simultaneous players. On a **copy**, deliberately kill the UUID,
+leave/reload/restart, and verify no replacement. Also visit an intact old furnished
+cottage in a Stage 3.4 save: it should enroll without modifying blocks. Older
+unfurnished shells or broken structural fingerprints remain uninhabited.
+Run these acceptance checks in Forge and Better MC BMC4 v55.5 separately.
+
+Automated commands (fresh isolated worlds, actual completion summaries required):
+
+```bash
+python3 tools/run_vale_stage34a_checks.py residency
+python3 tools/run_vale_stage34a_checks.py focused
+python3 tools/run_vale_stage34a_checks.py firefly --seed -4853257702107486027
+python3 tools/run_vale_stage34a_checks.py build
+python3 tools/run_vale_stage34a_checks.py full
+```
+
+The residency tests cover structural recognition, automatic nearby discovery,
+concurrent visitor requests, durable issuance/entity reload, real chunk unload
+and disk reload, deliberate removal, interrupted issuance, existing-world block
+preservation, unloaded-boundary rejection and live door/porch/home navigation.
+They do not replace a real process restart or graphical multiplayer/BMC4 checks.
+
+## Stage 3.4b: Pufik cottage residency
+
+Use a disposable world with the existing developer opt-in enabled. Enter
+Mushroom Vale and prepare a Pink Meadows fixture near the player:
+
+```mcfunction
+/tp @s 32 161 24
+/fill 20 159 -4 44 159 20 minecraft:mycelium
+/fill 20 160 -4 44 171 20 minecraft:air
+/fillbiome 16 144 -16 47 175 31 dudunka:pink_meadows
+/dudunka_dev mushroom_vale cottage pufik 32 160 8 north
+/dudunka_dev mushroom_vale resident pufik 32 160 8
+```
+
+Remain within 48 blocks and wait for the bounded visitor scan. Reinspect with
+the last command; the resident UUID should remain stable. Check its association
+and persistence directly:
+
+```mcfunction
+/execute as @e[type=dudunka:pufik,distance=..32] if data entity @s PufikCottageOrigin run data get entity @s UUID
+/execute as @e[type=dudunka:pufik,distance=..32] if data entity @s PufikCottageOrigin run data get entity @s PufikCottageOrigin
+/execute as @e[type=dudunka:pufik,distance=..32] if data entity @s PufikCottageOrigin run data get entity @s PufikCottageRotation
+/execute as @e[type=dudunka:pufik,distance=..32] if data entity @s PufikCottageOrigin run data get entity @s PersistenceRequired
+```
+
+Observe the resident inside, walking through the spruce door, exploring the
+porch and returning home. Check that he avoids hazards, does not jump by
+teleporting, occasionally uses existing emotes, looks toward approaching
+players and keeps the localized greeting. Repeat inspection and visit with two
+players; only one entity should carry this origin. Save, quit and restart, then
+check the same UUID. On a world copy, remove that UUID and verify subsequent
+visits do not recreate it. Visit an existing intact generated cottage to check
+old-world enrollment. Confirm a wild Glowing Mushroom Forest Pufik has no
+`PufikCottageOrigin` and remains despawnable. Repeat in BMC4 v55.5.
+
+Focused automated coverage is in `PufikCottageTests` and the existing Pufik and
+Wise cottage test classes. External validation commands:
+
+```bash
+./tools/test.sh build
+./tools/test.sh gametest
+```
+
+These commands have not been run by Codex for Stage 3.4b.
+
+## Stage 3.5: Fluffy Jumpers and residency/travel regressions
+
+This task explicitly permits Codex to run builds and GameTests. Subsequent tasks
+retain the normal `DEVELOPMENT-WORKFLOW.md` roles. Use Java 17:
+
+Recorded result (2026-10-11): build and all model/resource verifiers **PASS**;
+focused residency/Jumper/travel set **30/30 PASS**, alternate-seed travel
+**7/7 PASS**, final full suite **217/217 PASS, 0 FAIL**. Graphical Minecraft,
+BMC4 and two real clients remain **NOT RUN**. Detailed logs and earlier failed
+diagnostic runs are recorded in the linked validation report below.
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./tools/test.sh build
+python3 tools/run_vale_stage35_checks.py all
+python3 tools/run_vale_stage35_checks.py travel --seed 42
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./tools/test.sh all
+python3 tools/preview_fluffy_jumper.py
+```
+
+`regressions` runs the three existing live shared-furniture tests plus peaceful
+Wise/Spider interaction checks.
+
+Focused groups are `pufik`, `wise`, `travel`, `jumper`, `regressions` and `all`; `--method`
+selects one actual test method. The runner creates isolated worlds and a temporary
+namespace wrapper around the real methods, preserving their timeouts and cleanup
+hooks. Wrappers use distinct batch names, and generated build-output classes and
+templates are removed on exit. Both runners refuse overlapping runs and require
+an explicit completed passing GameTest summary. Logs and focused input manifests
+are under `build/reports/mushroom-vale-stage35/`; wrapper reports remain under
+`build/reports/dudunka-tests/`.
+
+The full wrapper and focused runner default to seed `-255494441983840131`;
+`DUDUNKA_TEST_SEED` overrides the full wrapper seed. Forge's GameTest launch through
+`Main` reads `server.properties` before constructing its `GameTestServer`, unlike
+the unused vanilla static `GameTestServer.create` seed constant. That bypass also
+omits vanilla's no-random-mobs/no-weather-cycle GameTest rules. A startup hook
+limited to `GameTestServer` now supplies those intended rules, with a required
+regression. Natural-population tests explicitly enable spawning and restore its
+prior state. Production servers keep their own game rules. Travel command
+tests own and restore a small arrival surface at `(8,64,8)`, so safe transfer,
+veto, fallback and blocked-arrival assertions do not rely on generated terrain.
+The blocked-arrival scenario obstructs both the near-anchor fixture and all real
+heightmap candidates. Production landing checks still reject hazards and never
+terraform. Terrain/biome/generation tests continue to exercise real worldgen.
+Shared-furniture fixtures seed entity RNG and suppress unrelated idle roaming,
+keeping all live home/family goals and original assertions. Wise interaction
+checks use a reversible supported roofed room and still compare every block.
+Pufik fixtures restore blocks, original biome quart samples and prior forced
+chunk flags after each batch; fixture players and entities are discarded on
+success or failure through cleanup hooks.
+
+`FluffyJumperTests` covers seven scenarios: registration/attributes/assets/family
+independence; actual biome spawn predicates, weights, groups and unsafe surfaces;
+localized interaction/cooldown, save/reload and natural despawn policy; repeated
+real hops/landings/rests with per-tick bounds and no clipping/damage; blocked swept
+flight, hazards and cliffs; two real server players with peaceful loose group
+hops; disabled AI and actual vanilla far-distance despawn. Pufik movement is
+covered in four cottage rotations alongside ledger uniqueness and chunk reload.
+All eight Wise residency regressions and seven travel/bookmark/permission
+scenarios are included in the focused `all` selection. `verifyFluffyJumper`, wired
+into Gradle `check`, bakes the actual model and checks anatomy, three atlases,
+UVs, localization, renderer wiring, 300 finite poses, squash/stretch/reset and
+nine exported preview poses. The preview is an offline render, not a screenshot
+from Minecraft.
+
+### Exact manual Minecraft / Better MC BMC4 v55.5 acceptance
+
+Use a disposable test world and the built jar with Minecraft 1.20.1 / Forge
+47.4.13 / Java 17. Start with JVM flag `-Ddudunka.devMushroomVale=true` (or
+`./gradlew -PmushroomValeDev=true runClient`); developer commands require operator
+permission. This does not authorize publishing or modifying a production save.
+
+1. Stand on safe solid ground and run `/dudunka_dev mushroom_vale enter`.
+   Run `/locate biome dudunka:pink_meadows`; travel to the returned biome in
+   Creative, land on dry open soil, then switch to Survival. Explore fresh chunks
+   in daylight for natural groups of 2–4. Count nearby wildlife if needed with
+   `/execute in dudunka:mushroom_vale as @e[type=dudunka:fluffy_jumper,distance=..64] run data get entity @s Pos`.
+   Confirm other meadow inhabitants, Pufik cottages and fireflies remain present;
+   natural groups are probabilistic and share the vanilla creature cap.
+2. On a clear meadow, run `/summon dudunka:fluffy_jumper ~2 ~ ~ {FluffyColor:0}`;
+   repeat with color 1 and 2. Inspect front/side/back and close player-eye views:
+   round tufted silhouette, tiny paws, friendly visible face, three pastel colors,
+   no missing texture, clipping, severe stretching or animation state leakage.
+3. Watch each for at least 60 seconds: small hops, grounded pauses, occasional
+   higher jump, soft landing squash and smooth return to idle. Approach slowly,
+   then move around the group. Confirm curious looking and occasional loose
+   coordinated hops. Right-click empty-handed: cheerful sway and one brief
+   friendly message. Repeat with a held item and check it is retained. Switch
+   language between English and Russian and repeat after the two-second cooldown.
+4. In a disposable fenced test area, provide dry grass/moss with safe room, then
+   nearby water, magma/fire, a two-block drop and a low ceiling. Confirm normal AI
+   refuses unsafe launch corridors, cannot suffocate itself or walk off the edge,
+   and rests when confined. Do not judge external pushing or mid-flight edits as
+   an AI-planned route. Inspect nearest entity with
+   `/data get entity @e[type=dudunka:fluffy_jumper,sort=nearest,limit=1]`.
+5. Hit one gently in Survival, observe players and nearby creatures remain
+   unharmed, and check no attack, taming, breeding, trade or inventory UI appears.
+   With two real clients on a dedicated server, have both right-click the same
+   group; confirm identical palette/movement/emotes, independent localized
+   messages and no duplication or client/server crash.
+6. Inspect `UUID`, `FluffyColor`, `Health` and `Pos` using `/data get entity`;
+   name one with a name tag, save/quit/reload and confirm identity/color/name/health.
+   Leave an unnamed group beyond ordinary despawn range, return, and ensure there
+   is no forced persistence or global replenishment service. Name tags retain
+   normal vanilla persistence.
+7. Find an intact Pink Meadows cottage, visit as a non-spectator and inspect
+   `/dudunka_dev mushroom_vale resident pufik <originX> <originY> <originZ>`.
+   Observe a full departure/return (up to 90 seconds), door opening/closing, slab
+   transitions and no teleport. Repeat for rotated cottages; a safe disposable
+   preview can be placed with
+   `/dudunka_dev mushroom_vale cottage pufik <x> <y> <z> north` (also east/south/west).
+   Preview requires a clear supported footprint, loaded chunks, an appropriate
+   biome and the player standing outside it. Record the resident UUID, leave until
+   the chunk unloads, return and reload the world: exactly the same resident must
+   remain. Deliberately removed residents must never be reissued.
+8. Repeat departure/return and UUID reload in a Memory Forest Wise cottage;
+   `/dudunka_dev mushroom_vale resident <originX> <originY> <originZ>` inspects it.
+   Confirm existing Pufik, Spider, Firefly and Wise models/interactions are unchanged.
+9. Run `/dudunka_dev mushroom_vale return`; confirm safe departure bookmark,
+   identity, family companions and album behavior. Test an existing saved world
+   in a copy: old cottages remain eligible and existing resident UUIDs/ledger,
+   biome IDs and album protocol 9 remain compatible.
+
+Automated results, real-client/BMC4 acceptance and publication are separate
+statuses in [the Stage 3.5 validation record](VALIDATION-MUSHROOM-VALE-STAGE-3.5.md).

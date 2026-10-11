@@ -43,6 +43,7 @@ public final class MushroomVale {
                         .then(Commands.literal("enter").executes(context -> enter(context.getSource())))
                         .then(Commands.literal("return").executes(context -> leave(context.getSource())))
                         .then(MushroomValeCottagePreview.command())
+                        .then(MushroomValeCottagePreview.residentCommand())
                         .then(MushroomValeCottagePreview.decorCommand())));
     }
 

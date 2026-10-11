@@ -38,6 +38,8 @@ public class DudunkaMod {
     public static final RegistryObject<EntityType<ValeBenchSeat>> VALE_BENCH_SEAT=ENTITIES.register("vale_bench_seat",()->EntityType.Builder.<ValeBenchSeat>of(ValeBenchSeat::new,MobCategory.MISC).sized(.01f,.01f).clientTrackingRange(8).noSave().noSummon().build(ID+":vale_bench_seat"));
     public static final RegistryObject<EntityType<ValeFirefly>> VALE_FIREFLY;
     public static final RegistryObject<EntityType<Pufik>> PUFIK;
+    public static final RegistryObject<EntityType<FluffyJumper>> FLUFFY_JUMPER;
+    public static final RegistryObject<EntityType<WiseFlyAgaric>> WISE_FLY_AGARIC;
     public static final RegistryObject<EntityType<ValeSpider>> VALE_SPIDER;
     public static final RegistryObject<MushroomValeDecorFeature> VALE_DECOR_FEATURE=FEATURES.register("mushroom_vale_decor",MushroomValeDecorFeature::new);
     public static final RegistryObject<MushroomValeLandmarkFeature> VALE_LANDMARK_FEATURE=FEATURES.register("mushroom_vale_landmark",MushroomValeLandmarkFeature::new);
@@ -66,7 +68,9 @@ public class DudunkaMod {
             ITEMS.register(k.id+"_home",()->new BlockItem(HOMES.get(k).get(),new Item.Properties()));
             EGG_ITEMS.put(k,ITEMS.register(k.id+"_egg",()->new BlockItem(EGGS.get(k).get(),new Item.Properties().stacksTo(16))));
         }
+        WISE_FLY_AGARIC=ENTITIES.register("wise_fly_agaric",()->EntityType.Builder.of(WiseFlyAgaric::new,MobCategory.CREATURE).sized(.72f,1.15f).clientTrackingRange(8).build(ID+":wise_fly_agaric"));
         VALE_SPIDER=ENTITIES.register("vale_spider",()->EntityType.Builder.of(ValeSpider::new,MobCategory.CREATURE).sized(.8f,.5f).clientTrackingRange(8).build(ID+":vale_spider"));
+        FLUFFY_JUMPER=ENTITIES.register("fluffy_jumper",()->EntityType.Builder.of(FluffyJumper::new,MobCategory.CREATURE).sized(.5f,.5f).clientTrackingRange(8).build(ID+":fluffy_jumper"));
         PUFIK=ENTITIES.register("pufik",()->EntityType.Builder.of(Pufik::new,MobCategory.CREATURE).sized(.68f,.62f).clientTrackingRange(8).build(ID+":pufik"));
         VALE_FIREFLY=ENTITIES.register("vale_firefly",()->EntityType.Builder.of(ValeFirefly::new,MobCategory.AMBIENT).sized(.2f,.2f).clientTrackingRange(8).updateInterval(2).build(ID+":vale_firefly"));
     }
@@ -93,15 +97,21 @@ public class DudunkaMod {
     }
     private void attributes(EntityAttributeCreationEvent e) {
         TYPES.forEach((k,v)->e.put(v.get(),Companion.attributes(k).build()));
+        e.put(WISE_FLY_AGARIC.get(),WiseFlyAgaric.attributes().build());
         e.put(VALE_SPIDER.get(),ValeSpider.attributes().build());
+        e.put(FLUFFY_JUMPER.get(),FluffyJumper.attributes().build());
         e.put(PUFIK.get(),Pufik.attributes().build());
         e.put(VALE_FIREFLY.get(),ValeFirefly.attributes().build());
     }
     private void spawnPlacements(net.minecraftforge.event.entity.SpawnPlacementRegisterEvent e) {
         e.register(VALE_FIREFLY.get(),SpawnPlacements.Type.NO_RESTRICTIONS,net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 ValeFirefly::canSpawn,net.minecraftforge.event.entity.SpawnPlacementRegisterEvent.Operation.REPLACE);
+        e.register(WISE_FLY_AGARIC.get(),SpawnPlacements.Type.ON_GROUND,net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                WiseFlyAgaric::canSpawn,net.minecraftforge.event.entity.SpawnPlacementRegisterEvent.Operation.REPLACE);
         e.register(VALE_SPIDER.get(),SpawnPlacements.Type.ON_GROUND,net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 ValeSpider::canSpawn,net.minecraftforge.event.entity.SpawnPlacementRegisterEvent.Operation.REPLACE);
+        e.register(FLUFFY_JUMPER.get(),SpawnPlacements.Type.ON_GROUND,net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                FluffyJumper::canSpawn,net.minecraftforge.event.entity.SpawnPlacementRegisterEvent.Operation.REPLACE);
         e.register(PUFIK.get(),SpawnPlacements.Type.ON_GROUND,net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Pufik::canSpawn,net.minecraftforge.event.entity.SpawnPlacementRegisterEvent.Operation.REPLACE);
     }

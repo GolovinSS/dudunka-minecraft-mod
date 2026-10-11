@@ -20,6 +20,43 @@ final class MushroomValeCottagePreview {
     static LiteralArgumentBuilder<CommandSourceStack> decorCommand() {
         return command("decor", new String[]{"bench", "lantern_post"});
     }
+    static LiteralArgumentBuilder<CommandSourceStack> residentCommand() {
+        var root = Commands.literal("resident");
+        root.then(Commands.literal("pufik").then(Commands.argument("origin", BlockPosArgument.blockPos()).executes(context -> {
+            var source=context.getSource(); var origin=BlockPosArgument.getLoadedBlockPos(context,"origin");
+            if (!source.getLevel().dimension().equals(MushroomVale.LEVEL)) throw error("Inspect cottages in Mushroom Vale only.");
+            var entry=WiseCottageResidency.get(source.getLevel()).pufikCottage(origin);
+            if (entry==null) {
+                boolean recognized=false; for(var rotation:Rotation.values()) recognized|=WiseCottageResidency.matchesPufik(source.getLevel(),origin,rotation);
+                boolean match=recognized;
+                source.sendSuccess(()->Component.literal("Pufik cottage "+origin.toShortString()+": no issued resident; recognized="+match+". Loaded Pink Meadows cottages activate near non-spectator players."),false);
+            } else {
+                var entity=source.getLevel().getEntity(entry.resident());
+                source.sendSuccess(()->Component.literal("Pufik cottage "+origin.toShortString()+" rotation="+entry.rotation()+" resident="+entry.resident()+" home="+entry.home().toShortString()+" loaded="+(entity!=null)+(entity==null?" (unloaded or removed; no automatic replacement)":" position="+entity.position())),false);
+            }
+            return 1;
+        })));
+        root.then(Commands.argument("origin", BlockPosArgument.blockPos()).executes(context -> {
+            var source = context.getSource();
+            var origin = BlockPosArgument.getLoadedBlockPos(context, "origin");
+            if (!source.getLevel().dimension().equals(MushroomVale.LEVEL)) throw error("Inspect cottages in Mushroom Vale only.");
+            var entry = WiseCottageResidency.get(source.getLevel()).cottage(origin);
+            if (entry == null) {
+                boolean matches = false;
+                for (var rotation : Rotation.values()) matches |= WiseCottageResidency.matches(source.getLevel(),origin,rotation);
+                final boolean recognized = matches;
+                source.sendSuccess(() -> Component.literal("Cottage " + origin.toShortString() + ": no issued resident; recognized=" + recognized
+                        + ". Loaded Memory Forest cottages activate near non-spectator players."), false);
+            } else {
+                var entity = source.getLevel().getEntity(entry.resident());
+                source.sendSuccess(() -> Component.literal("Cottage " + origin.toShortString() + " rotation=" + entry.rotation()
+                        + " resident=" + entry.resident() + " home=" + entry.home().toShortString()
+                        + " loaded=" + (entity != null) + (entity == null ? " (unloaded or removed; no automatic replacement)" : " position=" + entity.position())), false);
+            }
+            return 1;
+        }));
+        return root;
+    }
     private static LiteralArgumentBuilder<CommandSourceStack> command(String literal, String[] names) {
         var root = Commands.literal(literal);
         for (String name : names) {

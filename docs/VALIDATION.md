@@ -164,3 +164,47 @@ and old-world acceptance remain manual. No commit or push.
 
 [Exact results, evidence, limitations and changed files](VALIDATION-MUSHROOM-VALE-STAGE-3.3.md).
 [runClient and summon instructions](TESTING.md#stage-33-friendly-magical-spider).
+
+## Mushroom Vale Stage 3.4 — Wise Fly Agaric
+
+Build/model/resource checks and 6/6 focused entity tests pass. The single full
+suite run passed 192/193; the unchanged firefly takeoff test failed. Natural
+surveys recorded 0/5/4 completed births for seeds 0/42/2026, with sightline
+encounters on seed 42. The zero-birth route failed the survey assertion.
+
+The independent scholarly entity, original spotted/bearded voxel model, bilingual
+interaction, safe strolling and procedural poses are implemented. Cottage
+residency remains a separate follow-up. See the
+[dedicated Stage 3.4 report](VALIDATION-MUSHROOM-VALE-STAGE-3.4.md) for measured
+completed natural spawning, automated results and manual limitations, and
+[exact IntelliJ and summon instructions](TESTING.md#stage-34-wise-fly-agaric).
+Minecraft/BMC4 graphical, multiplayer and old-save acceptance remains manual.
+
+## Stage 3.4a — Wise cottage residency
+
+Continues the uncommitted Stage 3.4 tree while preserving the approved visuals,
+all six bilingual dialogue lines, existing cottage blueprints and natural spawn
+settings. Nearby loaded-cottage recognition uses a durable server-side UUID
+issuance ledger, without worldgen entities, forced chunks or automatic replacement
+of removed residents. Residents walk through the door/porch, explore locally,
+return and think/read at home.
+
+Automated validation: residency **8/8**, existing elder tests **6/6**, historical
+firefly seed replay **1/1**, build/model/resource/JAR checks **PASS**, and one final
+full suite **201/201 PASS**. The intermittent firefly cause remains unconfirmed;
+its production behavior, assertions and timeout are unchanged. Real process
+restart, graphical multiplayer/old-save upgrade and BMC4 acceptance remain manual.
+See [full report](VALIDATION-MUSHROOM-VALE-STAGE-3.4a.md),
+[metrics](validation-data/mushroom-vale-stage34a-metrics.json) and
+[developer commands](TESTING.md#stage-34a-wise-cottage-residency).
+
+## Mushroom Vale Stage 3.4b finish and Stage 3.5 — 2026-10-11
+
+Pufik open-door collision corrected with aperture-centered resident movement and
+four-orientation regression coverage; travel command tests now own reversible
+arrival fixtures. Original Fluffy Jumper wildlife adds safe physical hops,
+three pastel variants, peaceful localized interactions and standard Pink Meadows
+spawning. Final build/verifiers passed and the full suite passed **217/217**,
+with **0 failures**. Exact automated results, preserved local work, changed files and
+pending manual Minecraft/BMC4 acceptance are recorded in
+[Stage 3.5 validation](VALIDATION-MUSHROOM-VALE-STAGE-3.5.md).

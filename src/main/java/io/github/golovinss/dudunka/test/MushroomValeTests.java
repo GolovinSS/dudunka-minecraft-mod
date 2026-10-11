@@ -581,6 +581,21 @@ public class MushroomValeTests {
         } catch (CommandSyntaxException expected) {}
     }
 
+    /** Command tests own their arrival surface; random worldgen is tested separately. */
+    private static final class ArrivalFixture implements AutoCloseable {
+        private final net.minecraft.server.level.ServerLevel level;
+        private final Map<BlockPos, BlockState> saved = new HashMap<>();
+        ArrivalFixture(GameTestHelper h) {
+            level = h.getLevel().getServer().getLevel(MushroomVale.LEVEL);
+            level.getChunk(0, 0);
+            for (var p : BlockPos.betweenClosed(new BlockPos(4, 62, 4), new BlockPos(12, 68, 12))) {
+                saved.put(p.immutable(), level.getBlockState(p));
+                level.setBlock(p, p.getY() <= 63 ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 18);
+            }
+        }
+        @Override public void close() { saved.forEach((p, state) -> level.setBlock(p, state, 18)); }
+    }
+
     private static void cleanup(ServerPlayer player) {
         MushroomValeReturns.get(player.server).forget(player.getUUID());
         player.remove(Entity.RemovalReason.DISCARDED);
@@ -747,6 +762,7 @@ public class MushroomValeTests {
         UUID playerId = player.getUUID();
         var companions = new ArrayList<Companion>();
         var snapshots = new HashMap<UUID, CompoundTag>();
+        var arrival = new ArrivalFixture(h);
         try {
             for (var kind : Kind.values()) {
                 var companion = DudunkaMod.TYPES.get(kind).get().create(source);
@@ -785,6 +801,7 @@ public class MushroomValeTests {
         } finally {
             companions.forEach(Entity::discard);
             cleanup(player);
+            arrival.close();
         }
         h.succeed();
     }
@@ -854,6 +871,7 @@ public class MushroomValeTests {
         var oldSpawn = overworld.getSharedSpawnPos();
         float oldAngle = overworld.getSharedSpawnAngle();
         var spawn = player.blockPosition().immutable();
+        var arrival = new ArrivalFixture(h);
         try {
             overworld.setDefaultSpawnPos(spawn, 0);
             var dispatcher = serverCommands(h);
@@ -873,6 +891,7 @@ public class MushroomValeTests {
         } finally {
             overworld.setDefaultSpawnPos(oldSpawn, oldAngle);
             cleanup(player);
+            arrival.close();
         }
         h.succeed();
     }
@@ -884,6 +903,7 @@ public class MushroomValeTests {
         var oldSpawn = overworld.getSharedSpawnPos();
         float oldAngle = overworld.getSharedSpawnAngle();
         var blocks = new HashMap<BlockPos, BlockState>();
+        var arrival = new ArrivalFixture(h);
         try {
             var dispatcher = serverCommands(h);
             execute(dispatcher, player, ENTER);
@@ -911,6 +931,7 @@ public class MushroomValeTests {
             blocks.forEach(overworld::setBlockAndUpdate);
             overworld.setDefaultSpawnPos(oldSpawn, oldAngle);
             cleanup(player);
+            arrival.close();
         }
         h.succeed();
     }
@@ -927,6 +948,7 @@ public class MushroomValeTests {
             if (event.getEntity() == player) event.setCanceled(true);
         };
         var blocks = new HashMap<BlockPos, BlockState>();
+        var arrival = new ArrivalFixture(h);
         try {
             returns.remember(player.getUUID(), previous);
             MinecraftForge.EVENT_BUS.addListener(veto);
@@ -948,6 +970,12 @@ public class MushroomValeTests {
                 blocks.put(p.immutable(), vale.getBlockState(p));
                 vale.setBlockAndUpdate(p, Blocks.MAGMA_BLOCK.defaultBlockState());
             }
+            // Also obstruct near-anchor candidates below any taller generated canopy.
+            for (int x = 4; x <= 12; x++) for (int z = 4; z <= 12; z++) {
+                var p = new BlockPos(x, 63, z);
+                blocks.putIfAbsent(p, vale.getBlockState(p));
+                vale.setBlockAndUpdate(p, Blocks.MAGMA_BLOCK.defaultBlockState());
+            }
             rejected(h, dispatcher, player.createCommandSourceStack().withPermission(2), ENTER);
             h.assertTrue(player.serverLevel() == source && returns.point(player.getUUID()) == null,
                     "Blocked arrival must leave player and existing terrain untouched by the command");
@@ -955,6 +983,7 @@ public class MushroomValeTests {
             MinecraftForge.EVENT_BUS.unregister(veto);
             blocks.forEach(vale::setBlockAndUpdate);
             cleanup(player);
+            arrival.close();
         }
         h.succeed();
     }

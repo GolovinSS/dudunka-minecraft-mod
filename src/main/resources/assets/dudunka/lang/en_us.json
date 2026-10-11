@@ -372,5 +372,16 @@
   "entity.dudunka.pufik": "Pufik",
   "message.dudunka.pufik_greeting": "Pufik: Hello! The Vale feels cozier with you here.",
   "entity.dudunka.vale_spider": "Vale Spider",
-  "message.dudunka.vale_spider_greeting": "Hello, friend! What a lovely day for a little wander."
+  "message.dudunka.vale_spider_greeting": "Hello, friend! What a lovely day for a little wander.",
+  "entity.dudunka.wise_fly_agaric": "Wise Fly Agaric",
+  "message.dudunka.wise_fly_agaric.0": "Every mushroom keeps a little story.",
+  "message.dudunka.wise_fly_agaric.1": "Quiet... perhaps the Vale is remembering something.",
+  "message.dudunka.wise_fly_agaric.2": "With friends nearby, even the forest sounds different.",
+  "message.dudunka.wise_fly_agaric.3": "A good book is a little door to wonder.",
+  "message.dudunka.wise_fly_agaric.4": "Take your time. There is so much to notice.",
+  "message.dudunka.wise_fly_agaric.5": "Kind words make even a rainy day warmer.",
+  "entity.dudunka.fluffy_jumper": "Fluffy Jumper",
+  "message.dudunka.fluffy_jumper.0": "Hop along with me!",
+  "message.dudunka.fluffy_jumper.1": "A little hop of happiness!",
+  "message.dudunka.fluffy_jumper.2": "You make my fluff sparkle!"
 }

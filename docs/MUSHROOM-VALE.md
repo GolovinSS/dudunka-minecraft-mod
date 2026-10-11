@@ -912,3 +912,203 @@ promise of encounters at every location. Existing Companion UUIDs/save code,
 Pufik/firefly implementations, dimension/biome IDs and album protocol **9** are
 preserved. [Exact commands and manual checks](TESTING.md#stage-33-friendly-magical-spider)
 cover client, BMC4, multiplayer and existing saves.
+
+## Stage 3.4: Wise Fly Agaric
+
+`dudunka:wise_fly_agaric` is an independent friendly `PathfinderMob`, category
+`CREATURE`, collision size 0.72×1.15 blocks, health 12 and movement speed 0.12.
+He is separate from `Companion` and `Kind`. The inspected approved character
+concept guides his red spotted dome, cream stem, highlighted eyes, white brows,
+moustache and tapered beard, leafy cloak, leather belt/pouch and wooden crook
+with an amber lantern. The original 128×64 atlas is reproducible with
+`tools/generate_wise_fly_agaric.py`. The lantern is a model prop, without world
+lighting or an inventory. A small open book appears during reading.
+
+A shared head pivot carries face, hair, beard and cap. Client rendering provides
+gentle rigid breathing, slow alternating steps, thoughtful head tilt, greeting
+wave/bow, reading and a visible look toward nearby player eyes. Look smoothing
+is per entity in a weak-key map; each render resets every part and book visibility.
+Close look lifts the head and shifts the brim upward/back. Server-synchronized
+emote type/start time uses ordinary entity metadata; album protocol stays **9**.
+Think/read last 100 ticks, greeting 40 ticks, with sine envelopes. Main-hand
+right-click chooses one of six English/Russian lines, with an 80-tick server
+cooldown. No quests, trades, rewards, inventory, ownership or progression.
+
+Server AI samples at most eight local columns and three nearby heights, requires
+safe dry ground, a reachable path and safe ground at every path node, then follows
+that checked path for at most 80 ticks. It rechecks the next node while moving.
+Water, lava, fire and other damaging path types are avoided; FloatGoal provides
+recovery if externally pushed into water. No hostile targets, attacks, item pickup,
+trampling, block changes or obstacle placement are added. External pushes and
+terrain changes are not a guarantee of invulnerability.
+
+Natural spawning adds **weight 10, group 1–1, Memory Forest only**, requiring
+both the Vale dimension and biome. Dry sturdy soil/moss, clear body/head space,
+nearby safe floors, world border and a position within twelve blocks under the
+surface heightmap are required. Mushroom understory is allowed; roofs/caps and
+deep caves are excluded. Vanilla chunk-generation spawning and 400-tick runtime
+creature spawning remain in use. Runtime Y is sampled across world height, so
+most trials never land on eligible ground. The shared creature cap remains 10;
+existing passive animals and spiders can suppress runtime replenishment.
+Ordinary despawn applies, with names, persistence and Forge vetoes respected.
+All prior spawn entries/weights, terrain, decorations and music are preserved.
+
+Cottage residency is deferred: `MushroomValeDecorFeature` places bounded JSON
+block blueprints, without structure starts, resident markers, ownership or
+entity lifecycle records. The approved Wise cottage still has its library,
+lectern, bench and unchanged 1/32 placement filter. Reliably associating one
+resident across chunk unload/reload and despawn needs a separate saved residency
+contract. Stage 3.4 adds no scans, forced chunks or entities during worldgen.
+Manual summons beside a cottage are available for inspection.
+
+See [testing instructions](TESTING.md#stage-34-wise-fly-agaric),
+[offline preview](WISE-FLY-AGARIC-PREVIEW.png) and
+[actual validation results](VALIDATION-MUSHROOM-VALE-STAGE-3.4.md).
+
+## Stage 3.4a: Wise cottage residency
+
+Cottages remain worldgen placed features. `MushroomValeDecorFeature`, placement
+rates and all blueprint JSON are unchanged. No entity is created during feature
+placement. The approved Wise model, texture, renderer and animation code are
+unchanged, as are the six bilingual dialogue lines and ordinary natural spawning.
+
+`WiseCottageResidency` runs on the server thread, once every 20 ticks in the Vale.
+It rotates through one non-spectator visitor's nine nearby chunks, reads only
+already loaded chunks, examines at most 64 block entities, and tests lecterns
+against four rotated structural fingerprints of the existing furnished Wise
+blueprint. It issues at most one resident per pass, within 48 blocks of that
+visitor, in Memory Forest. The fingerprint checks the birch floor/stem, red
+mushroom roof, bookshelves and lectern; door/book/redstone state and movable
+props do not affect recognition. No structure lookup, terrain rewrite, world
+scan, chunk ticket or background worldgen mutation is used. With many visitors,
+each visitor receives a nine-second turn; densely modified chunks with more
+than 64 block entities may not automatically enroll a cottage. This deliberately bounds server work.
+
+The Overworld saved-data ledger `data/dudunka_wise_cottages.dat` stores cottage
+floor origin, cardinal rotation and issued resident UUID. Entity NBT stores
+`WiseCottageOrigin` (packed BlockPos long) and `WiseCottageRotation` (0–3), in
+addition to vanilla UUID and persistence. Issuance is written through a compressed
+NBT temporary file, flushed, and atomically renamed **before** adding the entity.
+A failed write creates no entity and retains an in-memory reservation for the
+session. Normal server-thread serialization makes simultaneous visits idempotent.
+There is no lookup-based replenishment: a missing loaded UUID can mean an
+unloaded chunk, death, `/kill`, deliberate removal or cancelled entity join.
+All consume the original issuance permanently. An interruption after issuance
+but before entity saving can leave an empty cottage; it cannot trigger an
+automatic replacement. No reset/replacement command is supplied. Backups must
+retain both world entity/chunk data and this ledger together.
+
+Previously generated **furnished cottages matching the current blueprint** gain
+a resident on a nearby visit, without markers or block changes. This includes
+Stage 2.4b–3.4 cottages and developer previews in Memory Forest. Very old exterior
+shells predating the furnished layout, damaged structural fingerprints, and
+player builds without the full fingerprint are left unchanged and uninhabited.
+Existing naturally spawned elders retain ordinary AI/despawn behavior and are
+not adopted or removed. Consequently an independent wanderer may also be nearby;
+only the ledger UUID is the designated resident.
+
+Residents are persistent, take checked local walking trips through the existing
+entrance/porch, return to a reading position inside, and use the existing think
+and read emotes while resting at home. No teleport recovery is used. Unloaded
+pathfinding regions and unsafe/damaged routes are refused and retried later.
+The existing wooden cottage door is opened before contact and held until he clears
+the doorway. Waypoints align with the free opening beside the hinged panel,
+so his approved 0.72-block collision size can pass without changing the model
+or cottage. No door is broken.
+Navigation does not promise recovery from player confinement or external pushes.
+
+See [Stage 3.4a testing](TESTING.md#stage-34a-wise-cottage-residency) and
+[validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.4a.md).
+
+## Stage 3.4b: Pufik cottage residency
+
+Pink Meadows Pufik cottages enroll one permanent resident when an intact,
+loaded cottage is discovered near a non-spectator visitor. No entity is created
+during blueprint placement or world generation. The existing server-thread
+residency service checks the visitor's loaded chunk on its rotating nine-chunk
+schedule. Pufik entrances are recognized in a bounded vertical band around the
+visitor; each candidate must match the complete rotated birch, mushroom-roof
+and spruce-door fingerprint. Enrollment is dimension- and Pink Meadows-specific.
+Existing generated cottages and developer previews are eligible without block
+markers or edits.
+
+Pufik records share `data/dudunka_wise_cottages.dat` in an additive
+`PufikCottages` list. Existing `Cottages` Wise records retain their original
+format. Each record permanently reserves the cottage origin, rotation and
+resident UUID; it is flushed before entity creation. Entity NBT stores
+`PufikCottageOrigin` and `PufikCottageRotation`. Unloaded, killed, deliberately
+removed or rejected residents are never replaced. Natural Glowing Mushroom
+Forest Pufiks keep their ordinary despawn rules and are never adopted.
+
+Residents use bounded dry-ground routes through their spruce doorway, wander a
+small area beside home and return to rest. Their existing happy, shy, walking,
+look-up and greeting behavior remains in use. No teleport movement, new
+interaction system, registry ID or protocol change is introduced. The existing
+Pufik model, texture, renderer, spawn weights and personality are preserved.
+Discovery remains visitor-driven and does not load chunks. A missing/damaged
+fingerprint or unsafe interior prevents enrollment. At most 16 spruce-door
+candidates are fingerprinted per visited chunk pass; unusually door-dense,
+player-built chunks may need a later visit or remain unrecognized. As with Wise
+issuance, an interruption after the durable reservation but before entity save
+can leave an empty cottage permanently. See [Stage 3.4b testing](TESTING.md#stage-34b-pufik-cottage-residency).
+
+## Stage 3.5: Fluffy Jumpers
+
+`dudunka:fluffy_jumper` is independent friendly wildlife, approximately half a
+block tall. The original code-native voxel model follows creature 4 of
+`docs/reference/mushroom-vale/creatures_and_props.png`: layered round body,
+all-round cuboid wool tufts, four tiny paws, large dark eyes with bright glints,
+rosy cheeks and a small smile. Three original opaque pixel atlases provide
+peach pink, lavender and pale blue variants. Vanilla entity data synchronizes
+color and animation timing; the existing client layer/renderer system adds idle
+breathing, curious looking, tucked paws, smooth flight stretch, landing squash
+and cheerful greeting sway. No external animation library is used.
+
+Jumpers rest for 18–40 grounded ticks between short physics hops. Most hops use
+an upward impulse of 0.30; occasional excited hops use 0.42. Nearby players
+encourage curious approaches and sideways play, and an excited jumper can
+encourage nearby grounded jumpers within three blocks, with a short stagger.
+The server checks a bounded swept flight volume and supported corridor before
+each launch; water, fire, damaging blocks, insufficient headroom, unloaded
+chunks and ledges are refused. Vanilla gravity, friction and collisions move
+the creature. Confined jumpers simply rest. There is no teleportation, attack,
+target, trampling, taming, inventory, breeding, trading, quest or companion
+ownership. External pushes and blocks changed during flight remain subject to
+ordinary Minecraft physics.
+
+Pink Meadows alone adds a standard `creature` spawn entry, weight **8**, group
+**2–4**, using `ON_GROUND` placement and the normal creature population cap.
+The previous competing entries remain pig 1, rabbit 2 and sheep 2; adding a
+new weighted entry shares future creature rolls and capacity with them.
+Existing Pufik, Spider, Firefly and Wise Fly Agaric entries/frequencies are
+unchanged. Spawn candidates require dry supported soil (dirt-family ground or
+moss), local headroom, safe adjacent ground, the Vale dimension and Pink Meadows
+biome. Roofs, leaves, slabs, caves more than four blocks below the heightmap,
+water edges and cliffs are refused. Ordinary exploration in newly generated
+open meadows offers the best chance of finding a small group. No custom/global
+spawner is added. Existing finished chunks keep their generated populations;
+loaded biome spawn data also applies to future ordinary spawn attempts there.
+
+Right-click with the main hand gives a short localized friendly message and
+cheerful sway, and schedules an excited hop if a safe route exists. A 40-tick
+server cooldown suppresses duplicate clicks. English and Russian are supplied.
+The only custom saved field is additive `FluffyColor` (0–2); vanilla UUID,
+health, name, location and despawn handling remain intact. Unnamed wild jumpers
+can naturally despawn; named jumpers follow vanilla persistence. New summon:
+
+```mcfunction
+/summon dudunka:fluffy_jumper ~2 ~ ~ {FluffyColor:0}
+```
+
+Set `FluffyColor` to 1 or 2 for lavender or blue. See
+[Stage 3.5 acceptance and commands](TESTING.md#stage-35-fluffy-jumpers-and-residencytravel-regressions),
+[offline model preview](FLUFFY-JUMPER-PREVIEW.png) and
+[validation evidence](VALIDATION-MUSHROOM-VALE-STAGE-3.5.md).
+
+Stage 3.4b doorway correction: a block-centered 0.68-wide resident body clipped
+the open spruce door panel by approximately 0.0074 blocks in the measured failing
+approach (0.0275 blocks when perfectly centered). Navigation and movement control now share the aperture-centered
+waypoint and advance each checked node in order; floor validation uses actual
+bottom-slab elevation. All four cottage orientations are tested. The existing
+residency UUID/ledger, Wise residents, wild Pufik behavior and approved Pufik art
+remain intact.

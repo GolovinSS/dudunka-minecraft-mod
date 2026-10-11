@@ -260,6 +260,17 @@ public class ValeFireflyTests {
         h.onEachTick(()->{
             if(finished[0] || h.getTick()<1)return;
             h.assertTrue(f.isAlive() && f.isNoGravity() && f.withinHome(f.position()),"Flight stays alive, gravity-free and locally bounded: tick="+h.getTick()+", age="+f.tickCount+", alive="+f.isAlive()+", gravityFree="+f.isNoGravity()+", pos="+f.position()+", home="+f.flightHome());
+            if (!ValeFirefly.safeVolume(level,f.getBoundingBox())) {
+                boolean loaded=true;
+                for (var p : BlockPos.betweenClosed(BlockPos.containing(f.getBoundingBox().minX,f.getBoundingBox().minY,f.getBoundingBox().minZ),
+                        BlockPos.containing(f.getBoundingBox().maxX,f.getBoundingBox().maxY,f.getBoundingBox().maxZ))) loaded &= level.hasChunkAt(p);
+                System.out.println("FIREFLY_COLLISION_DIAGNOSTIC uuid="+f.getUUID()+" noCollision="+(loaded?level.noCollision(f.getBoundingBox()):"unloaded")
+                        +" border="+level.getWorldBorder().isWithinBounds(f.getBoundingBox()));
+                for (var p : BlockPos.betweenClosed(BlockPos.containing(f.getBoundingBox().minX,f.getBoundingBox().minY,f.getBoundingBox().minZ),
+                        BlockPos.containing(f.getBoundingBox().maxX,f.getBoundingBox().maxY,f.getBoundingBox().maxZ)))
+                    System.out.println("FIREFLY_COLLISION_BLOCK pos="+p+" loaded="+level.hasChunkAt(p)
+                            +" state="+(level.hasChunkAt(p)?level.getBlockState(p):"unloaded"));
+            }
             h.assertTrue(ValeFirefly.safeVolume(level,f.getBoundingBox()),"Swept flight avoids wall/fluid: tick="+h.getTick()+", pos="+f.position()+", motion="+f.getDeltaMovement()+", home="+f.flightHome()+", box="+f.getBoundingBox());
             h.assertTrue(f.getDeltaMovement().length()<=.056,"Server velocity stays gentle");
             h.assertTrue(paused.position().equals(held) && paused.getDeltaMovement().equals(Vec3.ZERO),"NoAI server fixture holds position without gravity while normal AI flies");

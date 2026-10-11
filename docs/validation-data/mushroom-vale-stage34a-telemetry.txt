@@ -1,0 +1,47 @@
+residency: build/reports/mushroom-vale-stage34a/residency-0-20261011-140126/gametest.log
+[14:02:24] [Server thread/INFO] [minecraft/GameTestServer]: ========= 8 GAME TESTS COMPLETE ======================
+[14:02:24] [Server thread/INFO] [minecraft/GameTestServer]: All 8 required tests passed :)
+BUILD SUCCESSFUL in 1m 12s
+
+elder: build/reports/mushroom-vale-stage34a/focused-0-20261011-140023/gametest.log
+[14:01:10] [Server thread/INFO] [minecraft/GameTestServer]: ========= 6 GAME TESTS COMPLETE ======================
+[14:01:10] [Server thread/INFO] [minecraft/GameTestServer]: All 6 required tests passed :)
+BUILD SUCCESSFUL in 1m 1s
+
+firefly: build/reports/mushroom-vale-stage34a/firefly--4853257702107486027-20261011-140238/gametest.log
+[14:03:18] [Server thread/INFO] [minecraft/GameTestServer]: ========= 1 GAME TESTS COMPLETE ======================
+[14:03:18] [Server thread/INFO] [minecraft/GameTestServer]: All 1 required tests passed :)
+BUILD SUCCESSFUL in 54s
+
+build: build/reports/mushroom-vale-stage34a/build-default-20261011-140334/gametest.log
+PASS firefly: baked model/animated UVs, six atlases, emissive masks, asynchronous pulse bounds, locales
+PASS: Vale-only entry/exit, uninterrupted tracks, 1200/3600-tick gaps, native co-scheduling and pause/resume
+PASS spider: 55 baked parts, eight paws, original atlas, UVs, locales, registered client references, 960 rigid animation poses
+PASS Wise Fly Agaric: 120 parts, 1.157499998807907 block height, atlas/UVs/locales, 960 rigid poses, six close camera distances
+PASS model bake DUDUNKA stage 0: 145 parts
+PASS model bake DUDUNKA stage 1: 205 parts
+PASS model bake DUDUNKA stage 2: 207 parts
+PASS model bake MARUSYA stage 0: 14 parts
+PASS model bake MARUSYA stage 1: 54 parts
+PASS model bake MARUSYA stage 2: 66 parts
+PASS model bake SYUSYA stage 0: 9 parts
+PASS model bake SYUSYA stage 1: 37 parts
+PASS model bake SYUSYA stage 2: 41 parts
+PASS Pufik model: 45 parts, 960 vertices, 11.01099967956543×11.889999389648438 pixels, atlas/locales, posed camera clearance and emote composition
+BUILD SUCCESSFUL in 16s
+
+full: build/reports/mushroom-vale-stage34a/full-default-20261011-140503/gametest.log
+[14:07:15] [Server thread/INFO] [minecraft/GameTestServer]: ========= 201 GAME TESTS COMPLETE ======================
+[14:07:15] [Server thread/INFO] [minecraft/GameTestServer]: All 201 required tests passed :)
+BUILD SUCCESSFUL in 2m 36s
+
+resources.log
+PASS: 372 JSON/PNG/OGG resources byte-match packaged JAR
+PASS: bounded mushroom frequencies, layered landmarks, distinct benches, streamed music and biome scheduling
+PASS: 304 JSON resources; 3 biomes; 115 referenced worldgen resources; 8 bounded decor blueprints; 28 block/item/loot/localization sets; 81 model references; acyclic feature ordering.
+
+
+preservation.log
+PASS: 478 baseline production paths preserved except four authorized Java edits; all original resources, Wise model/renderer/texture, six dialogue lines, spawn rates, blueprints and worldgen code unchanged; packaged assets match; no temporary helpers.
+PASS: final residency, build and full-suite input hashes match current production files.
+

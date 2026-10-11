@@ -1631,12 +1631,28 @@ public class FamilyTests {
             if(x==-1 || x==6 || z==-1 || z==6)for(int y=2;y<=4;y++)h.getLevel().setBlock(h.absolutePos(new BlockPos(x,y,z)),Blocks.STONE.defaultBlockState(),3);
         }
     }
+    private static Runnable liveVisitCleanup=()->{};
+    private static void cleanupLiveVisit() {var action=liveVisitCleanup;liveVisitCleanup=()->{};action.run();}
+    @AfterBatch(batch="isolated_liveshareddrawing")
+    public static void cleanupLiveDrawing(net.minecraft.server.level.ServerLevel level) {cleanupLiveVisit();}
+    @AfterBatch(batch="isolated_livesharedcatrest")
+    public static void cleanupLiveCatRest(net.minecraft.server.level.ServerLevel level) {cleanupLiveVisit();}
+    @AfterBatch(batch="isolated_livesharedsnailpeek")
+    public static void cleanupLiveSnailPeek(net.minecraft.server.level.ServerLevel level) {cleanupLiveVisit();}
     private static void liveVisit(GameTestHelper h,Kind kind){
         var owner=testOwner(h);var host=furnitureFixture(h,owner,kind);var guest=visitGuest(h,owner,kind==Kind.MARUSYA?Kind.DUDUNKA:Kind.MARUSYA,0);
-        visitRoom(h);var saved=new CompoundTag();host.addAdditionalSaveData(saved);saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);host.readAdditionalSaveData(saved);host.setNoAi(false);
+        visitRoom(h);var saved=new CompoundTag();host.addAdditionalSaveData(saved);saved.putInt("GrowthTicks",DudunkaMod.GROWTH_SECONDS.get()*40);host.readAdditionalSaveData(saved);
+        host.getRandom().setSeed(3501+kind.ordinal());guest.getRandom().setSeed(3511+kind.ordinal());
+        // This live fixture measures furniture completion, not unrelated idle roaming
+        // before selection or during the post-visit cooldown. Keep all home/family goals.
+        for(var member:java.util.List.of(host,guest))for(var wrapped:member.goalSelector.getAvailableGoals().stream().toList())
+            if(wrapped.getGoal() instanceof net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal)
+                member.goalSelector.removeGoal(wrapped.getGoal());
+        liveVisitCleanup=()->{host.discard();guest.discard();owner.discard();};host.setNoAi(false);
         var observed=new boolean[2];var counts=new int[3];var start=new net.minecraft.world.phys.Vec3[]{null};
-        h.onEachTick(()->{var scene=FurnitureVisits.hosted(host);if(scene!=null){guest.setNoAi(false);counts[0]++;observed[0]=true;if(start[0]==null)start[0]=guest.position();if(FurnitureVisits.settled(guest,scene)){observed[1]=true;counts[1]++;if(guest.hasLineOfSight(host))counts[2]++;}}});
-        h.runAfterDelay(560,()->{h.assertTrue(observed[0] && observed[1],"Real AI must host and walk into shared "+kind+" occasion: seen="+java.util.Arrays.toString(observed)+", host="+host.activity()+", guest="+guest.activity()+", at="+guest.position()+", scene="+FurnitureVisits.hosted(host));var ledger=FamilyFriendships.get(owner.server);h.assertTrue(ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID())>0,"Real shared activity must credit confirmed time: active/seated/visible="+java.util.Arrays.toString(counts)+", host="+host.position()+", guest="+guest.position());h.assertTrue(host.atHomeMode() && guest.atHomeMode() && host.homeSceneTarget()==null && guest.homeSceneTarget()==null,"Solo cycle resumes and reservations clear after visit");host.commandStay(owner,true);guest.commandStay(owner,true);host.discard();guest.discard();owner.discard();h.succeed();});
+        var transitions=new java.util.ArrayList<String>();var previousState=new String[]{""};
+        h.onEachTick(()->{var scene=FurnitureVisits.hosted(host);var state="host="+host.activity()+"/"+host.homeSceneTarget()+" guest="+guest.activity()+"/"+guest.homeSceneTarget();if(!state.equals(previousState[0])){transitions.add(host.tickCount+":"+state);previousState[0]=state;}if(scene!=null){guest.setNoAi(false);counts[0]++;observed[0]=true;if(start[0]==null)start[0]=guest.position();if(FurnitureVisits.settled(guest,scene)){observed[1]=true;counts[1]++;if(guest.hasLineOfSight(host))counts[2]++;}}});
+        h.runAfterDelay(560,()->{h.assertTrue(observed[0] && observed[1],"Real AI must host and walk into shared "+kind+" occasion: seen="+java.util.Arrays.toString(observed)+", host="+host.activity()+", guest="+guest.activity()+", at="+guest.position()+", scene="+FurnitureVisits.hosted(host));var ledger=FamilyFriendships.get(owner.server);h.assertTrue(ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID())>0,"Real shared activity must credit confirmed time: active/seated/visible="+java.util.Arrays.toString(counts)+", host="+host.position()+", guest="+guest.position());h.assertTrue(host.atHomeMode() && guest.atHomeMode() && host.homeSceneTarget()==null && guest.homeSceneTarget()==null,"Solo cycle resumes and reservations clear after visit: "+transitions);host.commandStay(owner,true);guest.commandStay(owner,true);host.discard();guest.discard();owner.discard();h.succeed();});
     }
     @GameTest(template="empty",timeoutTicks=620,batch="isolated_liveshareddrawing")
     public static void friendsReallyWatchDudunkasDrawing(GameTestHelper h){liveVisit(h,Kind.DUDUNKA);}

@@ -53,6 +53,7 @@ WORLD_DIR="$ROOT/$WORLD_REL"
 if [[ "$MODE" != build ]]; then
   # Every full GameTest starts with a genuinely unused working directory.
   mkdir "$WORLD_DIR"
+  printf "level-seed=%s\n" "${DUDUNKA_TEST_SEED:--255494441983840131}" > "$WORLD_DIR/server.properties"
 fi
 
 GRADLE_ARGS=(--offline -Dnet.minecraftforge.gradle.check.certs=false)
@@ -119,7 +120,14 @@ if [[ "$MODE" == gametest || "$MODE" == all ]]; then
   elif run_phase 'GAME TESTS' "$REPORT_DIR/gametest.log" \
       ./gradlew "${GRADLE_ARGS[@]}" -I "$INIT" \
       "-PdudunkaTestWorld=$WORLD_REL" runGameTestServer -x downloadAssets; then
-    GAME_STATUS=PASS
+    # Forge can exit zero after a startup exception. Require a completed suite.
+    if grep -Eq 'All [0-9]+ required tests passed' "$REPORT_DIR/gametest.log"; then
+      GAME_STATUS=PASS
+    else
+      GAME_STATUS=FAIL
+      FAILED=1
+      echo 'GAME TESTS: FAIL: server did not report a completed passing suite.' >&2
+    fi
   else
     GAME_STATUS=FAIL
     FAILED=1
@@ -131,10 +139,10 @@ fi
     "$RUN_ID" "$MODE" "$HEAD" "$DIRTY" "$JAVA_VERSION"
   printf 'build=%s\ngametest=%s\n' "$BUILD_STATUS" "$GAME_STATUS"
   printf 'report=%s\n' "$REPORT_DIR"
-  if [[ "$MODE" != build ]]; then printf 'fresh_world=%s\n' "$WORLD_DIR"; fi
+  if [[ "$MODE" != build ]]; then printf 'fresh_world=%s\ntest_seed=%s\n' "$WORLD_DIR" "${DUDUNKA_TEST_SEED:--255494441983840131}"; fi
   if [[ -f "$REPORT_DIR/gametest.log" ]]; then
     printf '\nGameTest result lines (from server log; check the full log for details):\n'
-    grep -Ei '([0-9]+/[0-9]+.*(tests?|gametests?)|(gametests?|tests?).*[0-9]+/[0-9]+|[0-9]+ tests? (passed|failed)|GameTest.*(failed|passed)|BUILD (SUCCESSFUL|FAILED))' \
+    grep -Ei '(All [0-9]+ required tests passed|[0-9]+ required tests failed|[0-9]+/[0-9]+.*(tests?|gametests?)|(gametests?|tests?).*[0-9]+/[0-9]+|[0-9]+ tests? (passed|failed)|GameTest.*(failed|passed)|BUILD (SUCCESSFUL|FAILED))' \
       "$REPORT_DIR/gametest.log" | tail -n 12 || true
   fi
 } >"$REPORT_DIR/summary.txt"

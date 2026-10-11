@@ -372,5 +372,16 @@
   "entity.dudunka.pufik": "Пуфик",
   "message.dudunka.pufik_greeting": "Пуфик: Привет! С тобой в долине ещё уютнее.",
   "entity.dudunka.vale_spider": "Паучок Грибной долины",
-  "message.dudunka.vale_spider_greeting": "Привет, друг! Какой чудесный день для прогулки!"
+  "message.dudunka.vale_spider_greeting": "Привет, друг! Какой чудесный день для прогулки!",
+  "entity.dudunka.wise_fly_agaric": "Мудрый Мухомор",
+  "message.dudunka.wise_fly_agaric.0": "Каждый гриб хранит маленькую историю.",
+  "message.dudunka.wise_fly_agaric.1": "Тише... кажется, Долина что-то вспоминает.",
+  "message.dudunka.wise_fly_agaric.2": "Когда друзья рядом, даже лес звучит иначе.",
+  "message.dudunka.wise_fly_agaric.3": "Хорошая книга — маленькая дверь к чудесам.",
+  "message.dudunka.wise_fly_agaric.4": "Не спеши. Вокруг столько интересного.",
+  "message.dudunka.wise_fly_agaric.5": "Добрые слова согревают даже дождливый день.",
+  "entity.dudunka.fluffy_jumper": "Мохнатый прыгун",
+  "message.dudunka.fluffy_jumper.0": "Попрыгаем вместе!",
+  "message.dudunka.fluffy_jumper.1": "Маленький прыжок радости!",
+  "message.dudunka.fluffy_jumper.2": "От тебя моя шёрстка сияет!"
 }

@@ -250,3 +250,19 @@ tasks.register('verifyValeSpider', JavaExec) {
     mainClass = 'CheckValeSpider'
 }
 tasks.named('check').configure { dependsOn 'verifyValeSpider' }
+
+// Independent elder: baked anatomy, UVs, poses and camera sightlines.
+tasks.register('verifyWiseFlyAgaric', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckWiseFlyAgaric'
+}
+tasks.named('check').configure { dependsOn 'verifyWiseFlyAgaric' }
+
+// Original Fluffy Jumper geometry, palettes, UVs, poses, localization and client wiring.
+tasks.register('verifyFluffyJumper', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckFluffyJumper'
+}
+tasks.named('check').configure { dependsOn 'verifyFluffyJumper' }

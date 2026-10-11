@@ -57,7 +57,7 @@ public class PufikTests {
         var forest = server.registryAccess().registryOrThrow(Registries.BIOME).get(Pufik.HABITAT);
         var entries = forest.getMobSettings().getMobs(MobCategory.CREATURE).unwrap();
         h.assertTrue(entries.stream().anyMatch(e -> e.type == DudunkaMod.PUFIK.get()
-                        && e.minCount == 1 && e.maxCount == 2 && e.getWeight().asInt() == 24),
+                        && e.minCount == 1 && e.maxCount == 2 && e.getWeight().asInt() == 40),
                 "Forest adds a small 1–2 Pufik group without replacing mooshrooms");
         h.assertTrue(entries.stream().anyMatch(e -> e.type == net.minecraft.world.entity.EntityType.MOOSHROOM),
                 "Existing forest inhabitants remain");

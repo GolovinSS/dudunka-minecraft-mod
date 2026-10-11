@@ -45,7 +45,7 @@ public class ValeSpiderTests {
         for(String biome:List.of("memory_forest","glowing_mushroom_forest","pink_meadows")) {
             var key=ResourceLocation.fromNamespaceAndPath("dudunka",biome);
             var entries=level.registryAccess().registryOrThrow(Registries.BIOME).get(key).getMobSettings().getMobs(MobCategory.CREATURE).unwrap();
-            int weight=biome.equals("memory_forest")?32:biome.equals("glowing_mushroom_forest")?6:0;
+            int weight=biome.equals("memory_forest")?44:biome.equals("glowing_mushroom_forest")?12:0;
             h.assertTrue(entries.stream().filter(e->e.type==DudunkaMod.VALE_SPIDER.get()).allMatch(e->e.getWeight().asInt()==weight && e.minCount==1 && e.maxCount==2)
                     && entries.stream().anyMatch(e->e.type==DudunkaMod.VALE_SPIDER.get())==(weight>0),"Additive habitat weights and 1–2 group: "+biome);
             var existing=biome.equals("glowing_mushroom_forest")?EntityType.MOOSHROOM:EntityType.RABBIT;
