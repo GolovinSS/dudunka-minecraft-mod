@@ -1267,3 +1267,85 @@ otherwise hardcoded GameTest seed before worlds load; `server.properties` alone
 does not change GameTest terrain. It is excluded from ordinary builds/JARs.
 
 [Stage 3.2c results and limitations](VALIDATION-MUSHROOM-VALE-STAGE-3.2C.md).
+
+## Stage 3.2d natural landmarks and Pufik acceptance
+
+Use Java 17, Minecraft 1.20.1 and Forge 47.4.13. For the development client:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew runClient
+```
+
+Create a **new Creative world** with seed `0`, then repeat with `42` and `2026`.
+Enable cheats and use view/simulation distances of 8 chunks for the matched
+observation route. Enter Vale using the existing opt-in travel flow, or move only
+the observer with:
+
+```mcfunction
+/execute in dudunka:mushroom_vale run tp @s 0 150 0
+/gamerule doMobSpawning true
+/time set day
+/locate biome dudunka:glowing_mushroom_forest
+```
+
+Teleport to the reported biome coordinates at a safe height, then descend to
+walkable soil. Explore near ground level through fresh terrain for several
+minutes, walking at least 160 blocks and pausing periodically. Spectator mode
+cannot drive normal spawning. High Creative flight can move the player beyond
+the 128-block spawn/despawn range of ground creatures; dense foliage, hills and
+Pufik's small size also affect visibility. Both runtime and chunk-generation
+spawning obey the real safety rules. Existing mooshrooms/other passive animals
+can fill the shared cap; do not remove animals or alter caps for acceptance.
+
+One measured dry forest route in seed **42** starts at X=8192, Z=8192.
+Move the observer with `/execute in dudunka:mushroom_vale run tp @s 8192 96 8192`,
+descend to soil, then walk roughly 160 blocks east over two minutes. Counts vary;
+this route is an observation aid, not a guaranteed spawn point.
+
+This read-only diagnostic counts loaded Pufiks within 128 blocks:
+
+```mcfunction
+/execute as @e[type=dudunka:pufik,distance=..128] run data get entity @s Pos
+```
+
+Pufiks naturally belong to Glowing Mushroom Forest. A naturally born Pufik can
+later wander across a biome boundary. Repeat daytime and nighttime observation;
+Pufik has no night-only gate. Do not use `/summon`, spawn eggs or manufactured
+spawn floors. Nighttime firefly acceptance is already established and unchanged.
+
+For cottages, use `/locate biome dudunka:pink_meadows` (Pufik cottage) and
+`/locate biome dudunka:memory_forest` (Wise Fly Agaric cottage), then explore
+new ground over several hundred blocks. Cottages remain sparse landmarks and
+are placed features, so `/locate structure` cannot find them. Do not use
+`/place feature` or the developer cottage/decor preview for natural acceptance.
+Measured natural specimens include a Pufik cottage near **-1187, 70, 635** in
+seed **42**, and a Wise cottage near **-1061, 100, -914** in seed **0**. Teleport
+the observer safely above these sites and descend; generation order can change
+which nearby sites succeed. These are naturally generated specimens, not preview
+commands. Inspect doors from both sides, step through entrances, inspect furnished
+interiors and walk around the preserved exterior terrain. Test a save/reload.
+
+Look for lantern posts and three-seat benches in all three Vale biomes.
+Confirm warm block light at night, functional right-click seating and safe
+normal dismount. Bring Syusya through several naturally decorated areas and
+check routes around props/cottages. Flower beds and small mushrooms retain their
+approved appearance. Repeat in BMC4 v55.5, with shaders/settings normally used,
+and with two players. Keep previously visited chunks intact: never delete
+region files, reset chunks or expect existing terrain to be regenerated.
+
+Offline reproducible checks (each survey uses a new isolated test world):
+
+```bash
+python3 tools/validate_vale_resources.py
+python3 tools/validate_vale_stage32d.py
+python3 tools/run_vale_stage32d_checks.py focused
+python3 tools/run_vale_stage32d_checks.py survey --baseline --seeds 0 42 2026
+python3 tools/run_vale_stage32d_checks.py survey --seeds 0 42 2026
+python3 tools/run_vale_stage32d_checks.py build
+python3 tools/run_vale_stage32d_checks.py full
+```
+
+Survey baseline is pinned to published `65ac290`; instrumentation/seed hooks
+are compiled only in the isolated runner and removed afterward. Never package
+survey helpers. Run the ordinary build after surveys and verify the packaged JAR
+with `python3 tools/validate_vale_stage32d.py --jar build/libs/dudunka-<version>.jar`.

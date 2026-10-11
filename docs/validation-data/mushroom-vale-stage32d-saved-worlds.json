@@ -1,0 +1,224 @@
+[
+  {
+    "survey": "survey-baseline-0-20261011-045945",
+    "savedCottages": [],
+    "verifiedCottages": 0,
+    "fullChunksRead": 1728,
+    "savedDecorBlocksByBiome": {
+      "dudunka:glowing_mushroom_forest": {
+        "dudunka:vale_bench": 151,
+        "dudunka:vale_lantern": 8
+      },
+      "dudunka:memory_forest": {
+        "dudunka:vale_bench": 61,
+        "dudunka:vale_lantern": 2
+      },
+      "dudunka:pink_meadows": {
+        "dudunka:vale_bench": 38,
+        "dudunka:vale_lantern": 2
+      }
+    }
+  },
+  {
+    "survey": "survey-baseline-42-20261011-050655",
+    "savedCottages": [],
+    "verifiedCottages": 0,
+    "fullChunksRead": 1728,
+    "savedDecorBlocksByBiome": {
+      "dudunka:glowing_mushroom_forest": {
+        "dudunka:vale_bench": 96,
+        "dudunka:vale_lantern": 6
+      },
+      "dudunka:memory_forest": {
+        "dudunka:vale_bench": 27,
+        "dudunka:vale_lantern": 3
+      },
+      "dudunka:pink_meadows": {
+        "dudunka:vale_bench": 30,
+        "dudunka:vale_lantern": 3
+      }
+    }
+  },
+  {
+    "survey": "survey-baseline-2026-20261011-051732",
+    "savedCottages": [],
+    "verifiedCottages": 0,
+    "fullChunksRead": 1728,
+    "savedDecorBlocksByBiome": {
+      "dudunka:glowing_mushroom_forest": {
+        "dudunka:vale_bench": 105,
+        "dudunka:vale_lantern": 5
+      },
+      "dudunka:memory_forest": {
+        "dudunka:vale_bench": 51,
+        "dudunka:vale_lantern": 2
+      },
+      "dudunka:pink_meadows": {
+        "dudunka:vale_bench": 3
+      }
+    }
+  },
+  {
+    "survey": "survey-final-0-20261011-051424",
+    "savedCottages": [
+      {
+        "feature": "wise_fly_agaric_cottage",
+        "pos": [
+          -1061,
+          100,
+          -914
+        ],
+        "rotation": 180,
+        "preservedBlocks": 264
+      },
+      {
+        "feature": "wise_fly_agaric_cottage",
+        "pos": [
+          -1057,
+          100,
+          -901
+        ],
+        "rotation": 180,
+        "preservedBlocks": 264
+      }
+    ],
+    "verifiedCottages": 2,
+    "fullChunksRead": 1728,
+    "savedDecorBlocksByBiome": {
+      "dudunka:glowing_mushroom_forest": {
+        "dudunka:vale_lantern": 11,
+        "dudunka:vale_bench": 268
+      },
+      "dudunka:memory_forest": {
+        "dudunka:vale_bench": 118,
+        "dudunka:vale_lantern": 10
+      },
+      "dudunka:pink_meadows": {
+        "dudunka:vale_bench": 80,
+        "dudunka:vale_lantern": 3
+      }
+    }
+  },
+  {
+    "survey": "survey-final-42-20261011-051009",
+    "savedCottages": [
+      {
+        "feature": "pufik_cottage",
+        "pos": [
+          -1187,
+          70,
+          635
+        ],
+        "rotation": 0,
+        "preservedBlocks": 150
+      },
+      {
+        "feature": "pufik_cottage",
+        "pos": [
+          -1141,
+          93,
+          523
+        ],
+        "rotation": 90,
+        "preservedBlocks": 150
+      },
+      {
+        "feature": "pufik_cottage",
+        "pos": [
+          -1121,
+          90,
+          555
+        ],
+        "rotation": 90,
+        "preservedBlocks": 150
+      },
+      {
+        "feature": "pufik_cottage",
+        "pos": [
+          -1124,
+          89,
+          575
+        ],
+        "rotation": 0,
+        "preservedBlocks": 150
+      },
+      {
+        "feature": "pufik_cottage",
+        "pos": [
+          -1009,
+          89,
+          361
+        ],
+        "rotation": 270,
+        "preservedBlocks": 150
+      }
+    ],
+    "verifiedCottages": 5,
+    "fullChunksRead": 1728,
+    "savedDecorBlocksByBiome": {
+      "dudunka:glowing_mushroom_forest": {
+        "dudunka:vale_bench": 214,
+        "dudunka:vale_lantern": 15
+      },
+      "dudunka:memory_forest": {
+        "dudunka:vale_bench": 54,
+        "dudunka:vale_lantern": 8
+      },
+      "dudunka:pink_meadows": {
+        "dudunka:vale_bench": 68,
+        "dudunka:vale_lantern": 15
+      }
+    }
+  },
+  {
+    "survey": "survey-final-2026-20261011-052250",
+    "savedCottages": [
+      {
+        "feature": "wise_fly_agaric_cottage",
+        "pos": [
+          -561,
+          64,
+          1063
+        ],
+        "rotation": 0,
+        "preservedBlocks": 264
+      },
+      {
+        "feature": "wise_fly_agaric_cottage",
+        "pos": [
+          -537,
+          71,
+          1192
+        ],
+        "rotation": 0,
+        "preservedBlocks": 264
+      },
+      {
+        "feature": "wise_fly_agaric_cottage",
+        "pos": [
+          -465,
+          72,
+          1110
+        ],
+        "rotation": 270,
+        "preservedBlocks": 264
+      }
+    ],
+    "verifiedCottages": 3,
+    "fullChunksRead": 1728,
+    "savedDecorBlocksByBiome": {
+      "dudunka:glowing_mushroom_forest": {
+        "dudunka:vale_bench": 221,
+        "dudunka:vale_lantern": 14
+      },
+      "dudunka:memory_forest": {
+        "dudunka:vale_bench": 108,
+        "dudunka:vale_lantern": 14
+      },
+      "dudunka:pink_meadows": {
+        "dudunka:vale_bench": 15,
+        "dudunka:vale_lantern": 1
+      }
+    }
+  }
+]

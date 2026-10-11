@@ -127,3 +127,22 @@ separately. Existing uncommitted Stage 3.2–3.2b work is preserved.
 
 [Root causes, exact measurements and validation logs](VALIDATION-MUSHROOM-VALE-STAGE-3.2C.md).
 [Natural-world client acceptance commands](TESTING.md#stage-32c-natural-flight-and-density-acceptance).
+
+
+## Mushroom Vale Stage 3.2d — natural cottages, Pufiks and props
+
+Matched surveys across seeds 0/42/2026 finished 5,184 FULL chunks per phase.
+Cottages increased 0 → 10 (five Pufik / five Wise); standalone benches 186 → 376,
+lantern posts 21 → 56; completed census Pufik births 75 → 130. Forest-route mean
+visible Pufiks increased 0.347 → 0.687; runtime NATURAL births across all nine
+route windows 3 → 15, without changing creature cap, group size, safety or
+persistence. Saved files retain all ten complete approved cottage blueprints.
+
+Resource/JAR checks, build, verifyModels, verifyPufik, verifyValeFirefly and
+verifyValeMusic PASS; focused 10/10; one complete suite 182/182 required tests.
+No firefly, music, terrain, companion, save-format or protocol changes. No commit,
+push or existing-chunk regeneration. Client/BMC4, navigation, multiplayer and
+old-save upgrade acceptance remain manual.
+
+[Exact measurements, rejection rates, file list and evidence](VALIDATION-MUSHROOM-VALE-STAGE-3.2D.md).
+[Natural-world runClient instructions](TESTING.md#stage-32d-natural-landmarks-and-pufik-acceptance).

@@ -138,7 +138,7 @@ for path in decor:
         positions.add((x, y, z))
         block(piece['state']['Name'])
     placement = json.loads(resource('data/worldgen/placed_feature', 'dudunka:mushroom_vale/' + path.stem))
-    assert placement['placement'][0]['chance'] >= (8 if path.stem == 'bench' else (28 if path.stem == 'lantern_post' else 32))
+    assert placement['placement'][0]['chance'] >= {'bench':8, 'lantern_post':64, 'pufik_cottage':24}.get(path.stem,32)
     assert placement['placement'][-1]['type'] == 'minecraft:biome'
 for path in biomes:
     refs = sum(json.loads(path.read_text())['features'], [])

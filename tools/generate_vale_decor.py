@@ -66,12 +66,12 @@ class Build:
 
 
 b = Build(); b.lantern(0, 0)
-b.prop(-1, 0, 0, 'planter'); b.save('lantern_post', 1, 4, 32)
+b.prop(-1, 0, 0, 'planter'); b.save('lantern_post', 1, 4, 64)
 b = Build()
 b.put(0, 0, 0, 'stripped_spruce_log', axis='y')
 b.prop(0, 1, 0, 'signpost'); b.prop(0, 2, 0, 'lantern')
 b.put(-1, 0, 0, 'dudunka:small_golden_mushroom'); b.save('direction_marker', 1, 3, 48)
-b = Build(); b.bench(0, 0); b.save('bench', 1, 2, 40)
+b = Build(); b.bench(0, 0); b.save('bench', 1, 2, 8)
 b = Build(); b.table(0, 0); b.prop(0, 0, 2, 'planter'); b.save('mushroom_picnic', 2, 2, 48)
 b = Build(); b.flowers(0, 0); b.save('flower_bed', 1, 2, 32)
 b = Build(); b.bench(-1, 0); b.lantern(2, 1)
@@ -150,12 +150,12 @@ def cottage(scholarly):
         for x in range(-2, 3):
             b.put(x, 4, -r-2, 'spruce_slab', type='bottom')
         b.bench(0, r+2)
-        b.save('wise_fly_agaric_cottage', 6, 9, 64)
+        b.save('wise_fly_agaric_cottage', 6, 9, 32)
     else:
         b.prop(-1, 1, 0, 'mushroom_stool')
         b.prop(1, 1, 1, 'mushroom_table')
         b.prop(-1, 0, r+1, 'planter')
-        b.save('pufik_cottage', 4, 8, 48)
+        b.save('pufik_cottage', 4, 8, 24)
 
 
 cottage(False); cottage(True)

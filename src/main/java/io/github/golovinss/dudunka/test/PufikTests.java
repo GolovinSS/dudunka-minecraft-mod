@@ -57,7 +57,7 @@ public class PufikTests {
         var forest = server.registryAccess().registryOrThrow(Registries.BIOME).get(Pufik.HABITAT);
         var entries = forest.getMobSettings().getMobs(MobCategory.CREATURE).unwrap();
         h.assertTrue(entries.stream().anyMatch(e -> e.type == DudunkaMod.PUFIK.get()
-                        && e.minCount == 1 && e.maxCount == 2 && e.getWeight().asInt() == 5),
+                        && e.minCount == 1 && e.maxCount == 2 && e.getWeight().asInt() == 24),
                 "Forest adds a small 1–2 Pufik group without replacing mooshrooms");
         h.assertTrue(entries.stream().anyMatch(e -> e.type == net.minecraft.world.entity.EntityType.MOOSHROOM),
                 "Existing forest inhabitants remain");
@@ -89,6 +89,18 @@ public class PufikTests {
                     "Safe Vale forest ground permits natural Pufik spawn");
             h.assertTrue(!SpawnPlacements.checkSpawnRules(DudunkaMod.PUFIK.get(), h.getLevel(), MobSpawnType.NATURAL,
                     h.absolutePos(new BlockPos(1,2,1)), h.getLevel().random), "Overworld spawn is refused");
+            // Keep actual ground/clearance safety independent of spawn-list weight.
+            for (var hazard : java.util.List.of(Blocks.MAGMA_BLOCK, Blocks.CAMPFIRE, Blocks.POWDER_SNOW,
+                    Blocks.CACTUS, Blocks.SWEET_BERRY_BUSH, Blocks.WITHER_ROSE)) {
+                vale.setBlock(site, hazard.defaultBlockState(), 18);
+                h.assertTrue(!Pufik.canSpawn(DudunkaMod.PUFIK.get(), vale, MobSpawnType.NATURAL, site, vale.random),
+                        "Hazardous body position is refused: " + hazard);
+            }
+            vale.setBlock(site, Blocks.AIR.defaultBlockState(), 18);
+            vale.setBlock(site.above(), Blocks.STONE.defaultBlockState(), 18);
+            h.assertTrue(!Pufik.canSpawn(DudunkaMod.PUFIK.get(), vale, MobSpawnType.NATURAL, site, vale.random),
+                    "Blocked head clearance is refused");
+            vale.setBlock(site.above(), Blocks.AIR.defaultBlockState(), 18);
             vale.setBlock(site.below(), Blocks.WATER.defaultBlockState(), 18);
             h.assertTrue(!Pufik.canSpawn(DudunkaMod.PUFIK.get(), vale, MobSpawnType.NATURAL, site, vale.random),
                     "Water floor is refused");

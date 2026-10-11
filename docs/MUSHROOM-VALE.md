@@ -816,3 +816,48 @@ transient server state; colors and existing home NBT persist normally.
 [Stage 3.2c measurements and validation](VALIDATION-MUSHROOM-VALE-STAGE-3.2C.md)
 distinguish actual completed natural spawns from the earlier eligible-position
 estimate. Minecraft/BMC4 visual and multiplayer acceptance remains manual.
+
+## Stage 3.2d: naturally discoverable cottages and Pufiks
+
+This section supersedes the earlier placement frequencies and full-square flat
+foundation rule. Approved blueprints, block models, textures, doors, interiors,
+seating, lighting and all IDs/codecs remain unchanged. Existing chunks are never
+rewritten. New generation retains the same biome lists and feature ordering.
+
+Cottages keep flat, dry, sturdy soil beneath **every ground-level blueprint
+piece** and a level approach to the half-step porch. Exterior space and the one-block halo may follow a dry one-block rise
+or drop; all terrain remains untouched. The complete checked volume still
+rejects fluids, trees/leaves, other structures, unavailable/unwritable chunks,
+world-border and build-height violations. Only existing BushBlock vegetation
+at explicit blueprint positions may be replaced. Every rejected site is atomic.
+A chosen cottage chunk tries the original position, then at most 15 local
+positions in that same chunk and biome, each with the complete safety preflight.
+Explicit developer previews keep their exact requested position and orientation.
+
+| Feature | Attempt filter | Site behavior |
+| --- | --- | --- |
+| Pufik cottage | 1/24, Pink Meadows | Level actual foundation; bounded local search |
+| Wise Fly Agaric cottage | 1/32, Memory Forest | Level actual foundation; bounded local search |
+| Bench | 1/8, all Vale biomes | Three supported seats; dry one-step exterior slopes allowed |
+| Lantern post | 1/64, all Vale biomes | Supported post/planter; dry one-step exterior slopes allowed |
+
+The lantern filter is deliberately rarer than Stage 2.5b's 1/28: the old full
+5×5 flat-site rule rejected most attempts. Better site acceptance increases
+successful placement, while the rarer filter keeps the resulting density modest.
+Direction markers, flower beds, picnic/cozy clusters and small mushroom
+configuration are unchanged. Terrain and vegetation density are unchanged.
+
+Pufik remains `dudunka:pufik`, category `CREATURE`, groups **1–2**, with ordinary
+vanilla distance/idle despawning and name/persistence/Forge protections. The
+Glowing Mushroom Forest creature weight is **24**, from 5; mooshrooms retain
+weight 8 and groups 4–8. The shared creature cap remains **10**. Spawn placement,
+spawn Y sampling, the Vale + forest restriction, safe ground, nearby cliffs,
+fluids/hazards and clear body/head checks are unchanged. Runtime creature spawning
+still uses vanilla's 400-tick cadence; generated passive animals can fill the cap.
+No custom spawner, forced population, chunk request or persistent NPC is added.
+
+[Stage 3.2d validation](VALIDATION-MUSHROOM-VALE-STAGE-3.2D.md) distinguishes
+completed `CHUNK_GENERATION` births from runtime `NATURAL` births, placement
+attempts from successful sites, and server visibility proxies from manual client
+acceptance. [Natural exploration instructions](TESTING.md#stage-32d-natural-landmarks-and-pufik-acceptance)
+cover fresh worlds and unvisited terrain. Fireflies and music are unchanged.
