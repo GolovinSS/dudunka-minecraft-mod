@@ -15,10 +15,10 @@ public final class FamilyAlbumScreen extends Screen {
     private final UUID session;
     private int request,pending,pendingTicks,retryTicks;
     private Component status=Component.translatable("screen.dudunka.album_commands");
-    private int page,guidePage,recoveryPage,scroll;
-    private boolean guide,recovery,requests,memories;
+    private int page,guidePage,recoveryPage,mysteryPage,scroll;
+    private boolean guide,recovery,requests,memories,mystery;
     private List<FormattedCharSequence> lines=List.of();
-    private Button previous,next,stay,follow,homeMode,assignFurniture,clearFurniture,returnMember,help,requestTab,acceptRequest,deliverRequest,skipRequest,memoryTab,openFriend;
+    private Button previous,next,stay,follow,homeMode,assignFurniture,clearFurniture,returnMember,help,requestTab,acceptRequest,deliverRequest,skipRequest,memoryTab,openFriend,mysteryTab,locateArch;
     private int left,panelWidth,top,bottom;
     public FamilyAlbumScreen(AlbumCommands.Open message){super(Component.translatable("screen.dudunka.album"));session=message.session();snapshot=message.snapshot();recovery=snapshot.entries().isEmpty() && !snapshot.recovery().isEmpty();guide=snapshot.entries().isEmpty() && !recovery;}
     public static void open(AlbumCommands.Open message){var mc=Minecraft.getInstance();if(mc.player!=null && mc.level!=null)mc.setScreen(new FamilyAlbumScreen(message));}
@@ -40,6 +40,11 @@ public final class FamilyAlbumScreen extends Screen {
     private FriendRequests.Info requestInfo(){if(snapshot.entries().isEmpty())return null;var kind=snapshot.entries().get(page).kind();return snapshot.requests().stream().filter(r->r.kind()==kind).findFirst().orElse(null);}
     private void request(FriendRequests.Action action){if(pending!=0 || snapshot.entries().isEmpty())return;pending=++request;pendingTicks=0;status=Component.translatable("screen.dudunka.album_pending");rebuild();AlbumNetwork.request(new AlbumCommands.RequestCommand(session,snapshot.entries().get(page).id(),action,pending));}
     private void recover(){if(pending!=0 || retryTicks>0 || snapshot.recovery().isEmpty())return;pending=++request;pendingTicks=0;var target=snapshot.recovery().get(recoveryPage);status=Component.translatable(target.state()==FamilyAlbum.RecoveryState.LIVE?"screen.dudunka.searching":"screen.dudunka.album_pending",target.name());rebuild();AlbumNetwork.recover(new AlbumCommands.RecoveryCommand(session,snapshot.recovery().get(recoveryPage).id(),pending));}
+    private void locateArch(){
+        if(pending!=0 || retryTicks>0)return;
+        pending=++request;pendingTicks=0;status=Component.translatable("screen.dudunka.album_pending");rebuild();
+        AlbumNetwork.arch(new AlbumCommands.ArchCommand(session,pending));
+    }
     @Override public void tick(){
         if(retryTicks>0 && --retryTicks%20==0){status=Component.translatable(retryTicks==0?"screen.dudunka.retry_ready":"screen.dudunka.result.cooldown",(retryTicks+19)/20);rebuild();}
         if(pending!=0 && ++pendingTicks>=160){pending=0;status=Component.translatable("screen.dudunka.album_timeout");rebuild();}
@@ -57,22 +62,44 @@ public final class FamilyAlbumScreen extends Screen {
         returnMember=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.recovery_return"),b->recover()).bounds(left,height-60,panelWidth,20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.guide_tab"),b->tab(true)).bounds(left,31,panelWidth/3-3,20).build());
         addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.family_tab"),b->tab(false)).bounds(left+panelWidth/3+2,31,panelWidth/3-3,20).build());
-        addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.recovery_tab"),b->{guide=false;recovery=true;requests=false;memories=false;scroll=0;rebuild();}).bounds(left+2*panelWidth/3+4,31,panelWidth/3-4,20).build());
-        help=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.help"),b->minecraft.setScreen(new QuickStartScreen(this))).bounds(left,55,panelWidth/3-3,20).build());
-        requestTab=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.tab"),b->{guide=false;recovery=false;memories=false;requests=!requests;scroll=0;status=Component.translatable("request.dudunka.commands");rebuild();}).bounds(left+panelWidth/3+2,55,panelWidth/3-3,20).build());
+        addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.recovery_tab"),b->{guide=false;recovery=true;requests=false;memories=false;mystery=false;scroll=0;rebuild();}).bounds(left+2*panelWidth/3+4,31,panelWidth/3-4,20).build());
+        help=addRenderableWidget(Button.builder(Component.translatable("screen.dudunka.help"),b->minecraft.setScreen(new QuickStartScreen(this))).bounds(left,55,panelWidth/4-3,20).build());
+        requestTab=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.tab"),b->{guide=false;recovery=false;memories=false;mystery=false;requests=!requests;scroll=0;status=Component.translatable("request.dudunka.commands");rebuild();}).bounds(left+panelWidth/4+1,55,panelWidth/4-3,20).build());
         acceptRequest=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.accept"),b->request(FriendRequests.Action.ACCEPT)).bounds(left,height-60,panelWidth/3-3,20).build());
         deliverRequest=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.deliver"),b->request(FriendRequests.Action.DELIVER)).bounds(left+panelWidth/3+2,height-60,panelWidth/3-3,20).build());
         skipRequest=addRenderableWidget(Button.builder(Component.translatable("request.dudunka.skip"),b->request(FriendRequests.Action.SKIP)).bounds(left+2*panelWidth/3+4,height-60,panelWidth/3-4,20).build());
-        memoryTab=addRenderableWidget(Button.builder(Component.translatable("memory.dudunka.tab"),b->{guide=false;recovery=false;requests=false;memories=true;scroll=0;status=Component.translatable("memory.dudunka.scope");rebuild();}).bounds(left+2*panelWidth/3+4,55,panelWidth/3-4,20).build());
+        memoryTab=addRenderableWidget(Button.builder(Component.translatable("memory.dudunka.tab"),b->{guide=false;recovery=false;requests=false;memories=true;mystery=false;scroll=0;status=Component.translatable("memory.dudunka.scope");rebuild();}).bounds(left+2*panelWidth/4+2,55,panelWidth/4-3,20).build());
         openFriend=addRenderableWidget(Button.builder(Component.translatable("family.dudunka.open"),b->{if(snapshot.recovery().isEmpty())return;var id=snapshot.recovery().get(recoveryPage).id();for(int i=0;i<snapshot.entries().size();i++)if(snapshot.entries().get(i).id().equals(id)){page=i;tab(false);break;}}).bounds(left,height-84,panelWidth,20).build());
+        mysteryTab=addRenderableWidget(Button.builder(Component.translatable("mystery.dudunka.tab"),b->{guide=false;recovery=false;requests=false;memories=false;mystery=true;scroll=0;status=Component.translatable("mystery.dudunka.snapshot");rebuild();}).bounds(left+3*panelWidth/4+3,55,panelWidth/4-3,20).build());
+        locateArch=addRenderableWidget(Button.builder(Component.translatable("mystery.dudunka.listen"),b->locateArch()).bounds(left,height-60,panelWidth,20).build());
         rebuild();
     }
-    private void tab(boolean guide){this.guide=guide;recovery=false;requests=false;memories=false;scroll=0;rebuild();}
-    private void change(int delta){if(memories)return;if(recovery){recoveryPage=Math.max(0,Math.min(snapshot.recovery().size()-1,recoveryPage+delta));scroll=0;rebuild();return;}if(guide){guidePage=Math.max(0,Math.min(EggGuide.PAGES-1,guidePage+delta));scroll=0;rebuild();return;}page=Math.max(0,Math.min(snapshot.entries().size()-1,page+delta));scroll=0;rebuild();}
+    private void tab(boolean guide){this.guide=guide;recovery=false;requests=false;memories=false;mystery=false;scroll=0;rebuild();}
+    private void change(int delta){if(mystery){mysteryPage=Math.max(0,Math.min(Math.min(4,snapshot.mysteryChapters()),mysteryPage+delta));scroll=0;rebuild();return;}if(memories)return;if(recovery){recoveryPage=Math.max(0,Math.min(snapshot.recovery().size()-1,recoveryPage+delta));scroll=0;rebuild();return;}if(guide){guidePage=Math.max(0,Math.min(EggGuide.PAGES-1,guidePage+delta));scroll=0;rebuild();return;}page=Math.max(0,Math.min(snapshot.entries().size()-1,page+delta));scroll=0;rebuild();}
     private void rebuild(){
-        top=93+font.split(scope(),panelWidth-16).size()*10;bottom=guide?height-54:height-99-Math.max(2,font.split(status,panelWidth-16).size())*10;stay.visible=follow.visible=homeMode.visible=assignFurniture.visible=clearFurniture.visible=!guide && !recovery && !requests && !memories;returnMember.visible=recovery;openFriend.visible=recovery;acceptRequest.visible=deliverRequest.visible=skipRequest.visible=requests;
+        top=93+font.split(scope(),panelWidth-16).size()*10;bottom=mystery?height-88:guide?height-54:height-99-Math.max(2,font.split(status,panelWidth-16).size())*10;stay.visible=follow.visible=homeMode.visible=assignFurniture.visible=clearFurniture.visible=!guide && !recovery && !requests && !memories && !mystery;returnMember.visible=recovery;openFriend.visible=recovery;acceptRequest.visible=deliverRequest.visible=skipRequest.visible=requests;
         var text=new ArrayList<Component>();
-        if(memories){
+        locateArch.visible=mystery && snapshot.mysteryChapters()>=3;
+        locateArch.active=pending==0 && retryTicks==0;
+        if(mystery){
+            boolean unlocked=mysteryPage<snapshot.mysteryChapters();
+            text.add(Component.translatable(unlocked?"mystery.dudunka.chapter."+(mysteryPage+1):"mystery.dudunka.waiting"));
+            text.add(Component.empty());
+            text.add(Component.translatable(unlocked?"mystery.dudunka.text."+(mysteryPage+1):"mystery.dudunka.next."+snapshot.mysteryChapters()));
+            if(snapshot.mysteryChapters()>=3){
+                text.add(Component.empty());var echo=snapshot.archEcho();
+                text.add(echo.target()==null?Component.translatable("mystery.dudunka.echo."+echo.state().name().toLowerCase(Locale.ROOT)):
+                    Component.translatable("mystery.dudunka.echo.found",echo.target().getX(),echo.target().getY(),echo.target().getZ()));
+                if(echo.target()!=null && minecraft.player!=null){
+                    double dx=echo.target().getX()-minecraft.player.getX(),dz=echo.target().getZ()-minecraft.player.getZ();
+                    String[] directions={"e","se","s","sw","w","nw","n","ne"};
+                    int direction=Math.floorMod((int)Math.round(Math.atan2(dz,dx)/(Math.PI/4)),8);
+                    text.add(Component.translatable("mystery.dudunka.bearing",Component.translatable("mystery.dudunka.direction."+directions[direction]),Math.round(Math.hypot(dx,dz))));
+                }
+                text.add(Component.translatable("mystery.dudunka.craft"));
+            }
+        }
+        else if(memories){
             text.add(Component.translatable("memory.dudunka.note"));
             if(snapshot.memories().isEmpty())text.add(Component.translatable("memory.dudunka.empty"));
             for(var m:snapshot.memories()){text.add(Component.empty());text.add(Component.translatable("memory.dudunka.heading",Component.translatable("entity.dudunka."+m.kind().id),Component.translatable("memory.dudunka.event."+m.event().name().toLowerCase(Locale.ROOT)),m.tick()/24000+1));text.add(Component.translatable("memory.dudunka."+m.kind().id+"."+m.event().name().toLowerCase(Locale.ROOT)));}
@@ -126,23 +153,24 @@ public final class FamilyAlbumScreen extends Screen {
                 text.add(Component.translatable("message.dudunka.friendship_row",f.name(),f.score(),Component.translatable("friendship.dudunka."+tier)));
             }
         }
+        if(mystery){text.add(Component.empty());text.add(status);}
         if(!guide){text.add(Component.empty());text.add(Component.translatable("screen.dudunka.album_snapshot"));}
         var wrapped=new ArrayList<FormattedCharSequence>();for(var line:text)wrapped.addAll(font.split(line,Math.max(40,panelWidth-24)));
-        help.active=requestTab.active=memoryTab.active=pending==0;var r=requestInfo();
+        help.active=requestTab.active=memoryTab.active=mysteryTab.active=pending==0;var r=requestInfo();
         acceptRequest.active=pending==0 && r!=null && !r.accepted() && r.retrySeconds()==0;
         deliverRequest.active=pending==0 && r!=null && r.accepted();
         skipRequest.active=pending==0 && r!=null && r.retrySeconds()==0;
         returnMember.active=pending==0 && retryTicks==0 && !snapshot.recovery().isEmpty() && snapshot.recovery().get(recoveryPage).canReturn();
         openFriend.active=pending==0 && !snapshot.recovery().isEmpty() && snapshot.entries().stream().anyMatch(e->e.id().equals(snapshot.recovery().get(recoveryPage).id()));
-        lines=List.copyOf(wrapped);previous.active=memories?false:guide?guidePage>0:recovery?pending==0 && recoveryPage>0:pending==0 && page>0;next.active=memories?false:guide?guidePage+1<EggGuide.PAGES:recovery?pending==0 && recoveryPage+1<snapshot.recovery().size():pending==0 && page+1<snapshot.entries().size();scroll=Math.min(scroll,maxScroll());
+        lines=List.copyOf(wrapped);previous.active=mystery?pending==0 && mysteryPage>0:memories?false:guide?guidePage>0:recovery?pending==0 && recoveryPage>0:pending==0 && page>0;next.active=mystery?pending==0 && mysteryPage<Math.min(4,snapshot.mysteryChapters()):memories?false:guide?guidePage+1<EggGuide.PAGES:recovery?pending==0 && recoveryPage+1<snapshot.recovery().size():pending==0 && page+1<snapshot.entries().size();scroll=Math.min(scroll,maxScroll());
         stay.active=pending==0 && !snapshot.entries().isEmpty() && !snapshot.entries().get(page).staying();
         follow.active=pending==0 && !snapshot.entries().isEmpty() && (snapshot.entries().get(page).staying() || snapshot.entries().get(page).homeMode());
         homeMode.active=pending==0 && !snapshot.entries().isEmpty() && !snapshot.entries().get(page).homeMode() && snapshot.entries().get(page).home().state()==FamilyAlbum.HomeState.READY;
         assignFurniture.active=pending==0 && !snapshot.entries().isEmpty();clearFurniture.active=assignFurniture.active && snapshot.entries().get(page).furniture().state()!=FurnitureScenes.State.NONE;
     }
     private static Component familyStatus(FamilyAlbum.RecoveryEntry e){return Component.translatable(e.state()!=FamilyAlbum.RecoveryState.LIVE?"family.dudunka.carried":e.atHome()?"family.dudunka.at_home":"family.dudunka.mode."+e.mode().name().toLowerCase(Locale.ROOT));}
-    private Component scope(){if(memories)return Component.translatable("memory.dudunka.scope");if(requests)return Component.translatable("request.dudunka.scope");if(recovery)return Component.translatable("screen.dudunka.recovery_scope",snapshot.recovery().size(),snapshot.recoveryTotal());if(guide)return Component.translatable("screen.dudunka.guide_scope");return Component.translatable("screen.dudunka.album_scope",snapshot.entries().size(),snapshot.total());}
-    private int maxScroll(){return Math.max(0,lines.size()*12-(bottom-top));}
+    private Component scope(){if(mystery)return Component.translatable("mystery.dudunka.title");if(memories)return Component.translatable("memory.dudunka.scope");if(requests)return Component.translatable("request.dudunka.scope");if(recovery)return Component.translatable("screen.dudunka.recovery_scope",snapshot.recovery().size(),snapshot.recoveryTotal());if(guide)return Component.translatable("screen.dudunka.guide_scope");return Component.translatable("screen.dudunka.album_scope",snapshot.entries().size(),snapshot.total());}
+    private int maxScroll(){return Math.max(0,lines.size()*12+(mystery && mysteryPage<snapshot.mysteryChapters()?64:0)-(bottom-top));}
     @Override public boolean mouseScrolled(double x,double y,double amount){scroll=Math.max(0,Math.min(maxScroll(),scroll-(int)(amount*24)));return true;}
     @Override public boolean isPauseScreen(){return false;}
     @Override public void render(GuiGraphics graphics,int mouseX,int mouseY,float partial){
@@ -150,13 +178,14 @@ public final class FamilyAlbumScreen extends Screen {
         graphics.drawCenteredString(font,title,width/2,16,0xFFE2AD);
         int subtitleY=85;for(var line:font.split(scope(),panelWidth-16)){graphics.drawString(font,line,width/2-font.width(line)/2,subtitleY,0xC7C0AE,false);subtitleY+=10;}
         graphics.enableScissor(left,top,left+panelWidth,bottom);
-        int y=top-scroll;for(var line:lines){graphics.drawString(font,line,left+12,y,0xF3E8CF,false);y+=12;}
+        int y=top-scroll;if(mystery && mysteryPage<snapshot.mysteryChapters()){MysteryIllustrations.draw(graphics,width/2,y,mysteryPage);y+=64;}for(var line:lines){graphics.drawString(font,line,left+12,y,0xF3E8CF,false);y+=12;}
         graphics.disableScissor();
         if(maxScroll()>0)graphics.drawString(font,Component.literal(scroll<maxScroll()?"↓":"↑"),left+panelWidth-10,bottom-10,0xFFE2AD,false);
-        if(guide)graphics.drawCenteredString(font,Component.literal((guidePage+1)+" / "+EggGuide.PAGES),width/2,height-42,0xC7C0AE);
+        if(mystery)graphics.drawCenteredString(font,Component.literal((mysteryPage+1)+" / "+Math.min(5,snapshot.mysteryChapters()+1)),width/2,bottom+4,0xC7C0AE);
+        else if(guide)graphics.drawCenteredString(font,Component.literal((guidePage+1)+" / "+EggGuide.PAGES),width/2,height-42,0xC7C0AE);
         else if(recovery && !snapshot.recovery().isEmpty())graphics.drawCenteredString(font,Component.literal((recoveryPage+1)+" / "+snapshot.recovery().size()),width/2,bottom+4,0xC7C0AE);
-        else if(!recovery && !memories && !snapshot.entries().isEmpty())graphics.drawCenteredString(font,Component.literal((page+1)+" / "+snapshot.entries().size()),width/2,bottom+4,0xC7C0AE);
-        int statusY=bottom+16;if(!guide)for(var line:font.split(status,panelWidth-16)){graphics.drawString(font,line,width/2-font.width(line)/2,statusY,0xC7C0AE,false);statusY+=10;}
+        else if(!recovery && !memories && !mystery && !snapshot.entries().isEmpty())graphics.drawCenteredString(font,Component.literal((page+1)+" / "+snapshot.entries().size()),width/2,bottom+4,0xC7C0AE);
+        int statusY=bottom+16;if(!guide && !mystery)for(var line:font.split(status,panelWidth-16)){graphics.drawString(font,line,width/2-font.width(line)/2,statusY,0xC7C0AE,false);statusY+=10;}
         super.render(graphics,mouseX,mouseY,partial);
     }
 }

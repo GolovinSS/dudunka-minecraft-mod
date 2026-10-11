@@ -39,7 +39,7 @@ public final class FamilyGatewayTests {
             "Furniture", "FurnitureDimension", "Staying", "Trust", "GrowthTicks",
             "CharacterVariant", "NextCharacterVariant");
 
-    private static final class Fixture implements AutoCloseable {
+    static final class Fixture implements AutoCloseable {
         final GameTestHelper h;
         final ServerLevel level;
         final BlockPos root;
@@ -50,7 +50,8 @@ public final class FamilyGatewayTests {
         final Map<BlockPos, BlockState> blocks = new LinkedHashMap<>();
         boolean closed;
         Fixture(GameTestHelper h) { this(h, false); }
-        Fixture(GameTestHelper h, boolean elevatedDrySite) {
+        Fixture(GameTestHelper h, boolean elevatedDrySite) { this(h,elevatedDrySite,195); }
+        Fixture(GameTestHelper h, boolean elevatedDrySite,long cleanupTick) {
             this.h = h; level = h.getLevel();
             var normalRoot = h.absolutePos(new BlockPos(8, 4, 8));
             // This opt-in site avoids fluids entering a long-running multiplayer
@@ -62,7 +63,7 @@ public final class FamilyGatewayTests {
             }
             owner = player();
             // Runs even if a delayed assertion fails. Success paths also close immediately.
-            h.runAtTickTime(195, this::close);
+            h.runAtTickTime(cleanupTick, this::close);
         }
         ServerPlayer player() {
             var p = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "GateTest"));
@@ -502,7 +503,7 @@ public final class FamilyGatewayTests {
         h.succeed();
     }
 
-    private static final class Arrival implements AutoCloseable {
+    static final class Arrival implements AutoCloseable {
         final ServerLevel vale;
         final Map<BlockPos,BlockState> saved=new LinkedHashMap<>();
         final Map<BlockPos,CompoundTag> savedEntities=new LinkedHashMap<>();
@@ -655,6 +656,9 @@ public final class FamilyGatewayTests {
     public static void previouslyActivatedPhysicalGatewayCreatesExitOnNaturalValeArrival(GameTestHelper h) {
         try(var f=new Fixture(h)) {
             savedUnlock(f);
+            h.assertTrue(MushroomVale.safeLanding(f.level,f.owner.blockPosition(),f.owner),
+                    "Natural-arrival fixture needs a safe departure; feet="+f.level.getBlockState(f.owner.blockPosition())
+                            +", floor="+f.level.getBlockState(f.owner.blockPosition().below()));
             var vale=f.owner.server.getLevel(MushroomVale.LEVEL);
             vale.getChunk(0,0);
             h.assertTrue(MushroomValeReturnGateway.find(vale)==null,"Fresh natural arrival chunk starts without a return gateway");

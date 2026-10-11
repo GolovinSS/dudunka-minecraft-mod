@@ -1,0 +1,7 @@
+{
+  "type": "dudunka:forgotten_mushroom_arch",
+  "biomes": "#dudunka:has_structure/forgotten_mushroom_arch",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

@@ -129,6 +129,7 @@ public final class MushroomVale {
             if (previous == null) returns.forget(player.getUUID()); else returns.remember(player.getUUID(), previous);
             return TravelResult.DENIED;
         }
+        MysteryAdventure.get(player.server).unlockThrough(player.getUUID(),5);
         return TravelResult.ENTERED;
     }
 

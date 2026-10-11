@@ -15,6 +15,9 @@ import org.joml.Vector3f;
 /** Owner unlocks live in chunk NBT. A ritual is transient and must be retried after an unload/restart. */
 public final class FamilyGatewayEntity extends BlockEntity {
     private final Set<UUID> awakened = new HashSet<>();
+    private boolean forgottenArch;
+    public boolean forgottenArch() { return forgottenArch; }
+    public void markForgottenArch() { forgottenArch = true; setChanged(); }
     private UUID performer;
     private List<UUID> participants = List.of();
     private long finishes;
@@ -37,6 +40,7 @@ public final class FamilyGatewayEntity extends BlockEntity {
         }
         if (!world.dimension().equals(Level.OVERWORLD)) { tell(player, "broken"); return; }
         if (awakened(player.getUUID())) {
+            MysteryAdventure.get(player.server).unlockThrough(player.getUUID(),4);
             var result = MushroomVale.enterPlayer(player);
             MushroomVale.tell(player, result);
             if (result == MushroomVale.TravelResult.ENTERED)
@@ -87,6 +91,7 @@ public final class FamilyGatewayEntity extends BlockEntity {
         }
         if (now < gateway.finishes) return;
         gateway.awakened.add(gateway.performer);
+        MysteryAdventure.get(world.getServer()).unlockThrough(gateway.performer,4);
         gateway.setChanged();
         for (int part = 0; part < 12; part++) {
             var cell = FamilyGatewayBlock.cell(pos, part);
@@ -97,12 +102,13 @@ public final class FamilyGatewayEntity extends BlockEntity {
         gateway.cancel();
     }
     @Override public void load(CompoundTag tag) {
-        super.load(tag); cancel(); awakened.clear();
+        super.load(tag); cancel(); awakened.clear(); forgottenArch = tag.getBoolean("ForgottenArch");
         var rows = tag.getList("AwakenedOwners", Tag.TAG_COMPOUND);
         for (int i = 0; i < rows.size(); i++) if (rows.getCompound(i).hasUUID("Owner")) awakened.add(rows.getCompound(i).getUUID("Owner"));
     }
     @Override protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        if (forgottenArch) tag.putBoolean("ForgottenArch", true);
         var rows = new ListTag();
         for (var owner : awakened) { var row = new CompoundTag(); row.putUUID("Owner", owner); rows.add(row); }
         tag.put("AwakenedOwners", rows);

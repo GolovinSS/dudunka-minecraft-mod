@@ -34,7 +34,7 @@ Existing specialized survey and focused-test tools remain available when a stage
 
 ## Boundaries
 
-- Git/source is the source of truth. Preserve registry IDs, UUIDs, world save compatibility, namespace `dudunka`, and album protocol 9 unless explicitly authorized.
+- Git/source is the source of truth. Preserve registry IDs, UUIDs, world save compatibility, namespace `dudunka`, and the current album protocol unless explicitly authorized. Stage 3.8 uses protocol 10 for its extended private snapshot/locator request; published Stage 3.7 used 9.
 - Preserve approved character designs and behavior, including manually accepted models and interactions.
 - Prioritize the smallest maintainable solution. No new dependencies, mixins, broad web research or unrelated refactors without a reason.
 - A completed implementation is not a verified implementation. Keep **implemented**, **automatically validated**, **manually accepted**, and **published** separate.

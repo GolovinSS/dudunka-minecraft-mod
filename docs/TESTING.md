@@ -2065,3 +2065,65 @@ family if the command has already been consumed.
 Record implementation, build/GameTests, local manual single-player/save-reload,
 local multiplayer, dedicated BMC4 and publication separately. Do not begin the
 quest chapters or music restoration during this stage's acceptance.
+
+## Stage 3.8: Mystery of the Forgotten Arch
+
+Implementation, automatic checks, manual Minecraft/BMC4 acceptance and publication
+are distinct. Current evidence: [Stage 3.8 validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.8.md).
+Never open a production save for these checks. Automated commands use JDK 17 and
+wrapper-created fresh isolated worlds:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./tools/test.sh build
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./tools/test.sh gametest
+git diff --check
+```
+
+`MysteryAdventureTests` adds native registry/biome/random-spread/piece-NBT coverage;
+bounded native forest chunk generation and initially unowned awakening; individual
+unlock, companion identity, safe physical entry/return and new memories; no retrofit
+of a FULL chunk/player container; old memories and monotonic SavedData reload;
+verified local locator/no chunks or force-loads; held-album/session/replay checks;
+crafted route and unsafe-arrival progression; bounded protocol-10 serialization.
+Existing gateway/return/recovery/worldgen/saved-data regressions remain in the suite.
+The native generation test uses at most 128 pure biome probes and six fresh eligible
+native start chunks, far from fixtures; it is not a broad distribution survey.
+
+Manual acceptance on a fresh local test world, then a separate complete **copy**
+of an existing BMC4 v55.5 save:
+
+1. Install the same freshly built JAR on server and every client (protocol 10).
+   Keep the original production save closed. Retain a consistent backup.
+2. RU and EN, with several GUI Scale/window sizes: find the new album tab, scroll
+   pictures/text, reopen for updated events and confirm old notes/memories/commands.
+   Read only the legend first; later titles/pictures must stay hidden.
+3. Gather Dudunka; grow/gather the three adults; visit a forest. Observe the five
+   progressively unlocked narrative milestones. Save/quit/relaunch between events;
+   unlocked pages must remain. Trade the album: the other player sees their story.
+4. Explore newly generated forest chunks naturally, without operator commands.
+   Check the dormant mushroom arch, mossy stones/carpet/vines, safe walking access
+   and fit with other BMC4 generation. Compare previously generated/built chunks
+   before and after upgrading: no arch or terrain changes should appear there.
+   Structures must be enabled; verify an entirely new forest route exists in the
+   copied world. No fixed coordinates are promised by this checklist.
+5. Listen from outside/inside loaded range, leave/rejoin and break an arch in the
+   test copy. Fresh searches must never retain unloaded/broken targets, invent
+   coordinates or generate chunks. Follow the displayed direction/distance; no echo
+   explains exploration or crafting. Check locked and other-dimension feedback.
+6. Bring a legitimate adult/trusted/friendly family to a naturally unowned arch.
+   Complete the three-second ritual. A second real player's friends cannot grant
+   access; their own family must awaken the same arch independently. Verify private
+   album progression, stable companion UUID/owner/home/furniture/care and unchanged
+   friendship scores. Check a cancelled scene awards no awakening chapter.
+7. Enter, read the illustrated inhabitants introduction, use the shared physical
+   return gate with two independent bookmarks. Restart the copied dedicated server
+   with players inside Vale, then return. Unsafe/vetoed travel must preserve position
+   and bookmark and must not award a first journey. Keep `/dudunka return` available.
+8. Repeat with a crafted gateway and an already awakened Stage 3.7 gateway in old
+   terrain. Neither route requires finding a natural arch; both reveal the same story.
+9. Verify population, existing carrier/recovery/family requests and other dimensions.
+   BMC4 worldgen/protection integrations and real multiplayer need actual acceptance;
+   passing fixture/serialization tests are not evidence of a real server restart.
+
+No Stage 3.8 commit/push or JAR release is authorized by this checklist. Music
+restoration remains outside Stage 3.8.

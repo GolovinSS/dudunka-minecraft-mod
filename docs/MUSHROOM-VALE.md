@@ -1307,3 +1307,100 @@ saves chunks, playerdata and SavedData separately; partial backup/crash recovery
 is not atomic. Actual restart, multiplayer and full BMC4 checks remain manual.
 
 Coverage and remaining risks: [VALIDATION-MUSHROOM-VALE-STAGE-3.7b.md](VALIDATION-MUSHROOM-VALE-STAGE-3.7b.md).
+
+## Stage 3.8 — Mystery of the Forgotten Arch
+
+Implemented adventure: **«Тайна забытой арки»**. The existing family album now has
+**«Тайна Грибной долины» / “Mystery of Mushroom Vale”**. This is the bridge between
+the completed family portal and the later music-restoration story. Stage 4 music
+restoration remains deferred. Validation and publication have separate statuses in
+[the Stage 3.8 report](VALIDATION-MUSHROOM-VALE-STAGE-3.8.md).
+
+### Play together
+
+1. Bring your Dudunka within 32 blocks. Stay together for up to five seconds,
+   then open the album's **Vale mystery / Тайна долины** tab. She shares an
+   illustrated legend about a mossy mushroom arch.
+2. Grow all three friends and gather them nearby. The next chapter explains
+   cooperation, trust 20 for each adult and friendship 10 for every pair.
+3. Visit an Overworld forest. After the next observation, reopen the album for
+   forest clues and **Listen to the forest / Прислушаться к лесу**. Explore forests
+   you have not visited before. An old arch has the same mushroom frame as your
+   home gateway, with mossy ruined stones, moss carpets and vines.
+4. Bring your three eligible adults within eight blocks of either an ancient arch
+   **or a crafted gateway**. Right-click, stay nearby for three seconds, and keep
+   the illustrated awakening memory. No one owns a naturally generated arch until
+   their family completes its own ritual; other players need their own family.
+5. Right-click again from safe ground to visit Mushroom Vale. Its new album picture
+   introduces Pufik, the Wise Fly Agaric, fireflies and fluffy jumpers. Return through
+   the physical return gateway, or use `/dudunka return` from anywhere in the Vale.
+
+No arch nearby? Keep exploring new forest land and listen again, or craft a gateway
+at home from five stone, both mushrooms and an amethyst shard. Both routes share
+all safety, friendship and personal return-bookmark rules. Old placed gateways and
+old albums work too. Previously unlocked gateway owners gain the awakening chapter
+on their next actual interaction. An observed dimension entry or login in Vale also
+records the visit, including players already there after an upgrade. Old family
+memories are not guessed or overwritten.
+
+### Generation and save contract
+
+Additive native structure type, structure and piece ID:
+`dudunka:forgotten_mushroom_arch`; structure set:
+`dudunka:forgotten_mushroom_arches`. Forge's ordinary structure registry/start/
+reference pipeline places a single surface piece during chunk generation.
+`#dudunka:has_structure/forgotten_mushroom_arch` includes `#minecraft:is_forest`;
+the placement also checks the actual forest biome and Overworld dimension.
+Random spread uses spacing **24**, separation **8**, salt **38170841**: one potential
+start per 24×24 chunk region, further filtered by biome and safe terrain. This is
+not a promise of an arch in every forest. World structure generation must be enabled.
+
+The piece fits wholly within its owning chunk and has no terrain adaptation.
+It attempts at most 64 terrain-relative sites in that unfinished chunk. Actual
+writes require air, a natural dirt-family sturdy floor, dry clearance, world-border/
+build bounds and no block entities. It neither clears trees/builds nor flattens
+terrain. It refuses ordinary ServerLevel placement, legacy below-zero upgrading chunks and
+chunks at FEATURES or later;
+there is no chunk-load, login, startup, tick or `/reload` placement callback.
+Existing saves gain arches only as new chunks generate. Old generated chunks,
+including built areas, are never automatically retrofitted. Adjacent old chunks
+are not part of the write footprint. Other worldgen can obstruct a potential site;
+that start may then remain empty rather than overwrite another mod's work.
+
+Frame blocks are the unchanged `dudunka:family_gateway`; optional root NBT boolean
+`ForgottenArch` marks natural origin for discovery. Missing means an ordinary old
+or crafted gateway. `AwakenedOwners` and all companion/bookmark formats are unchanged.
+Breaking and re-placing the dropped item creates an ordinary crafted gate with no
+inherited owner access or natural-origin marker.
+
+### Bounded guidance and progression
+
+The locator is a local echo, not vanilla's potentially generating `/locate` search.
+Only on an explicit album request does the server inspect up to **13×13 already
+loaded chunks** around the player via `getChunkNow`, and at most **64 block-entity
+positions per chunk**. It reports only a complete, live, natural-marked frame
+inside the border. It generates/loads no chunks, adds no tickets, predicts no
+unexplored coordinates and stores no stale destination in SavedData. A broken or
+unloaded frame cannot be returned by a fresh search. No echo means no verified
+local target, not proof that a distant or unloaded forest has no arch.
+
+The album shows verified coordinates, a direction and approximate distance as a
+snapshot of the last listen. Moving or editing the area requires listening again.
+Wrong-dimension, locked-story, not-yet-searched and no-echo states have child-readable
+feedback. Session UUID, authenticated player, held album, dimension, life/spectator,
+monotonic request and rate checks remain server-side. Search also has a five-second
+session cooldown; no client sends a target coordinate or chapter unlock.
+
+Progress lives in new Overworld SavedData `dudunka_vale_mystery`, keyed by player
+UUID. Five sequential chapters persist monotonically; a real later event retains
+its introduction too, so the crafted route never requires natural discovery.
+Malformed rows cannot unlock chapters; duplicate owner rows retain the greatest
+valid count. Existing `dudunka_family_memories`, requests, notes and ownership
+records are untouched. Future chapter titles/pictures are hidden behind a generic
+waiting page until their event occurs. Reading the album alone awards no events.
+
+**Album protocol 10** is required because the private snapshot now includes the
+chapter count and typed optional locator result, plus a new explicit request.
+It is intentionally incompatible with protocol 9 clients; update server and all
+clients together. Historical Stage 3.7 reports correctly retain protocol 9 for
+that published source. The mod version/JAR release has not been incremented.

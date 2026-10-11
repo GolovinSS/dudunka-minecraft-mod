@@ -12,6 +12,7 @@ public final class AlbumCommands {
     }
     public record FurnitureCommand(UUID session,UUID member,boolean clear,int request) {}
     public record RequestCommand(UUID session,UUID member,FriendRequests.Action action,int request) {}
+    public record ArchCommand(UUID session,int request) {}
     public record RecoveryCommand(UUID session,UUID member,int request) {}
     public record Reply(UUID session,int request,RecoveryResult result,FamilyAlbum.Snapshot snapshot) {
         public Reply(UUID session,int request,boolean accepted,FamilyAlbum.Snapshot snapshot){this(session,request,RecoveryResult.of(accepted?RecoveryResult.Code.APPLIED:RecoveryResult.Code.REJECTED),snapshot);}
@@ -20,7 +21,7 @@ public final class AlbumCommands {
     private static final Map<ServerPlayer,Session> SESSIONS=new WeakHashMap<>();
     private static final class Session {
         final UUID id=UUID.randomUUID();final ResourceLocation dimension;
-        Set<UUID> members,recovery;long expires,lastCommand=Long.MIN_VALUE;int request;
+        Set<UUID> members,recovery;long expires,lastCommand=Long.MIN_VALUE,lastArchSearch=Long.MIN_VALUE;int request;
         Session(ServerPlayer player,FamilyAlbum.Snapshot snapshot){dimension=player.level().dimension().location();refresh(player,snapshot);}
         void refresh(ServerPlayer player,FamilyAlbum.Snapshot snapshot){
             members=new HashSet<>();for(var entry:snapshot.entries())members.add(entry.id());
@@ -85,6 +86,22 @@ public final class AlbumCommands {
         if(held(player) && session.members.contains(command.member()) && player.serverLevel().getEntity(command.member()) instanceof Companion mob)
             accepted=FriendRequests.get(player.server).apply(player,mob,command.action());
         var snapshot=FamilyAlbum.collect(player);session.refresh(player,snapshot);return new Reply(session.id,command.request(),RecoveryResult.of(!accepted?RecoveryResult.Code.REQUEST_NOT_READY:switch(command.action()){case ACCEPT->RecoveryResult.Code.REQUEST_ACCEPTED;case DELIVER->RecoveryResult.Code.REQUEST_COMPLETED;case SKIP->RecoveryResult.Code.REQUEST_SKIPPED;}),snapshot);
+    }
+    public static Reply executeArch(ServerPlayer player,ArchCommand command) {
+        if(player==null || FamilyRecovery.pending(player.server,player.getUUID()))return null;
+        var s=SESSIONS.get(player);long now=player.level().getGameTime();
+        if(s==null || !s.id.equals(command.session()) || command.request()<=s.request || command.request()<=0)return null;
+        if(now>s.expires || !s.dimension.equals(player.level().dimension().location())){SESSIONS.remove(player);return null;}
+        s.request=command.request();
+        if(s.lastCommand!=Long.MIN_VALUE && now-s.lastCommand<10)return null;
+        s.lastCommand=now;
+        if(!held(player) || !player.isAlive() || player.isSpectator())return null;
+        if(s.lastArchSearch!=Long.MIN_VALUE && now-s.lastArchSearch<100)
+            return new Reply(s.id,command.request(),new RecoveryResult(RecoveryResult.Code.COOLDOWN,5),FamilyAlbum.collect(player));
+        s.lastArchSearch=now;
+        var echo=ForgottenArchDiscovery.find(player);var snapshot=FamilyAlbum.withEcho(FamilyAlbum.collect(player),echo);
+        s.refresh(player,snapshot);
+        return new Reply(s.id,command.request(),RecoveryResult.of(RecoveryResult.Code.APPLIED),snapshot);
     }
     private AlbumCommands() {}
     public static Open open(ServerPlayer player) {

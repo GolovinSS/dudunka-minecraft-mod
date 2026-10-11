@@ -20,7 +20,8 @@ public final class FamilyAlbum {
     public record RecoveryEntry(UUID id,Component name,Kind kind,String dimension,net.minecraft.core.BlockPos pos,RecoveryState state,Mode mode,boolean loaded,boolean atHome,boolean canReturn) {
         public RecoveryEntry(UUID id,Component name,Kind kind,String dimension,net.minecraft.core.BlockPos pos,RecoveryState state){this(id,name,kind,dimension,pos,state,Mode.UNKNOWN,false,false,state!=RecoveryState.LEGACY_CARRIED);}
     }
-    public record Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask,List<FriendRequests.Info> requests,List<FamilyMemories.Memory> memories) {
+    public record Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask,List<FriendRequests.Info> requests,List<FamilyMemories.Memory> memories,int mysteryChapters,ForgottenArchDiscovery.Echo archEcho) {
+        public Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask,List<FriendRequests.Info> requests,List<FamilyMemories.Memory> memories){this(total,entries,guideFlags,recovery,recoveryTotal,trailMask,requests,memories,0,ForgottenArchDiscovery.Echo.of(ForgottenArchDiscovery.State.LOCKED));}
         public Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask,List<FriendRequests.Info> requests){this(total,entries,guideFlags,recovery,recoveryTotal,trailMask,requests,List.of());}
         public Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal,int trailMask){this(total,entries,guideFlags,recovery,recoveryTotal,trailMask,List.of());}
         public Snapshot(int total,List<Entry> entries,int guideFlags,List<RecoveryEntry> recovery,int recoveryTotal){this(total,entries,guideFlags,recovery,recoveryTotal,0);}
@@ -58,7 +59,8 @@ public final class FamilyAlbum {
         }
         var requests=new ArrayList<FriendRequests.Info>();var errands=FriendRequests.get(player.server);
         for(var kind:Kind.values())if(members.stream().anyMatch(m->m.kind==kind))requests.add(errands.info(player.getUUID(),kind,player.server.overworld().getGameTime()));
-        return new Snapshot(members.size(),List.copyOf(entries),EggGuide.flags(),recovery.values().stream().limit(32).toList(),recovery.size(),TrailProgress.get(player.server).mask(player.getUUID()),List.copyOf(requests),FamilyMemories.get(player.server).owned(player.getUUID()));
+        int chapters=MysteryAdventure.get(player.server).chapters(player.getUUID());
+        return new Snapshot(members.size(),List.copyOf(entries),EggGuide.flags(),recovery.values().stream().limit(32).toList(),recovery.size(),TrailProgress.get(player.server).mask(player.getUUID()),List.copyOf(requests),FamilyMemories.get(player.server).owned(player.getUUID()),chapters,ForgottenArchDiscovery.Echo.of(chapters>=3?ForgottenArchDiscovery.State.NOT_SEARCHED:ForgottenArchDiscovery.State.LOCKED));
     }
     private static Component name(Companion mob) {
         var custom=mob.getCustomName();
@@ -77,6 +79,11 @@ public final class FamilyAlbum {
         encodeRecovery(snapshot,buf);buf.writeVarInt(snapshot.trailMask());
         buf.writeVarInt(snapshot.requests().size());for(var r:snapshot.requests()){buf.writeEnum(r.kind());buf.writeEnum(r.task());buf.writeBoolean(r.accepted());buf.writeByte(r.memories());buf.writeVarInt(r.completed());buf.writeVarInt(r.retrySeconds());}
         buf.writeVarInt(snapshot.memories().size());for(var m:snapshot.memories()){buf.writeEnum(m.kind());buf.writeEnum(m.event());buf.writeLong(m.tick());}
+        buf.writeVarInt(snapshot.mysteryChapters());buf.writeEnum(snapshot.archEcho().state());
+        if(snapshot.archEcho().target()!=null)buf.writeBlockPos(snapshot.archEcho().target());
+    }
+    public static Snapshot withEcho(Snapshot s,ForgottenArchDiscovery.Echo echo) {
+        return new Snapshot(s.total(),s.entries(),s.guideFlags(),s.recovery(),s.recoveryTotal(),s.trailMask(),s.requests(),s.memories(),s.mysteryChapters(),echo);
     }
     private static void encodeRecovery(Snapshot snapshot,FriendlyByteBuf buf){buf.writeVarInt(snapshot.recoveryTotal());buf.writeVarInt(snapshot.recovery().size());for(var e:snapshot.recovery()){buf.writeUUID(e.id());buf.writeComponent(e.name());buf.writeEnum(e.kind());buf.writeUtf(e.dimension(),256);buf.writeBlockPos(e.pos());buf.writeEnum(e.state());buf.writeEnum(e.mode());buf.writeBoolean(e.loaded());buf.writeBoolean(e.atHome());buf.writeBoolean(e.canReturn());}}
     private static int bounded(FriendlyByteBuf buf,int min,int max){int n=buf.readVarInt();if(n<min || n>max)throw new IllegalArgumentException("Invalid album value");return n;}
@@ -103,6 +110,10 @@ public final class FamilyAlbum {
         for(int i=0;i<requestCount;i++){var kind=buf.readEnum(Kind.class);if(!kinds.add(kind))throw new IllegalArgumentException("Duplicate request kind");var task=buf.readEnum(FriendRequests.Task.class);boolean accepted=buf.readBoolean();int memories=buf.readUnsignedByte();if(memories>7)throw new IllegalArgumentException("Invalid memories");requests.add(new FriendRequests.Info(kind,task,accepted,memories,bounded(buf,0,1000000),bounded(buf,0,600)));}
         int memoryCount=bounded(buf,0,FamilyMemories.LIMIT);var memories=new ArrayList<FamilyMemories.Memory>();var seenMemories=new HashSet<String>();
         for(int i=0;i<memoryCount;i++){var kind=buf.readEnum(Kind.class);var event=buf.readEnum(FamilyMemories.Event.class);long tick=buf.readLong();if(tick<0 || !FamilyMemories.valid(kind,event) || !seenMemories.add(kind.name()+event.name()))throw new IllegalArgumentException("Invalid family memory");memories.add(new FamilyMemories.Memory(kind,event,tick));}
-        return new Snapshot(total,List.copyOf(entries),flags,List.copyOf(recovery),recoveryTotal,trail,List.copyOf(requests),List.copyOf(memories));
+        int chapters=bounded(buf,0,MysteryAdventure.CHAPTERS);var echoState=buf.readEnum(ForgottenArchDiscovery.State.class);
+        if(chapters<3 && echoState!=ForgottenArchDiscovery.State.LOCKED || chapters>=3 && echoState==ForgottenArchDiscovery.State.LOCKED)
+            throw new IllegalArgumentException("Invalid mystery progress");
+        var echo=new ForgottenArchDiscovery.Echo(echoState,echoState==ForgottenArchDiscovery.State.FOUND?buf.readBlockPos():null);
+        return new Snapshot(total,List.copyOf(entries),flags,List.copyOf(recovery),recoveryTotal,trail,List.copyOf(requests),List.copyOf(memories),chapters,echo);
     }
 }
