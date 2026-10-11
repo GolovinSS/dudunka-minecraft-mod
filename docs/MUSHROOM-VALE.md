@@ -1147,3 +1147,163 @@ waypoint and advance each checked node in order; floor validation uses actual
 bottom-slab elevation. All four cottage orientations are tested. The existing
 residency UUID/ledger, Wise residents, wild Pufik behavior and approved Pufik art
 remain intact.
+
+## Stage 3.7 family portal (design Stage 4)
+
+Implementation status: implemented. The developer reports Stage 3.7 GameTests passed
+and gateway appearance, activation and entry worked in local `runClient`.
+Dedicated BMC4 acceptance is postponed. Stage 3.7b build and all 245 required
+GameTests passed; the user confirmed local manual acceptance of both gateways. Real multiplayer remains **NOT RUN**.
+This implements the family portal from design Stage 4;
+the four quest chapters remain deferred. User instructions, the exact recipe and
+entry/exit steps are in [FAMILY-PORTAL.md](FAMILY-PORTAL.md). Deployment and real
+restart acceptance are in [TESTING.md](TESTING.md#stage-37-family-portal-on-an-existing-dedicated-bmc4-save).
+
+### Gateway and ownership contract
+
+Additive block/item/block-entity IDs: `dudunka:family_gateway`. The craft uses five
+vanilla stone, a red mushroom, a brown mushroom and an amethyst shard. It needs no
+Vale resources or new Overworld generation. A fixed north/south gateway occupies
+twelve cells (3 wide along X, 4 high, 1 deep). Placement preflights a loaded 3 × 3
+sturdy floor and air above it for four blocks, world border/build limits, player
+placement permissions and entity clearance. Even replaceable vegetation is
+rejected. Forge's normal multi-block placement event supports territory veto and
+snapshot rollback without consuming the item. Breaking the structure drops only
+the root item and removes loaded matching frame pieces; no player blocks are
+removed. The item does not carry unlock NBT when broken/replaced.
+
+Stepped mushroom caps, white spots, stems, moss footing and a small turquoise
+crystal use vanilla textures and native voxel models. Inactive gateways have an
+empty opening and light level 2; an active gateway has a translucent pink veil,
+colored motes and light level 12. Colored particles supply the pink/violet/turquoise
+palette; ordinary Minecraft block light itself has no RGB color. No new renderer,
+dependency, mixin, entity type, packet or album protocol is required.
+
+Main-hand right-click starts a 60-tick ritual only for a living, non-spectator
+player beside a complete Overworld gateway. `FamilyGatewayRules` holds the tuning
+constants: adult `stage == 2`, trust ≥ 20, all three pair friendship scores ≥ 10,
+and spherical radius 8 from the root centre. Exactly one live, loaded, owned
+companion per kind is selected. Carried, removed, dead, distant and other-dimension
+entities cannot substitute. Repeated kinds, repeated UUIDs, noncanonical entity
+instances, loaded UUID duplicates across levels and conflicting indexed identity
+are rejected. The registry is an identity cross-check, never a source for spawning,
+recovering or loading companions. Missing conditions go privately to the player's
+localized chat with the relevant names and current/required scores.
+
+The friends face the gate and use existing WAVE/PURR/CURIOUS poses, connected by
+colored particles, while remaining at their locations. A temporary goal reserves
+them without changing home/follow/stay assignments or introducing activity ordinals.
+One gateway processes one ritual; a friend cannot join two rituals at once.
+Eligibility and participant UUIDs are checked during the scene. Departure, unload,
+restart, a broken gate or a missing participant cancels incomplete progress.
+Trust and friendship are read without mutations, penalties or offerings.
+
+The bottom centre block entity stores `AwakenedOwners`, a list of UUID compounds
+in normal chunk NBT. There is no destructive migration or new global family save
+format. Malformed owner rows are ignored; duplicate rows collapse. Completed
+access is per owner **and per placed gateway** and survives normal save/reload,
+reconnect and server restart. The visible active state shows that somebody has
+awakened this gate; it does not grant access to another owner. That owner needs
+their own family ritual. Removal/replacement of the gate clears that gate's access.
+
+### Travel, return and existing saves
+
+A subsequent explicit interaction authorizes the awakened owner's player-only
+trip; family presence is no longer required. Collisions never trigger travel.
+The gateway and existing opt-in developer commands share `MushroomVale` travel
+checks and `MushroomValeReturns` bookmarks, retaining their previous file/NBT format.
+`dudunka:mushroom_vale`, all existing biome/entity IDs and protocol **9** are unchanged.
+The developer route retains its JVM opt-in and permission checks.
+
+With `-Ddudunka.devMushroomVale=true` on the local server JVM, an operator in the
+Overworld can run `/dudunka_dev mushroom_vale prepare_family` once per player per
+world. It creates a nearby adult, trusted Dudunka/Marusya/Syusya test family and
+seeds their pairwise scores in `FamilyFriendships`; it does not unlock a gateway.
+The command refuses when one of that player's companions is already within 16
+blocks, when no safe dry positions are available, or after a previous successful
+run. It never edits an existing companion or terrain. This route is unavailable
+unless the explicit JVM property is enabled.
+
+`/dudunka return` is always registered, needs no operator permission, and only works
+from Vale. A clickable localized hint appears on gateway entry and login in Vale.
+It provides an exit anywhere, including after reconnect, after a server restart,
+or after the departure gate is broken. It first checks the saved departure area,
+then the safe Overworld spawn fallback. No landing means no move and no bookmark
+consumption. Forge travel veto preserves the current location and old bookmark.
+Entry also leaves both untouched if Vale is unavailable or its arrival is unsafe.
+No terrain is manufactured or overwritten to force a successful trip.
+
+Activation, nearby entity checks and placement never load chunks. Explicit travel
+may normally load/generate its one destination chunk; return may check one saved
+chunk and one fallback spawn chunk. No force-loading, custom portal tickets or
+unbounded searches are introduced. Existing carrier, recovery, album, memories,
+inventory behavior and other dimensions retain their own established behavior.
+Companions are never transferred, cloned, reconstructed or respawned by the gate.
+
+An existing BMC4 save needs the same new JAR on server/all clients and a full server
+restart so Forge loads additive registrations. No Overworld regeneration, `/reload`
+migration, playerdata rewriting or friendship rebalance is needed. Previously saved
+Vale terrain/generator settings remain authoritative. GameTests cover serialization
+boundaries; an actual dedicated server restart with players inside Vale must still
+be accepted separately. See [VALIDATION-MUSHROOM-VALE-STAGE-3.7.md](VALIDATION-MUSHROOM-VALE-STAGE-3.7.md).
+
+## Stage 3.7b physical return gateway
+
+Implemented; build and all 245 required GameTests **PASS**.
+The user confirmed local manual acceptance of both gateways on 2026-10-12.
+Real multiplayer and dedicated BMC4 testing remain **NOT RUN**. Quests and music restoration remain deferred.
+
+After a successful physical Family Gateway entry, `MushroomValeReturnGateway`
+reuses a complete gateway in Vale's origin arrival chunk or attempts to place one
+near the player's safe arrival. The existing `dudunka:family_gateway` block,
+block entity, twelve-part shape, active models, light and particles are reused.
+The dimension determines the purpose: Overworld gates retain their owner ritual;
+complete Vale gates call `MushroomVale.returnPlayer` for the clicking player, with
+no companion, trust, friendship, owner unlock or consumable requirement.
+Collisions do not transfer players. Developer travel does not create gates.
+
+The gate persists as ordinary block states and a root block entity in the Vale
+chunk. Discovery reads only that already loaded chunk's block-entity positions,
+including deferred saved NBT before live block entities are instantiated. Re-entry
+and new visitors reuse it, including after NBT reload; a partial saved gate
+prevents a second automatic frame and is left for manual repair/removal.
+Completely removing a gate permits another safe placement on later physical entry.
+New entry first checks six standing-player positions two blocks north/south of
+the existing root, then the original bounded surface search. Gate blocks are
+excluded as landing floors, so the mushroom frame is not an arrival platform.
+
+Placement checks radius 0–15 in X/Z from arrival, following each column's terrain
+height entirely inside chunk (0,0). At most 120 root candidates can pass the chunk-interior bounds.
+Its loaded-area preflight checks the 3 × 3 sturdy, dry support, border, permissions
+and entities. The actual twelve frame cells must be air. Replaceable, noncolliding
+natural flora and floor-level moss carpet may remain in the gateway's unused
+side-clearance cells; block entities, fluids, hazards and other colliding blocks
+still reject a site. The player-placed gateway
+retains its stricter air-only clearance rule. Additional standing-player safety
+checks reject hazards at the root and require at least one safe terrain-relative
+approach among six positions two blocks north/south of the frame. No terrain, plants,
+fluids, containers or entities are replaced; no platform, chunk ticket or
+background task is added.
+The shared Forge snapshot transaction honors multi-place protection veto and
+restores all twelve cells on failure without consuming any held item. A veto
+ends the attempt; no further placement events probe other territory.
+
+Placement occurs after successful transfer, so denied entry cannot mutate Vale.
+If no safe site exists or placement is vetoed, entry and the player's bookmark
+remain valid; a localized failure message explains that the return gateway was
+not created and points to `/dudunka return`. A broken gate,
+blocked approaches, unavailable saved destination, unsafe fallback or denied
+return retain the existing safety/command behavior. Failed transfer never consumes
+the bookmark. Every visitor uses their UUID-keyed entry in the unchanged
+`dudunka_mushroom_vale_returns` SavedData; the shared block stores no destination.
+
+No registry IDs, block properties, NBT keys/formats, player/companion UUIDs,
+ownership, recovery, carrier, homes, friendship or protocol 9 are changed.
+Existing saves obtain the gate on their next successful physical entry if a safe
+site exists; there is no startup scan or destructive migration. Existing players
+already in Vale retain `/dudunka return` and can obtain the gate on a later visit.
+Normal save/reload persists the chunk and individual bookmarks. Minecraft still
+saves chunks, playerdata and SavedData separately; partial backup/crash recovery
+is not atomic. Actual restart, multiplayer and full BMC4 checks remain manual.
+
+Coverage and remaining risks: [VALIDATION-MUSHROOM-VALE-STAGE-3.7b.md](VALIDATION-MUSHROOM-VALE-STAGE-3.7b.md).

@@ -1,0 +1,112 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "stem": "minecraft:block/mushroom_stem",
+    "moss": "minecraft:block/moss_block",
+    "pink": "minecraft:block/pink_wool",
+    "violet": "minecraft:block/purple_wool",
+    "aqua": "minecraft:block/cyan_concrete",
+    "spot": "minecraft:block/white_wool",
+    "veil": "minecraft:block/pink_stained_glass",
+    "particle": "minecraft:block/pink_wool"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        3
+      ],
+      "to": [
+        16,
+        4,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#moss"
+        },
+        "down": {
+          "texture": "#moss"
+        },
+        "north": {
+          "texture": "#moss"
+        },
+        "south": {
+          "texture": "#moss"
+        },
+        "east": {
+          "texture": "#moss"
+        },
+        "west": {
+          "texture": "#moss"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        4,
+        5
+      ],
+      "to": [
+        11,
+        7,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#violet"
+        },
+        "down": {
+          "texture": "#violet"
+        },
+        "north": {
+          "texture": "#violet"
+        },
+        "south": {
+          "texture": "#violet"
+        },
+        "east": {
+          "texture": "#violet"
+        },
+        "west": {
+          "texture": "#violet"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        7,
+        6
+      ],
+      "to": [
+        10,
+        11,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#aqua"
+        },
+        "down": {
+          "texture": "#aqua"
+        },
+        "north": {
+          "texture": "#aqua"
+        },
+        "south": {
+          "texture": "#aqua"
+        },
+        "east": {
+          "texture": "#aqua"
+        },
+        "west": {
+          "texture": "#aqua"
+        }
+      }
+    }
+  ]
+}

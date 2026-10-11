@@ -80,10 +80,13 @@ public class DudunkaMod {
     public static final RegistryObject<Item> ALBUM=ITEMS.register("family_album",()->new FamilyAlbumItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> KEEPSAKE=ITEMS.register("friend_keepsake",()->new FriendKeepsakeItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CARRIER=ITEMS.register("syusya_carrier",()->new SyusyaCarrierItem(new Item.Properties().stacksTo(1).fireResistant()));
+    public static final RegistryObject<Block> FAMILY_GATEWAY=BLOCKS.register("family_gateway",FamilyGatewayBlock::new);
+    public static final RegistryObject<BlockEntityType<FamilyGatewayEntity>> FAMILY_GATEWAY_BE=BLOCK_ENTITIES.register("family_gateway",()->BlockEntityType.Builder.of(FamilyGatewayEntity::new,FAMILY_GATEWAY.get()).build(null));
+    public static final RegistryObject<Item> FAMILY_GATEWAY_ITEM=ITEMS.register("family_gateway",()->new FamilyGatewayItem(new Item.Properties()));
     public static final RegistryObject<Codec<FriendNoteLootModifier>> FRIEND_LOOT=LOOT.register("friend_notes",()->FriendNoteLootModifier.CODEC);
     public static final RegistryObject<Codec<TrailLootModifier>> TRAIL_LOOT=LOOT.register("trail_note",()->TrailLootModifier.CODEC);
     public static final RegistryObject<Codec<EggLootModifier>> EGG_LOOT=LOOT.register("egg",()->EggLootModifier.CODEC);
-    public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); FURNITURE.values().forEach(v->out.accept(v.get())); MushroomValeVegetation.BLOCKS.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); out.accept(ALBUM.get()); TRAIL_ITEMS.values().forEach(v->out.accept(v.get())); }).build());
+    public static final RegistryObject<CreativeModeTab> TAB=TABS.register("family",()->CreativeModeTab.builder().title(net.minecraft.network.chat.Component.translatable("tab.dudunka")).icon(()->new ItemStack(EGG_ITEMS.get(Kind.DUDUNKA).get())).displayItems((p,out)->{ EGG_ITEMS.values().forEach(v->out.accept(v.get())); HOMES.values().forEach(v->out.accept(v.get())); FURNITURE.values().forEach(v->out.accept(v.get())); MushroomValeVegetation.BLOCKS.values().forEach(v->out.accept(v.get())); out.accept(CARRIER.get()); out.accept(ALBUM.get()); out.accept(FAMILY_GATEWAY_ITEM.get()); TRAIL_ITEMS.values().forEach(v->out.accept(v.get())); }).build());
     public DudunkaMod() {
         IEventBus bus=FMLJavaModLoadingContext.get().getModEventBus();
         MushroomValeVegetation.register();

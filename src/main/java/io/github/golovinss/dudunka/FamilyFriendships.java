@@ -35,6 +35,13 @@ public final class FamilyFriendships extends SavedData {
     }
     public int score(UUID owner,UUID a,UUID b){var bond=bonds.get(Pair.of(owner,a,b));return bond==null?0:bond.score;}
     public int progress(UUID owner,UUID a,UUID b){var bond=bonds.get(Pair.of(owner,a,b));return bond==null?0:bond.progress;}
+    /** Seeds a bond for the opt-in developer family-preparation command; never models elapsed playtime. */
+    void ensureScoreForDeveloper(UUID owner,UUID a,Kind aKind,UUID b,Kind bKind,int minimum) {
+        Pair pair=Pair.of(owner,a,b);if(pair==null || aKind==null || bKind==null)return;
+        Bond bond=bonds.get(pair);
+        if(bond==null){boolean ordered=pair.first().equals(a);bond=new Bond(ordered?aKind:bKind,ordered?bKind:aKind,0,0);bonds.put(pair,bond);}
+        if(bond.score<minimum){bond.score=Math.min(100,minimum);bond.progress=0;setDirty();}
+    }
     /** One observation per pair and second. Callers must first validate the live scene/participants. */
     public boolean observe(UUID owner,UUID a,Kind aKind,UUID b,Kind bKind,long now){
         Pair pair=Pair.of(owner,a,b);if(pair==null || aKind==null || bKind==null)return false;

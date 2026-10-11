@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 
-/** Developer travel bookmarks, separate from player and companion NBT. */
+/** Shared gateway/developer travel bookmarks, separate from player and companion NBT. */
 public final class MushroomValeReturns extends SavedData {
     public record ReturnPoint(ResourceLocation dimension, BlockPos pos, float yaw, float pitch) {}
     private final Map<UUID, ReturnPoint> entries = new HashMap<>();

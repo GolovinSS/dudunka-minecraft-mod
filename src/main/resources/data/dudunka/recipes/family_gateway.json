@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RAB",
+    "S S",
+    "SSS"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:red_mushroom"
+    },
+    "A": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "B": {
+      "item": "minecraft:brown_mushroom"
+    },
+    "S": {
+      "item": "minecraft:stone"
+    }
+  },
+  "result": {
+    "item": "dudunka:family_gateway",
+    "count": 1
+  }
+}

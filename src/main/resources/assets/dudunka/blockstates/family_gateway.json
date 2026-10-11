@@ -1,0 +1,76 @@
+{
+  "variants": {
+    "active=false,part=0": {
+      "model": "dudunka:block/family_gateway_0"
+    },
+    "active=true,part=0": {
+      "model": "dudunka:block/family_gateway_0"
+    },
+    "active=false,part=1": {
+      "model": "dudunka:block/family_gateway_1"
+    },
+    "active=true,part=1": {
+      "model": "dudunka:block/family_gateway_1"
+    },
+    "active=false,part=2": {
+      "model": "dudunka:block/family_gateway_2"
+    },
+    "active=true,part=2": {
+      "model": "dudunka:block/family_gateway_2"
+    },
+    "active=false,part=3": {
+      "model": "dudunka:block/family_gateway_3"
+    },
+    "active=true,part=3": {
+      "model": "dudunka:block/family_gateway_3"
+    },
+    "active=false,part=4": {
+      "model": "dudunka:block/family_gateway_4"
+    },
+    "active=true,part=4": {
+      "model": "dudunka:block/family_gateway_4_active"
+    },
+    "active=false,part=5": {
+      "model": "dudunka:block/family_gateway_5"
+    },
+    "active=true,part=5": {
+      "model": "dudunka:block/family_gateway_5"
+    },
+    "active=false,part=6": {
+      "model": "dudunka:block/family_gateway_6"
+    },
+    "active=true,part=6": {
+      "model": "dudunka:block/family_gateway_6"
+    },
+    "active=false,part=7": {
+      "model": "dudunka:block/family_gateway_7"
+    },
+    "active=true,part=7": {
+      "model": "dudunka:block/family_gateway_7_active"
+    },
+    "active=false,part=8": {
+      "model": "dudunka:block/family_gateway_8"
+    },
+    "active=true,part=8": {
+      "model": "dudunka:block/family_gateway_8"
+    },
+    "active=false,part=9": {
+      "model": "dudunka:block/family_gateway_9"
+    },
+    "active=true,part=9": {
+      "model": "dudunka:block/family_gateway_9"
+    },
+    "active=false,part=10": {
+      "model": "dudunka:block/family_gateway_10"
+    },
+    "active=true,part=10": {
+      "model": "dudunka:block/family_gateway_10"
+    },
+    "active=false,part=11": {
+      "model": "dudunka:block/family_gateway_11"
+    },
+    "active=true,part=11": {
+      "model": "dudunka:block/family_gateway_11"
+    }
+  }
+}

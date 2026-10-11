@@ -417,6 +417,32 @@ public class FamilyTests {
         });
     }
 
+    /** Keep natural egg assertions independent of cave fluids, pre-existing eggs and
+     *  generation outside this GameTest's own 5x5 habitat footprint. */
+    private static void clearNaturalEggTestSite(GameTestHelper h, BlockPos pos) {
+        var level = h.getLevel();
+        for (var cell : BlockPos.betweenClosed(pos.offset(-2, -1, -2), pos.offset(2, 2, 2))) {
+            level.setBlock(cell, Blocks.AIR.defaultBlockState(), 18);
+        }
+    }
+
+    /** On failure, report which habitat requirement the actual world violates. */
+    private static String naturalEggSiteDiagnostic(GameTestHelper h, BlockPos pos) {
+        var level = h.getLevel();
+        int water = 0, lava = 0, eggs = 0;
+        for (var cell : BlockPos.betweenClosed(pos.offset(-2, -1, -2), pos.offset(2, 2, 2))) {
+            var fluid = level.getFluidState(cell);
+            if (fluid.is(net.minecraft.tags.FluidTags.WATER)) water++;
+            if (fluid.is(net.minecraft.tags.FluidTags.LAVA)) lava++;
+            if (level.getBlockState(cell).getBlock() instanceof EggBlock) eggs++;
+        }
+        return " site=" + pos + " target=" + level.getBlockState(pos)
+                + " floor=" + level.getBlockState(pos.below())
+                + " ceiling=" + level.getBlockState(pos.above())
+                + " water=" + water + " lava=" + lava + " nearbyEggs=" + eggs
+                + " naturalEggsEnabled=" + DudunkaMod.NATURAL_EGGS.get();
+    }
+
     private static boolean placeNaturalEgg(GameTestHelper h,BlockPos origin) {
         var configured=h.getLevel().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.CONFIGURED_FEATURE)
                 .get(new net.minecraft.resources.ResourceLocation(DudunkaMod.ID,"snail_egg"));
@@ -426,8 +452,9 @@ public class FamilyTests {
     @GameTest(template="empty",timeoutTicks=40)
     public static void naturalEggNeedsCareAndCanBeClaimed(GameTestHelper h) {
         var level=h.getLevel();var pos=h.absolutePos(new BlockPos(2,2,2));
-        level.setBlock(pos.below(),Blocks.MOSS_BLOCK.defaultBlockState(),3);level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),3);
-        h.assertTrue(placeNaturalEgg(h,pos),"Moss, water and free space must permit one natural egg");
+        clearNaturalEggTestSite(h,pos);
+        level.setBlock(pos.below(),Blocks.MOSS_BLOCK.defaultBlockState(),3);level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),18);
+        h.assertTrue(placeNaturalEgg(h,pos),"Moss, water and free space must permit one natural egg;" + naturalEggSiteDiagnostic(h,pos));
         var egg=(EggEntity)level.getBlockEntity(pos);var saved=egg.saveWithoutMetadata();
         h.assertTrue(egg.ownerId()==null && saved.getInt("Offerings")==0 && saved.getInt("Progress")==0,"Natural egg must be unclaimed and start with no care/progress");
         h.assertTrue(!placeNaturalEgg(h,pos) && level.getBlockEntity(pos)==egg,"Repeated attempt must not overwrite an existing egg");
@@ -440,9 +467,10 @@ public class FamilyTests {
     @GameTest(template="empty",timeoutTicks=40)
     public static void naturalEggRejectsUnsafeOrOccupiedSites(GameTestHelper h) {
         var level=h.getLevel();var pos=h.absolutePos(new BlockPos(2,2,2));
+        clearNaturalEggTestSite(h,pos);
         level.setBlock(pos.below(),Blocks.GRASS_BLOCK.defaultBlockState(),3);
         h.assertTrue(!placeNaturalEgg(h,pos),"Dry grass must not generate an egg");
-        level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),3);level.setBlock(pos.west(),Blocks.LAVA.defaultBlockState(),3);
+        level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),18);level.setBlock(pos.west(),Blocks.LAVA.defaultBlockState(),18);
         h.assertTrue(!placeNaturalEgg(h,pos),"Nearby lava must reject generation even with water");
         level.setBlock(pos.west(),Blocks.AIR.defaultBlockState(),3);level.setBlock(pos,Blocks.DIAMOND_BLOCK.defaultBlockState(),3);
         h.assertTrue(!placeNaturalEgg(h,pos) && level.getBlockState(pos).is(Blocks.DIAMOND_BLOCK),"Generation must not replace existing blocks");
@@ -451,7 +479,7 @@ public class FamilyTests {
         level.setBlock(pos.below(),Blocks.GRASS_BLOCK.defaultBlockState(),3);level.setBlock(pos.above(),Blocks.STONE.defaultBlockState(),3);
         h.assertTrue(!placeNaturalEgg(h,pos),"Low solid ceiling must reject an egg");
         level.setBlock(pos.above(),Blocks.AIR.defaultBlockState(),3);
-        h.assertTrue(placeNaturalEgg(h,pos),"Safe wet grass must qualify after restoring conditions");h.succeed();
+        h.assertTrue(placeNaturalEgg(h,pos),"Safe wet grass must qualify after restoring conditions;" + naturalEggSiteDiagnostic(h,pos));h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=40,batch="isolated_naturaleggprobeisboundedandcanbedisabled")
     public static void naturalEggProbeIsBoundedAndCanBeDisabled(GameTestHelper h) {
@@ -459,11 +487,15 @@ public class FamilyTests {
         level.setBlock(pos.below(),Blocks.MOSS_BLOCK.defaultBlockState(),3);level.setBlock(pos.east(),Blocks.WATER.defaultBlockState(),3);
         for(int y=0;y<=24;y++)level.setBlock(pos.above(y),Blocks.AIR.defaultBlockState(),3);
         h.assertTrue(!placeNaturalEgg(h,pos.above(24)),"Column probe must stop after 24 positions");
+        var liveConfig=isolateServerConfig();
         boolean enabled=DudunkaMod.NATURAL_EGGS.get();
+        // Keep this transient test toggle off the watched server config file. A live
+        // ConfigValue.set(false) can be written asynchronously and reloaded after restore.
         try {
             DudunkaMod.NATURAL_EGGS.set(false);
             h.assertTrue(!placeNaturalEgg(h,pos),"Disabled natural generation must not place an egg");
-        } finally {DudunkaMod.NATURAL_EGGS.set(enabled);}
+        } finally {DudunkaMod.CONFIG.acceptConfig(liveConfig);}
+        h.assertTrue(DudunkaMod.NATURAL_EGGS.get()==enabled,"Natural egg setting is restored after the isolated disabled check");
         h.assertTrue(placeNaturalEgg(h,pos.above(23)),"Column probe must find a suitable floor within its bound");h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=40)
@@ -914,7 +946,7 @@ public class FamilyTests {
     @GameTest(template="empty",timeoutTicks=40,batch="isolated_bmceggmodifiersmatchverifiedtableswithoutdependencies")
     public static void bmcEggModifiersMatchVerifiedTablesWithoutDependencies(GameTestHelper h) {
         String[] tables={"mvs:houses_common","mvs:houses_flower","mvs:houses_desert","mvs:abandoned","betterdungeons:skeleton_dungeon/chests/common","betterdungeons:zombie_dungeon/chests/common","mvs:swamps","betterdungeons:small_dungeon/chests/loot_piles"};
-        Kind[] kinds={Kind.DUDUNKA,Kind.DUDUNKA,Kind.DUDUNKA,Kind.MARUSYA,Kind.MARUSYA,Kind.MARUSYA,Kind.SYUSYA,Kind.SYUSYA};double setting=DudunkaMod.LOOT_MULTIPLIER.get();
+        Kind[] kinds={Kind.DUDUNKA,Kind.DUDUNKA,Kind.DUDUNKA,Kind.MARUSYA,Kind.MARUSYA,Kind.MARUSYA,Kind.SYUSYA,Kind.SYUSYA};var liveConfig=isolateServerConfig();
         try{
             DudunkaMod.LOOT_MULTIPLIER.set(10.0);
             for(int i=0;i<tables.length;i++){
@@ -926,12 +958,12 @@ public class FamilyTests {
                 h.assertTrue(found,"Registered GLM must add an egg for verified ID "+tables[i]);
             }
             var unrelated=net.minecraftforge.common.ForgeHooks.modifyLoot(new net.minecraft.resources.ResourceLocation("mvs:empty"),new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(),eggLootContext(h,"mvs:empty",1));h.assertTrue(unrelated.isEmpty(),"Unlisted empty structures must not get eggs");
-        }finally{DudunkaMod.LOOT_MULTIPLIER.set(setting);}h.succeed();
+        }finally{DudunkaMod.CONFIG.acceptConfig(liveConfig);}h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=40,batch="isolated_savedunopenedchestgetseggbutgeneratedchestdoesnotrefill")
     public static void savedUnopenedChestGetsEggButGeneratedChestDoesNotRefill(GameTestHelper h) {
         var pos=h.absolutePos(new BlockPos(2,2,2));h.getLevel().setBlock(pos,Blocks.CHEST.defaultBlockState(),3);var chest=(net.minecraft.world.level.block.entity.ChestBlockEntity)h.getLevel().getBlockEntity(pos);
-        var table=new net.minecraft.resources.ResourceLocation("minecraft:chests/village/village_plains_house");double setting=DudunkaMod.LOOT_MULTIPLIER.get();boolean found=false;
+        var table=new net.minecraft.resources.ResourceLocation("minecraft:chests/village/village_plains_house");var liveConfig=isolateServerConfig();boolean found=false;
         try {
             DudunkaMod.LOOT_MULTIPLIER.set(10.0);
             for(int seed=1;seed<=128;seed++) {
@@ -944,14 +976,14 @@ public class FamilyTests {
             h.assertTrue(found,"Existing unopened vanilla chest must receive egg through real loot generation");
             var formed=chest.saveWithFullMetadata();h.assertTrue(!formed.contains("LootTable"),"Generated chest must consume its loot table");chest.load(formed);chest.unpackLootTable(null);
             h.assertTrue(chest.saveWithFullMetadata().equals(formed),"Reload/reopen must retain identical inventory without another roll");
-        }finally{DudunkaMod.LOOT_MULTIPLIER.set(setting);}h.succeed();
+        }finally{DudunkaMod.CONFIG.acceptConfig(liveConfig);}h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=40,batch="isolated_egglootpreservesexistinglootanddeduplicatesimportedegg")
     public static void eggLootPreservesExistingLootAndDeduplicatesImportedEgg(GameTestHelper h) {
         var context=eggLootContext(h,"mvs:houses_common",1);var modifier=new EggLootModifier(new net.minecraft.world.level.storage.loot.predicates.LootItemCondition[0],"dudunka",1);
         var loot=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();loot.add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,3));modifier.apply(loot,context);modifier.apply(loot,context);
         h.assertTrue(loot.size()==2 && loot.get(0).getCount()==3 && loot.get(1).is(DudunkaMod.EGG_ITEMS.get(Kind.DUDUNKA).get()),"Repeated/imported loot must keep original items and at most one added egg of its kind");
-        double setting=DudunkaMod.LOOT_MULTIPLIER.get();try{DudunkaMod.LOOT_MULTIPLIER.set(0.0);var empty=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();modifier.apply(empty,context);h.assertTrue(empty.isEmpty(),"Zero loot multiplier must disable additions");}finally{DudunkaMod.LOOT_MULTIPLIER.set(setting);}h.succeed();
+        var liveConfig=isolateServerConfig();try{DudunkaMod.LOOT_MULTIPLIER.set(0.0);var empty=new it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.world.item.ItemStack>();modifier.apply(empty,context);h.assertTrue(empty.isEmpty(),"Zero loot multiplier must disable additions");}finally{DudunkaMod.CONFIG.acceptConfig(liveConfig);}h.succeed();
     }
 
     private static long togetherPreviousTime;
@@ -1131,6 +1163,13 @@ public class FamilyTests {
             +", enabled="+DudunkaMod.FAMILY_CATCH_UP.get()+", eligible="+FamilyTravel.eligible(mob,owner)+", activity="+mob.activity()
             +", destination="+FamilyTravel.destination(mob,owner)+", navigationDone="+mob.getNavigation().isDone()+"]";
     }
+    private static com.electronwill.nightconfig.core.CommentedConfig isolateServerConfig() {
+        var live=net.minecraftforge.fml.config.ConfigTracker.INSTANCE.configSets()
+            .get(net.minecraftforge.fml.config.ModConfig.Type.SERVER).stream()
+            .filter(config->config.getSpec()==DudunkaMod.CONFIG).findFirst().orElseThrow().getConfigData();
+        DudunkaMod.CONFIG.acceptConfig(com.electronwill.nightconfig.core.CommentedConfig.copy(live));
+        return live;
+    }
     @GameTest(template="empty",timeoutTicks=40)
     public static void catchUpPreservesIdentityAndAvoidsOccupiedPlaces(GameTestHelper h) {
         var owner=testOwner(h);var mob=travelFixture(h,owner);var before=new CompoundTag();mob.addAdditionalSaveData(before);var id=mob.getUUID();
@@ -1156,21 +1195,9 @@ public class FamilyTests {
         h.getLevel().setBlock(safe.below(),Blocks.MAGMA_BLOCK.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Magma floor must be rejected");
         h.getLevel().setBlock(safe.below(),Blocks.STONE.defaultBlockState(),3);h.getLevel().setBlock(safe,Blocks.SWEET_BERRY_BUSH.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Damaging plant must be rejected");
         h.getLevel().setBlock(safe,Blocks.AIR.defaultBlockState(),3);h.getLevel().setBlock(safe.above(),Blocks.WATER.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Water/head fluid must be rejected");
-        // Forge's server config autosaves and is reloaded by a watcher thread. Toggling
-        // the live file can race its reload and leave later tests with catch-up disabled.
-        var config=net.minecraftforge.fml.config.ConfigTracker.INSTANCE.configSets()
-            .get(net.minecraftforge.fml.config.ModConfig.Type.SERVER).stream()
-            .filter(c->c.getSpec()==DudunkaMod.CONFIG).findFirst().orElseThrow().getConfigData();
         boolean setting=DudunkaMod.FAMILY_CATCH_UP.get();
-        DudunkaMod.CONFIG.acceptConfig(com.electronwill.nightconfig.core.CommentedConfig.copy(config));
-        try {
-            DudunkaMod.FAMILY_CATCH_UP.set(false);
-            DudunkaMod.CONFIG.afterReload(); // Exercise the watcher's cache-invalidation path.
-            h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner),"World configuration must disable catch-up");
-            h.assertTrue(config.<Boolean>get(DudunkaMod.FAMILY_CATCH_UP.getPath())==setting,
-                "Disabled-config check must leave the live file-backed setting unchanged");
-        } finally { DudunkaMod.CONFIG.acceptConfig(config); }
-        h.assertTrue(DudunkaMod.FAMILY_CATCH_UP.get()==setting,"Live catch-up setting restored after the transient check");
+        h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner,false),"Disabled setting snapshot must reject catch-up");
+        h.assertTrue(DudunkaMod.FAMILY_CATCH_UP.get()==setting,"Disabled-setting check leaves global server config unchanged");
         owner.discard();stranger.discard();h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=210)

@@ -35,6 +35,8 @@ public class Companion extends PathfinderMob {
     private boolean homeWelcomeRunning;
     private long chestNoticeUntil,chestNoticeNext,homeSceneCooldownUntil;
     private int growthTicks,trust,feedCooldown,recoveryTicks,petCooldown,pettingTicks;
+    private BlockPos portalFocus;
+    private long portalPoseUntil;
     public Companion(EntityType<? extends Companion> type,Level l,Kind kind) {
         super(type,l); this.kind=kind; setPersistenceRequired(); refreshDimensions();
     }
@@ -44,6 +46,7 @@ public class Companion extends PathfinderMob {
     @Override protected void defineSynchedData() { super.defineSynchedData(); entityData.define(STAGE,0); entityData.define(STAY,false); entityData.define(ACTIVITY, Activity.IDLE.ordinal());entityData.define(CHARACTER_VARIANT,0);entityData.define(FEELERS,CharacterMoments.Feelers.CALM.ordinal()); }
     @Override protected void registerGoals() {
         goalSelector.addGoal(0,new FloatGoal(this));
+        goalSelector.addGoal(0,new PortalPoseGoal(this));
         goalSelector.addGoal(1,new PettingGoal(this));
         goalSelector.addGoal(2,new FamilyBehaviorGoal(this));
         goalSelector.addGoal(3,new CampfireRestGoal(this));
@@ -91,6 +94,17 @@ public class Companion extends PathfinderMob {
     public Player ownerPlayer() { return owner == null ? null : level().getPlayerByUUID(owner); }
     public boolean sameFamily(Companion other) { return owner != null && owner.equals(other.ownerId()); }
     public int trust() { return trust; }
+    /** Developer command setup for a freshly created test companion only; never use on a player's existing companion. */
+    void prepareFamilyGatewayDeveloperTest(int minimumTrust) {
+        if(level().isClientSide || owner==null)throw new IllegalStateException("Developer test setup requires an initialized server companion");
+        growthTicks=DudunkaMod.GROWTH_SECONDS.get()*40;
+        trust=Math.max(0,Math.min(100,minimumTrust));
+        entityData.set(STAGE,2);refreshDimensions();refreshTrustSpeed();
+    }
+    public BlockPos portalFocus() { return portalFocus; }
+    public boolean portalPosing() { return portalFocus!=null && level().getGameTime()<portalPoseUntil; }
+    public void beginPortalPose(BlockPos focus,long until) { portalFocus=focus.immutable();portalPoseUntil=until; }
+    public void endPortalPose(BlockPos focus) { if(focus.equals(portalFocus)){portalFocus=null;portalPoseUntil=0;} }
     private void changeTrust(int amount) { trust=Math.max(0,Math.min(100,trust+amount)); refreshTrustSpeed(); }
     private void refreshTrustSpeed() {
         if(kind!=Kind.SYUSYA) return;
@@ -272,12 +286,29 @@ public class Companion extends PathfinderMob {
         t.putInt("PetCooldown",petCooldown);t.putBoolean("HomeMarker",homeIsMarker);t.putInt("GrowthTicks",growthTicks);t.putInt("Trust",trust);t.putInt("FeedCooldown",feedCooldown);t.putInt("RecoveryTicks",recoveryTicks);t.putBoolean("Staying",staying());
     }
     @Override public void readAdditionalSaveData(CompoundTag t) {
+        portalFocus=null;portalPoseUntil=0;
         super.readAdditionalSaveData(t);owner=t.hasUUID("FamilyOwner")?t.getUUID("FamilyOwner"):null;home=t.contains("FamilyHome")?BlockPos.of(t.getLong("FamilyHome")):null;
         homeDimension=t.getString("HomeDimension");homeIsMarker=t.getBoolean("HomeMarker");
         entityData.set(CHARACTER_VARIANT,CharacterMoments.bounded(t.getInt("CharacterVariant")));nextCharacterVariant=CharacterMoments.bounded(t.getInt("NextCharacterVariant"));entityData.set(FEELERS,CharacterMoments.Feelers.CALM.ordinal());
         homeMode=t.getBoolean("HomeMode") && !t.getBoolean("Staying");furniture=t.contains("Furniture")?BlockPos.of(t.getLong("Furniture")):null;furnitureDimension=t.getString("FurnitureDimension");
         growthTicks=Math.max(0,t.getInt("GrowthTicks"));trust=Math.max(0,Math.min(100,t.getInt("Trust")));feedCooldown=t.getInt("FeedCooldown");recoveryTicks=t.getInt("RecoveryTicks");entityData.set(STAY,t.getBoolean("Staying"));petCooldown=Math.max(0,Math.min(600,t.getInt("PetCooldown")));pettingTicks=0;homecoming.reset();homeWelcomeRunning=false;homeSceneTarget=null;homeSceneCooldownUntil=0;openedChest=null;chestNoticeUntil=0;chestNoticeNext=0;refreshTrustSpeed();updateStage(false);
     }
+    private static final class PortalPoseGoal extends Goal {
+        private final Companion mob;
+        private BlockPos focus;
+        PortalPoseGoal(Companion mob) { this.mob=mob;setFlags(java.util.EnumSet.of(Flag.MOVE,Flag.LOOK,Flag.JUMP)); }
+        @Override public boolean canUse() { return mob.portalPosing(); }
+        @Override public boolean canContinueToUse() { return mob.portalPosing(); }
+        @Override public boolean requiresUpdateEveryTick() { return true; }
+        @Override public void start() { focus=mob.portalFocus();mob.getNavigation().stop(); }
+        @Override public void tick() {
+            mob.getNavigation().stop();
+            mob.getLookControl().setLookAt(focus.getX()+.5,focus.getY()+1.5,focus.getZ()+.5);
+            mob.setActivity(switch(mob.kind){case DUDUNKA->Activity.WAVE;case MARUSYA->Activity.PURR;case SYUSYA->Activity.CURIOUS;});
+        }
+        @Override public void stop() { mob.setActivity(Activity.IDLE); }
+    }
+
     private static class PettingGoal extends Goal {
         private final Companion mob;
         PettingGoal(Companion mob){this.mob=mob;setFlags(java.util.EnumSet.of(Flag.MOVE,Flag.LOOK));}

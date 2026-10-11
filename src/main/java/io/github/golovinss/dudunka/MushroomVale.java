@@ -23,13 +23,13 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/** Opt-in player-only prototype travel. No portals, family lookup, or entity reconstruction. */
+/** Shared player-only travel safety and bookmarks for the gateway and opt-in developer route. */
 @Mod.EventBusSubscriber(modid = DudunkaMod.ID)
 public final class MushroomVale {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(DudunkaMod.ID, "mushroom_vale");
     public static final ResourceKey<Level> LEVEL = ResourceKey.create(Registries.DIMENSION, ID);
     public static final String DEV_PROPERTY = "dudunka.devMushroomVale";
-    private static final BlockPos ENTRY = new BlockPos(8, 64, 8);
+    static final BlockPos ENTRY = new BlockPos(8, 64, 8);
     private MushroomVale() {}
 
     @SubscribeEvent public static void register(RegisterCommandsEvent event) {
@@ -37,11 +37,19 @@ public final class MushroomVale {
     }
 
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("dudunka")
+                .then(Commands.literal("return").executes(context -> {
+                    var player = context.getSource().getPlayerOrException();
+                    var result = returnPlayer(player);
+                    tell(player, result);
+                    return result.success() ? 1 : 0;
+                })));
         if (!Boolean.getBoolean(DEV_PROPERTY)) return;
         dispatcher.register(Commands.literal("dudunka_dev").requires(source -> source.hasPermission(2))
                 .then(Commands.literal("mushroom_vale")
                         .then(Commands.literal("enter").executes(context -> enter(context.getSource())))
                         .then(Commands.literal("return").executes(context -> leave(context.getSource())))
+                        .then(FamilyGatewayDevCommand.command())
                         .then(MushroomValeCottagePreview.command())
                         .then(MushroomValeCottagePreview.residentCommand())
                         .then(MushroomValeCottagePreview.decorCommand())));
@@ -59,30 +67,74 @@ public final class MushroomVale {
         return player;
     }
 
+    public enum TravelResult {
+        ENTERED, RETURNED, FALLBACK, PLAYER_UNSAFE, ALREADY_THERE, DEPARTURE_UNSAFE,
+        UNAVAILABLE, ARRIVAL_UNSAFE, DENIED, WRONG_DIMENSION, RETURN_UNSAFE;
+        public boolean success() { return this == ENTERED || this == RETURNED || this == FALLBACK; }
+        public Component message() { return Component.translatable("message.dudunka.gateway.travel." + name().toLowerCase(java.util.Locale.ROOT)); }
+    }
+
+    public static void returnHint(ServerPlayer player) {
+        var command = Component.literal("/dudunka return").withStyle(style -> style
+                .withColor(net.minecraft.ChatFormatting.AQUA)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/dudunka return")));
+        player.displayClientMessage(Component.translatable("message.dudunka.gateway.return_hint", command), false);
+    }
+
+    public static void tell(ServerPlayer player, TravelResult result) {
+        player.displayClientMessage(result.message(), false);
+        if (result == TravelResult.ENTERED || player.level().dimension().equals(LEVEL)) returnHint(player);
+    }
+
+    @SubscribeEvent public static void joined(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && player.level().dimension().equals(LEVEL)) returnHint(player);
+    }
+
+    private static boolean canTravel(ServerPlayer player) {
+        return player.isAlive() && !player.isSpectator() && !player.isSleeping() && !player.isPassenger() && !player.isVehicle();
+    }
+
     private static int enter(CommandSourceStack source) throws CommandSyntaxException {
-        var player = traveler(source);
-        if (player.level().dimension().equals(LEVEL)) throw error("Already in Mushroom Vale; use return.");
-        if (!safeLanding(player.serverLevel(), player.blockPosition(), player))
-            throw error("Stand on safe solid ground before entering so a return point can be saved.");
+        var result = enterPlayer(traveler(source));
+        if (!result.success()) throw new SimpleCommandExceptionType(result.message()).create();
+        source.sendSuccess(result::message, false);
+        return 1;
+    }
+
+    private static int leave(CommandSourceStack source) throws CommandSyntaxException {
+        var result = returnPlayer(traveler(source));
+        if (!result.success()) throw new SimpleCommandExceptionType(result.message()).create();
+        source.sendSuccess(result::message, false);
+        return 1;
+    }
+
+    /** Caller authorizes entry (gateway owner or developer command). Only explicit travel loads a target chunk. */
+    public static TravelResult enterPlayer(ServerPlayer player) {
+        if (!canTravel(player)) return TravelResult.PLAYER_UNSAFE;
+        if (player.level().dimension().equals(LEVEL)) return TravelResult.ALREADY_THERE;
+        if (!safeLanding(player.serverLevel(), player.blockPosition(), player)) return TravelResult.DEPARTURE_UNSAFE;
         var destination = player.server.getLevel(LEVEL);
-        if (destination == null) throw error("Mushroom Vale is unavailable; restart with its dimension data enabled.");
-        var pos = surfaceLanding(destination, ENTRY, player);
-        if (pos == null) throw error("The prototype arrival area is obstructed or unsafe. No blocks were changed.");
+        if (destination == null) return TravelResult.UNAVAILABLE;
+        // Prefer the existing return gate's clear approaches; never land on its roof.
+        destination.getChunk(ENTRY.getX() >> 4, ENTRY.getZ() >> 4);
+        var gate = MushroomValeReturnGateway.find(destination);
+        var pos = gate == null ? null : MushroomValeReturnGateway.landing(destination, gate, player);
+        if (pos == null) pos = surfaceLanding(destination, ENTRY, player);
+        if (pos == null) return TravelResult.ARRIVAL_UNSAFE;
         var returns = MushroomValeReturns.get(player.server);
         var previous = returns.point(player.getUUID());
         returns.remember(player.getUUID(), new MushroomValeReturns.ReturnPoint(
                 player.level().dimension().location(), player.blockPosition().immutable(), player.getYRot(), player.getXRot()));
         if (!move(player, destination, pos, player.getYRot(), player.getXRot())) {
             if (previous == null) returns.forget(player.getUUID()); else returns.remember(player.getUUID(), previous);
-            throw error("Dimension travel was denied; the player and return bookmark were preserved.");
+            return TravelResult.DENIED;
         }
-        source.sendSuccess(() -> Component.literal("Entered Mushroom Vale prototype. Return: /dudunka_dev mushroom_vale return"), false);
-        return 1;
+        return TravelResult.ENTERED;
     }
 
-    private static int leave(CommandSourceStack source) throws CommandSyntaxException {
-        var player = traveler(source);
-        if (!player.level().dimension().equals(LEVEL)) throw error("Use return from Mushroom Vale only.");
+    public static TravelResult returnPlayer(ServerPlayer player) {
+        if (!canTravel(player)) return TravelResult.PLAYER_UNSAFE;
+        if (!player.level().dimension().equals(LEVEL)) return TravelResult.WRONG_DIMENSION;
         var returns = MushroomValeReturns.get(player.server);
         var point = returns.point(player.getUUID());
         var destination = point == null ? null : player.server.getLevel(ResourceKey.create(Registries.DIMENSION, point.dimension()));
@@ -92,14 +144,10 @@ public final class MushroomVale {
             destination = player.server.overworld();
             pos = spawnLanding(destination, player);
         }
-        if (pos == null) throw error("Return point and Overworld spawn are unsafe. Clear a landing area and retry; bookmark retained.");
-        if (!move(player, destination, pos, point == null ? 0 : point.yaw(), point == null ? 0 : point.pitch()))
-            throw error("Dimension travel was denied; return bookmark retained.");
+        if (pos == null) return TravelResult.RETURN_UNSAFE;
+        if (!move(player, destination, pos, point == null ? 0 : point.yaw(), point == null ? 0 : point.pitch())) return TravelResult.DENIED;
         returns.forget(player.getUUID());
-        String message = fallback ? "Returned to a safe surface near Overworld spawn (saved return unavailable or unsafe)."
-                : "Returned to the saved departure area.";
-        source.sendSuccess(() -> Component.literal(message), false);
-        return 1;
+        return fallback ? TravelResult.FALLBACK : TravelResult.RETURNED;
     }
 
     private static boolean move(ServerPlayer player, ServerLevel destination, BlockPos pos, float yaw, float pitch) {
@@ -111,7 +159,7 @@ public final class MushroomVale {
     }
 
     private static BlockPos landingNear(ServerLevel level, BlockPos anchor, ServerPlayer player) {
-        // Explicit developer travel loads only the target chunk normally. No force-load or persistent tickets.
+        // Explicit player travel loads only the target chunk normally. No force-load or persistent tickets.
         level.getChunk(anchor.getX() >> 4, anchor.getZ() >> 4);
         for (int radius = 0; radius <= 4; radius++)
             for (int dy : new int[]{0, 1, -1, 2, -2})
@@ -161,7 +209,8 @@ public final class MushroomVale {
                     || state.is(Blocks.END_GATEWAY)) return false;
         }
         var floor = level.getBlockState(pos.below());
-        return !floor.is(BlockTags.LEAVES) && floor.isFaceSturdy(level, pos.below(), Direction.UP)
+        return !floor.is(BlockTags.LEAVES) && !floor.is(DudunkaMod.FAMILY_GATEWAY.get())
+                && floor.isFaceSturdy(level, pos.below(), Direction.UP)
                 && level.noCollision(player, box)
                 && level.getEntities(player, box, entity -> entity.isAlive()).isEmpty();
     }

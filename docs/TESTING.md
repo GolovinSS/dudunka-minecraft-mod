@@ -1824,3 +1824,244 @@ Survival/BMC4 acceptance.
 
 The short implementation record is
 [VALIDATION-MUSHROOM-VALE-STAGE-3.6.md](VALIDATION-MUSHROOM-VALE-STAGE-3.6.md).
+
+## Stage 3.7: Family portal on an existing dedicated BMC4 save
+
+The developer reports Stage 3.7 GameTests passed and gateway appearance, activation
+and entry worked in local `runClient`. Dedicated BMC4 acceptance below is postponed
+and **NOT RUN**. Stage 3.7b adds a physical return gateway; its build and all 245
+required GameTests passed. The user confirmed local manual acceptance of both
+gateways on 2026-10-12. Real multiplayer remains **NOT RUN**; the local acceptance
+steps are retained below for regression checks.
+Implementation and automated coverage are recorded in
+[VALIDATION-MUSHROOM-VALE-STAGE-3.7.md](VALIDATION-MUSHROOM-VALE-STAGE-3.7.md).
+Player recipe and instructions: [FAMILY-PORTAL.md](FAMILY-PORTAL.md).
+A successful GameTest run does not establish BMC4 compatibility.
+
+### Build and isolated automated verification
+
+From this repository with Java 17, run externally:
+
+```bash
+./tools/test.sh all
+```
+
+Review `summary.txt`, `build.log`, `gametest.log` under the emitted
+`build/reports/dudunka-tests/<run-id>/`. Confirm compilation/resources and all new
+`FamilyGatewayTests`, existing `MushroomValeTests`, family/carrier/recovery tests
+and Stage 3.6 wildlife assertions. Preserve complete failure logs; do not weaken
+old assertions or reuse a player's world for GameTests. Use the ordinary mod JAR
+from `build/libs/`, excluding `-sources`/`-dev`; this stage does not increment the
+mod version, so record a SHA-256 checksum to distinguish this build.
+
+### Prepare a separate server and a consistent world copy
+
+1. Stop the source server cleanly before copying. Make a complete immutable backup
+   of the server, world, current Dudunka JAR, `mods`, `config`, `defaultconfigs`,
+   server properties and relevant launcher settings. Record Minecraft 1.20.1,
+   Forge 47.4.13, BMC4 v55.5, Java 17 and old/new Dudunka JAR hashes.
+2. Install **Better MC [FORGE] BMC4 Server Pack v55.5** into a **new test directory**.
+   Use its supplied installer/launcher, with Java 17 selected. Keep the pack's
+   server mods, configs and datapacks; do not substitute a bare Forge dev server.
+   Confirm `java -version` reports 17 and the startup log reports Forge 47.4.13.
+   Accept the Minecraft EULA yourself through the server's documented setup.
+3. Copy the **whole existing saved world** into a new directory within the test
+   server, for example `bmc4-stage37-test`. Include `level.dat`, `region`, `entities`,
+   `poi`, `playerdata`, `data`, `DIM-1`, `DIM1`, `dimensions`, `serverconfig` and
+   world datapacks where present. Set the test `server.properties` to
+   `level-name=bmc4-stage37-test`; use a distinct server port and verify the path
+   resolves inside the test directory. Never point this instance at the original.
+4. Install the freshly built normal Dudunka JAR in test server `mods`, leaving
+   exactly one Dudunka JAR. Use a copied BMC4 v55.5 client profile and the **identical
+   JAR on every client**. Compare `sha256sum <jar>` on server/client (or
+   `Get-FileHash <jar> -Algorithm SHA256` in PowerShell). The album protocol stays 9;
+   a matching version string alone is insufficient to identify this stage's build.
+5. Start only the copied dedicated server using the pack launcher. A conventional
+   Forge installation can also use Java 17 with
+   `java @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.20.1-47.4.13/unix_args.txt nogui`
+   (Windows uses the generated `win_args.txt`); prefer the pack's launcher if it
+   supplies additional arguments. Save the complete startup log and check for
+   registry, datapack, recipe, missing-dimension and model/texture errors.
+6. Join with the existing player's account. Before placing anything, confirm the
+   copied old inventory, album, family memories, trust/friendship, homes, furniture
+   and carrier state match the source observations. Verify old Vale terrain if
+   this save already contains Vale. Do not regenerate Overworld or Vale chunks.
+
+### Record companion identities before travel
+
+Use an operator account only for observation. Record each companion UUID from
+its entity NBT/album, its owner, dimension, coordinates, stage, trust and all
+assigned home/furniture modes. For each UUID, these commands inspect the copy:
+
+```mcfunction
+/execute in minecraft:overworld run data get entity <companion-uuid> UUID
+/execute in minecraft:overworld run data get entity <companion-uuid> FamilyOwner
+/execute in minecraft:overworld run data get entity <companion-uuid> FamilyHome
+/execute in minecraft:overworld run data get entity <companion-uuid> HomeDimension
+/execute in minecraft:overworld run data get entity <companion-uuid> HomeMode
+/execute in minecraft:overworld run data get entity <companion-uuid> Staying
+/execute in minecraft:overworld run data get entity <companion-uuid> Furniture
+/execute in minecraft:overworld run data get entity <companion-uuid> FurnitureDimension
+/execute in minecraft:overworld run data get entity <companion-uuid> GrowthTicks
+/execute in minecraft:overworld run data get entity <companion-uuid> Trust
+```
+
+An absent optional tag means no assignment; record that too. Commands require the
+companion's chunk to be normally loaded by a nearby observer, not `/forceload`.
+Use a second observer remaining at the home to compare these exact UUIDs while
+another player visits Vale. Record friendship scores in the existing UI before
+and after; the ritual must not award or spend points. Ordinary elapsed gameplay
+can advance normal timers independently of portal use.
+
+### Survival portal and ownership acceptance
+
+1. In a long-existing Overworld area, obtain five stone, red/brown mushrooms and
+   one amethyst shard, then craft the exact recipe in the player guide. Confirm
+   the recipe book unlock and item/placed models in both Russian and English.
+2. Try placement against a chest/building, low ceiling, water, vegetation, occupied
+   space, unsupported ground and protected territory if the server uses claims.
+   Confirm each existing block/container and its contents remain intact, no frame
+   fragments remain and no item is consumed on failure. Then place on a clear
+   3 × 3 floor with four blocks of air. Inspect the inactive mushroom silhouette.
+3. Interact with one friend missing, a juvenile, trust 19, and any pair's friendship
+   below 10. The clicking player alone receives a named, helpful localized reason.
+   Other owners, far/unloaded friends and a carried Syusya must not substitute.
+   Read existing progression; do not change production friendship mechanics to
+   speed up this acceptance. Use separate already-progressed families when available.
+4. Bring exactly one adult of each kind with trust ≥ 20 and all three pair scores
+   ≥ 10 within 8 blocks. Click; watch the three-second poses and colored connecting
+   particles. Walk away or move one friend away during a second player's trial:
+   incomplete rituals must cancel without item cost or unlock. A competing click
+   must not steal the running ritual.
+5. After completion, inspect the pink veil, soft light and particles on both
+   clients. Standing/walking in the opening must not teleport. Stand on safe floor
+   2–3 blocks north/south and click explicitly; only that player travels. Confirm
+   inventory/carrier contents remain unchanged and all three original companions
+   remain at departure. Compare the recorded UUIDs, home/furniture NBT and ownership.
+6. As a **non-operator**, use the clickable chat hint or type `/dudunka return` from
+   another part of Vale. Confirm return near saved departure with correct yaw/pitch;
+   re-enter after the family leaves the portal area, without another ritual.
+7. Have player B click A's active gate with no eligible B family: B stays home,
+   cannot inherit A's unlock, and A's access remains. Then awaken it with B's own
+   family. Both players enter, keep distinct return bookmarks, and leave in either
+   order. Also try separate gateways with overlapping families: one friend may
+   help only one active ritual at a time. Confirm private messages are private.
+
+### Reconnect, real restart, safe failure and regressions
+
+1. Disconnect/reconnect once at home and once inside Vale. Confirm inventory,
+   family access and current dimension persist. On reconnect in Vale, the return
+   hint must appear and work without operator status or the developer JVM flag.
+2. With **both players in Vale**, issue `save-all flush`, stop the test server
+   cleanly, restart the same copied world, and reconnect. Confirm their current
+   dimension/locations, two distinct bookmarks, portal active state and personal
+   access survive. Recheck the three same companion UUIDs with the home observer;
+   confirm no companion appears in Vale. Return both players independently.
+3. Stop/restart during an unfinished ritual. No owner should gain an unlock from
+   elapsed offline time; companions should resume their previous home/stay/follow
+   modes and permit a fresh deliberate ritual.
+4. On this disposable copy only, have an observer temporarily block safe arrival
+   surfaces in the Vale origin chunk (chunk 0,0), recording blocks for restoration.
+   Entry must keep the exact player location and existing bookmark. Clear the
+   obstruction and retry. Do not delete dimension files or modify the original.
+5. After entry, temporarily obstruct the bounded departure area (radius 4 with
+   vertical offsets ±2 in its chunk): return should use a safe Overworld spawn.
+   Make both candidates unsafe in a **separate disposable scenario**: return must
+   fail privately, retaining current Vale position and bookmark. An observer clears
+   a landing in the recorded departure area; retry must succeed. Travel veto from
+   a pack protection mod must likewise retain the current position/bookmark.
+6. Break the departure gate while a player remains in Vale. `/dudunka return`
+   must still work. Replacing the gate starts inactive with new per-gate progression.
+   Verify a normal break produces one gateway item and clears the frame.
+7. Inspect `/forceload query` in Overworld and Vale before/after activation and
+   travel. No new persistent force-loads should appear. Activation near a chunk
+   boundary must not search/load distant companion chunks; explicit travel normally
+   loads only its bounded destination. Record any additional tickets from BMC4
+   chunk loaders separately.
+8. Recheck album/home commands, carrier capture/release and existing explicit
+   recovery on the test copy, then Nether, End and one already-installed pack
+   dimension. Confirm their IDs/routes and player inventories are intact.
+   Recheck Stage 3.6 Pufik/spider/jumper encounters, fireflies, cottage residents,
+   existing named mobs, music and benches. No quest chapter should start.
+
+### Rollback and evidence
+
+Stop the test server. Restore the **complete pre-upgrade world snapshot together
+with its matching old Dudunka JAR, pack configuration and datapacks** to the test
+instance. Start it and verify old inventory, companion UUIDs and dimension entry
+state. Replacing only the JAR while retaining a world containing new portal
+registrations is not a validated rollback. Do not selectively merge playerdata,
+region files or `dimensions/` from different snapshots.
+
+Record separate outcomes: implementation, build/GameTests, manual vanilla client,
+manual dedicated BMC4 old-save upgrade/reconnect/restart/two-player checks, rollback
+and publication. Include JAR hashes, server/client pack versions, logs, screenshots
+of inactive/active gateways and poses, and before/after UUID/NBT observations.
+No publication is authorized by this checklist.
+
+## Stage 3.7b: return gateway in local runClient
+
+Implementation complete in the working tree. Stage 3.7b build and all 245 required
+GameTests **PASS** (runs `20261011T220402Z-3213750` and
+`20261011T220426Z-3214532`). The user confirmed local manual acceptance of both
+gateways on 2026-10-12. Real multiplayer remains **NOT RUN**. Dedicated BMC4 acceptance
+remains postponed. Report: [VALIDATION-MUSHROOM-VALE-STAGE-3.7b.md](VALIDATION-MUSHROOM-VALE-STAGE-3.7b.md).
+
+Run externally with Java 17:
+
+```bash
+./tools/test.sh build
+./tools/test.sh gametest
+# Or run both phases:
+./tools/test.sh all
+```
+
+Confirm all nine Stage 3.7b tests (eight `FamilyGatewayTests.returnGateway*` tests
+and `previouslyActivatedPhysicalGatewayCreatesExitOnNaturalValeArrival`), the expanded
+physical unsafe-return assertion, and existing gateway/travel/family/recovery
+regressions pass in the fresh isolated world. Review the emitted summary and
+logs; serializer tests represent save boundaries, not an actual process restart.
+
+In local IntelliJ `runClient`, use a disposable world or a complete copy of the
+accepted local world. Enable `runClient -PmushroomValeDev=true` only if using the
+already implemented `/dudunka_dev mushroom_vale prepare_family` setup command.
+It remains optional and once per player per world; use an existing eligible
+family if the command has already been consumed.
+
+1. Awaken an Overworld gate with three adult friends, trust ≥20 and every pair's
+   friendship ≥10. Enter on the explicit second click. Inspect a glowing return
+   gate near arrival. It should match the existing models, light and particles.
+   Record its root coordinates. No friend should appear in Vale.
+2. Right-click the return gate without commands or another ritual. Confirm your
+   personal departure area and yaw/pitch, unchanged inventory, and the same
+   companion UUIDs/owner/home/furniture/carrier/recovery state at home. Move the
+   family away, enter again and repeat. Exactly one return gate remains at the
+   recorded location; arrivals should be beside it, clear of its frame and roof.
+3. Save/quit while in Vale. Restart `runClient`, reopen that same world and click
+   the same gate. Both its appearance and your return destination must persist.
+   Repeat after leaving/rejoining through Open to LAN if available. The clickable
+   `/dudunka return` login hint must also remain usable.
+4. For local multiplayer, Open to LAN and invite a second matching client. Each
+   owner must independently awaken an Overworld gate with their own family.
+   Enter from distinct departure locations; both use the same Vale return gate.
+   Return in reverse order, then after save/reload, verifying neither destination
+   nor consumed bookmark crosses players. Keep the dedicated BMC4 result separate.
+5. On a disposable copy, place obstructions around arrival or use a placement
+   protection veto if available. If a safe arrival exists but no safe frame site
+   exists, entry must still work and explain `/dudunka return`. Compare every
+   existing structure/container and its contents; none may be replaced. No extra
+   frame or held-item consumption is allowed. Remove the obstruction and revisit
+   through the Overworld gate to retry placement.
+6. On a disposable copy, break the Vale gate and confirm `/dudunka return` works.
+   Re-enter: a single replacement may appear if the site remains safe. Break the
+   Overworld gate while another player is in Vale: the physical exit must still
+   use that player's saved departure, with the usual safe spawn fallback.
+7. Obstruct both the saved destination and spawn only in a disposable scenario.
+   Physical return must leave the player in Vale and retain the bookmark. Repair
+   the saved landing and click again; it must succeed. A travel-event veto must
+   likewise keep the bookmark for a retry. Observe `/forceload query` before/after:
+   there should be no new persistent force-loads.
+
+Record implementation, build/GameTests, local manual single-player/save-reload,
+local multiplayer, dedicated BMC4 and publication separately. Do not begin the
+quest chapters or music restoration during this stage's acceptance.

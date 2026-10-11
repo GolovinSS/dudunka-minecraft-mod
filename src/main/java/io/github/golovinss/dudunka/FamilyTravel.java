@@ -31,7 +31,10 @@ public final class FamilyTravel {
         return true;
     }
     public static boolean eligible(Companion mob,Player owner){
-        return !mob.level().isClientSide && DudunkaMod.FAMILY_CATCH_UP.get() && owner!=null && owner.level()==mob.level()
+        return eligible(mob,owner,DudunkaMod.FAMILY_CATCH_UP.get());
+    }
+    private static boolean eligible(Companion mob,Player owner,boolean enabled){
+        return !mob.level().isClientSide && enabled && owner!=null && owner.level()==mob.level()
             && mob.ownerId()!=null && mob.ownerId().equals(owner.getUUID()) && mob.isAlive() && owner.isAlive()
             && !owner.isSpectator() && !owner.isSleeping() && owner.onGround() && !owner.isPassenger() && !owner.isFallFlying()
             && !owner.isInWaterOrBubble() && !owner.isInLava() && !mob.staying() && !mob.atHomeMode() && mob.willingToFollow()
@@ -57,7 +60,10 @@ public final class FamilyTravel {
         return mob.level().getEntities(mob,box,e->e.isAlive() && (e instanceof LivingEntity || e.isVehicle())).isEmpty();
     }
     public static BlockPos destination(Companion mob,Player owner){
-        if(!eligible(mob,owner))return null;
+        return destination(mob,owner,DudunkaMod.FAMILY_CATCH_UP.get());
+    }
+    private static BlockPos destination(Companion mob,Player owner,boolean enabled){
+        if(!eligible(mob,owner,enabled))return null;
         BlockPos center=owner.blockPosition();
         for(int dy:new int[]{0,1,-1})for(int radius=2;radius<=3;radius++)
             for(int dx=-radius;dx<=radius;dx++)for(int dz=-radius;dz<=radius;dz++) {
@@ -67,9 +73,13 @@ public final class FamilyTravel {
         return null;
     }
     public static boolean teleportNearOwner(Companion mob,Player owner){
-        BlockPos pos=destination(mob,owner);if(pos==null)return false;
+        return teleportNearOwner(mob,owner,DudunkaMod.FAMILY_CATCH_UP.get());
+    }
+    /** Explicit setting snapshot also lets callers evaluate eligibility without mutating global Forge config. */
+    public static boolean teleportNearOwner(Companion mob,Player owner,boolean enabled){
+        BlockPos pos=destination(mob,owner,enabled);if(pos==null)return false;
         // Revalidate just before movement, including other family members already placed this tick.
-        if(!eligible(mob,owner) || !safeDestination(mob,pos))return false;
+        if(!eligible(mob,owner,enabled) || !safeDestination(mob,pos))return false;
         mob.getNavigation().stop();mob.teleportTo(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
         mob.setDeltaMovement(Vec3.ZERO);mob.fallDistance=0;return true;
     }

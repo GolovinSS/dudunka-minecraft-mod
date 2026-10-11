@@ -1,0 +1,208 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "stem": "minecraft:block/mushroom_stem",
+    "moss": "minecraft:block/moss_block",
+    "pink": "minecraft:block/pink_wool",
+    "violet": "minecraft:block/purple_wool",
+    "aqua": "minecraft:block/cyan_concrete",
+    "spot": "minecraft:block/white_wool",
+    "veil": "minecraft:block/pink_stained_glass",
+    "particle": "minecraft:block/pink_wool"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        3
+      ],
+      "to": [
+        16,
+        4,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#moss"
+        },
+        "down": {
+          "texture": "#moss"
+        },
+        "north": {
+          "texture": "#moss"
+        },
+        "south": {
+          "texture": "#moss"
+        },
+        "east": {
+          "texture": "#moss"
+        },
+        "west": {
+          "texture": "#moss"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        4,
+        6
+      ],
+      "to": [
+        11,
+        13,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#stem"
+        },
+        "down": {
+          "texture": "#stem"
+        },
+        "north": {
+          "texture": "#stem"
+        },
+        "south": {
+          "texture": "#stem"
+        },
+        "east": {
+          "texture": "#stem"
+        },
+        "west": {
+          "texture": "#stem"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        11,
+        3
+      ],
+      "to": [
+        14,
+        14,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#pink"
+        },
+        "down": {
+          "texture": "#pink"
+        },
+        "north": {
+          "texture": "#pink"
+        },
+        "south": {
+          "texture": "#pink"
+        },
+        "east": {
+          "texture": "#pink"
+        },
+        "west": {
+          "texture": "#pink"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        14,
+        5
+      ],
+      "to": [
+        12,
+        16,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#violet"
+        },
+        "down": {
+          "texture": "#violet"
+        },
+        "north": {
+          "texture": "#violet"
+        },
+        "south": {
+          "texture": "#violet"
+        },
+        "east": {
+          "texture": "#violet"
+        },
+        "west": {
+          "texture": "#violet"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        14,
+        4
+      ],
+      "to": [
+        7,
+        15,
+        6
+      ],
+      "faces": {
+        "up": {
+          "texture": "#spot"
+        },
+        "down": {
+          "texture": "#spot"
+        },
+        "north": {
+          "texture": "#spot"
+        },
+        "south": {
+          "texture": "#spot"
+        },
+        "east": {
+          "texture": "#spot"
+        },
+        "west": {
+          "texture": "#spot"
+        }
+      }
+    },
+    {
+      "from": [
+        10,
+        14,
+        9
+      ],
+      "to": [
+        12,
+        15,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#spot"
+        },
+        "down": {
+          "texture": "#spot"
+        },
+        "north": {
+          "texture": "#spot"
+        },
+        "south": {
+          "texture": "#spot"
+        },
+        "east": {
+          "texture": "#spot"
+        },
+        "west": {
+          "texture": "#spot"
+        }
+      }
+    }
+  ]
+}

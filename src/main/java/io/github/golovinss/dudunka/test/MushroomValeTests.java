@@ -34,6 +34,19 @@ import net.minecraftforge.gametest.*;
 public class MushroomValeTests {
     private static final String ENTER = "dudunka_dev mushroom_vale enter";
     private static final String RETURN = "dudunka_dev mushroom_vale return";
+    private static final List<String> TRAVEL_STABLE_COMPANION_TAGS = List.of(
+            "FamilyOwner", "FamilyHome", "HomeDimension", "HomeMarker", "HomeMode",
+            "Furniture", "FurnitureDimension", "Staying", "Trust", "CharacterVariant",
+            "NextCharacterVariant", "PersistenceRequired", "CustomName", "Health", "Attributes");
+
+    private record CompanionTravelSnapshot(UUID owner, int stage, int trust,
+            net.minecraft.world.phys.Vec3 position, CompoundTag persistentData) {}
+
+    private static CompanionTravelSnapshot companionTravelSnapshot(Companion companion) {
+        var saved=companion.saveWithoutId(new CompoundTag());var persistent=new CompoundTag();
+        for(var key:TRAVEL_STABLE_COMPANION_TAGS)if(saved.contains(key))persistent.put(key,saved.get(key).copy());
+        return new CompanionTravelSnapshot(companion.ownerId(),companion.stage(),companion.trust(),companion.position(),persistent);
+    }
 
     @GameTest(template = "empty", timeoutTicks = 200, batch = "isolated_vale_light")
     public static void valeLanternPropagatesBlockLightAndRemovalClearsIt(GameTestHelper h) {
@@ -761,7 +774,7 @@ public class MushroomValeTests {
         var origin = player.blockPosition().immutable();
         UUID playerId = player.getUUID();
         var companions = new ArrayList<Companion>();
-        var snapshots = new HashMap<UUID, CompoundTag>();
+        var snapshots = new HashMap<UUID, CompanionTravelSnapshot>();
         var arrival = new ArrivalFixture(h);
         try {
             for (var kind : Kind.values()) {
@@ -771,7 +784,7 @@ public class MushroomValeTests {
                 companion.setNoAi(true);
                 source.addFreshEntity(companion);
                 companions.add(companion);
-                snapshots.put(companion.getUUID(), companion.saveWithoutId(new CompoundTag()));
+                snapshots.put(companion.getUUID(), companionTravelSnapshot(companion));
             }
             var dispatcher = serverCommands(h);
             h.assertTrue(execute(dispatcher, player, ENTER) == 1 && player.level().dimension().equals(MushroomVale.LEVEL),
@@ -792,10 +805,14 @@ public class MushroomValeTests {
                             && returns.point(playerId) == null,
                     "Return must preserve player identity and orientation, clear fall motion, and consume the bookmark");
             for (var companion : companions) {
+                var before=snapshots.get(companion.getUUID());
                 h.assertTrue(source.getEntity(companion.getUUID()) == companion
                                 && player.server.getLevel(MushroomVale.LEVEL).getEntity(companion.getUUID()) == null
-                                && snapshots.get(companion.getUUID()).equals(companion.saveWithoutId(new CompoundTag())),
-                        "Travel must leave each companion instance, UUID, and complete NBT at departure");
+                                && before!=null && before.owner().equals(companion.ownerId())
+                                && before.stage()==companion.stage() && before.trust()==companion.trust()
+                                && before.position().equals(companion.position())
+                                && before.persistentData().equals(companionTravelSnapshot(companion).persistentData()),
+                        "Travel must leave each companion instance, UUID, owner, position, care, home and stable saved state at departure");
             }
             rejected(h, dispatcher, player.createCommandSourceStack().withPermission(2), RETURN);
         } finally {
