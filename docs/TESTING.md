@@ -1015,3 +1015,255 @@ transition; this look-up also works with the fixture's AI disabled. Summon an
 ordinary Pufik separately to inspect walking, happy/right-click and shy poses
 alongside tracking. The preview commands are absent without the developer
 launch flag. No pose mode is saved in entity NBT or sent over the network.
+
+## Stage 3.2a: mixed-color natural groups
+
+At night, check newly generated loaded chunks in all three biomes. Natural
+packs should contain 3–5 fireflies, with at least two colors whenever two or
+more members spawn. Look for golden/turquoise plus occasional violet in Glowing
+Forest; golden with some turquoise/violet in Pink Meadows; violet with some
+turquoise/golden in Memory Forest. Spawn weights were lowered from 3 to 2 to
+offset the larger pack size and limit overall population growth. Use fresh
+chunks/world for a fair natural density comparison. `/summon` with explicit
+`ValeVariant` NBT remains a separate visual/persistence check. Run the focused
+and full multi-seed checks below; these exercise the actual group data selector.
+
+## Stage 3.2: magical fireflies
+
+Launch Minecraft 1.20.1 / Forge 47.4.13 using Java 17:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew runClient -PmushroomValeDev=true --offline
+```
+
+IntelliJ Gradle Tasks and arguments: `runClient -PmushroomValeDev=true --offline`;
+Gradle JVM: Java 17. If ForgeGradle's preliminary certificate probe fails in
+this cached environment, append `-Dnet.minecraftforge.gradle.check.certs=false`
+(the offline GameTest runner already does this). Use a **new disposable world**,
+seed `0`, cheats enabled,
+shaders OFF initially. Leave companions at home. Enter Vale from safe ground:
+
+```text
+/dudunka_dev mushroom_vale enter
+/time set midnight
+/gamerule doDaylightCycle false
+```
+
+The current dimension type has a normal day/night cycle (the older Stage 2.5a
+fixed-noon testing note no longer applies). For a deterministic fixture, these
+commands deliberately replace the indicated small area in this disposable world:
+
+```text
+/fill 0 159 0 31 159 31 minecraft:mycelium
+/fill 0 160 0 31 169 31 minecraft:air
+/tp @s 8 160 8
+/summon dudunka:vale_firefly 7 161 10 {NoAI:1b,ValeVariant:0,CustomName:'{"text":"Golden"}'}
+/summon dudunka:vale_firefly 8 161 10 {NoAI:1b,ValeVariant:1,CustomName:'{"text":"Turquoise"}'}
+/summon dudunka:vale_firefly 9 161 10 {NoAI:1b,ValeVariant:2,CustomName:'{"text":"Violet"}'}
+```
+
+Inspect from front/side/rear, close and several blocks away: tiny rounded body,
+face, thin wings, gold/turquoise/violet color and independent soft abdomen
+pulses. NoAI holds position but client wing animation continues. Check F3 block
+light away from other luminous blocks: fireflies must not illuminate terrain.
+Try a roofed dark area too. Repeat with the target shader/resource packs.
+
+For **actual server flight**, use ordinary entities with AI enabled:
+
+```text
+/summon dudunka:vale_firefly ~ ~1 ~
+/summon dudunka:vale_firefly 17 162 16 {ValeVariant:0}
+/summon dudunka:vale_firefly 18 162 16 {ValeVariant:1}
+/summon dudunka:vale_firefly 19 162 16 {ValeVariant:2}
+```
+
+Watch at least two minutes for gentle hovering, bobbing, short flights and
+occasional loose groups, staying within six horizontal/three vertical blocks of
+each home. Add a solid wall, water and lava nearby in the disposable fixture;
+they must stop/choose another target without entering hazards. Move to a loaded
+chunk edge and lower render/simulation distance to check stopping near unavailable
+terrain. Set `/time set noon` and compare slower movement; set midnight again.
+Name a moving firefly, save/quit/reopen, and confirm color, name, UUID (`/data get
+entity @e[type=dudunka:vale_firefly,name=Golden,limit=1] UUID` for the named fixture)
+and home NBT persist. Ordinary unnamed fireflies despawn beyond 48 blocks from every player;
+named/persistent entities and Forge despawn vetoes are respected.
+
+For natural spawning, locate each biome, travel to its actual surface and let
+loaded terrain 24–48 blocks away tick at midnight. Compare the amount of
+distinct groups encountered while exploring equal distances in the same fresh
+world; natural rates are stochastic, so repeat across several Vale regions.
+Groups should now be more common in open meadow clearings because the first-air
+height over the ground is accepted; Stage 3.2c also accepts safe understory beneath
+mushroom canopies and frees the cap when ordinary groups fall behind the player.
+
+```text
+/locate biome dudunka:glowing_mushroom_forest
+/locate biome dudunka:pink_meadows
+/locate biome dudunka:memory_forest
+```
+
+Confirm groups of 3–5, each mixed across at least two colors. Expect golden /
+turquoise / violet in Glowing Forest, mostly golden with occasional turquoise
+and violet in Pink Meadows, and mostly violet with occasional turquoise and
+golden in Memory Forest. Summons do not test natural rates. Repeat
+in daylight and the Overworld; no natural firefly spawn should occur there.
+Inspect a pre-stage world too: existing Pufik, family UUIDs, album, music, saved
+Vale terrain and travel must continue working. Repeat night flight, save/reload,
+spawn density and two-player synchronization in Better MC BMC4 v55.5.
+
+```text
+/gamerule doDaylightCycle true
+/dudunka_dev mushroom_vale return
+```
+
+Automated checks (graphical/BMC4 acceptance is separate):
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew build verifyModels verifyPufik verifyValeFirefly --offline
+python3 tools/run_vale_firefly_checks.py focused
+python3 tools/run_vale_firefly_checks.py full
+```
+
+The runner creates a fresh seed-0 world and log under
+`build/reports/mushroom-vale-stage32/` each time; focused wrapper classes/templates
+are excluded from normal builds and the production JAR. The full run executes
+all registered required GameTests, including the firefly variant, palette,
+natural-spawn opportunity, and bounded-flight checks.
+
+## Companion catch-up regression checks after Stage 3.2b
+
+Run repeated travel checks in fresh worlds using Java 17 and cached Forge:
+
+```bash
+python3 tools/run_family_travel_checks.py isolated
+python3 tools/run_family_travel_checks.py parallel
+```
+
+Each runs the counter, identity/occupied-landing, hazard/config rejection,
+actual following-goal and ordinary snail-walking tests three times. Original
+assertions and deadlines are retained. Logs are in `build/reports/family-travel/`.
+The configuration refusal test uses a transient in-memory config copy so the
+Forge file watcher cannot leak a disabled catch-up setting to later tests.
+
+To reproduce the original contaminated configuration deliberately:
+
+```bash
+python3 tools/run_family_travel_checks.py isolated --repeat 1 --catch-up-disabled
+```
+
+That command intentionally starts a separate disposable world with catch-up
+disabled and is expected to fail the two original assertions (0/2). It is a
+diagnostic, not a passing regression gate. Complete suite command:
+`python3 tools/run_vale_firefly_checks.py full`. Results and root cause are in
+[the catch-up investigation](VALIDATION-FAMILY-TRAVEL-STAGE-3.2B.md).
+
+## Stage 3.2c: natural flight and density acceptance
+
+Launch with the target Java 17 runtime:
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew runClient -PmushroomValeDev=true --offline -Dnet.minecraftforge.gradle.check.certs=false
+```
+
+Use a disposable normal world, first seed `0`, then repeat with `42` and `2026`.
+Set render/view distance and simulation distance to **8 chunks**. Begin with
+shaders off. These commands prepare natural nighttime observation:
+
+```text
+/gamemode creative
+/difficulty normal
+/dudunka_dev mushroom_vale enter
+/gamerule doMobSpawning true
+/gamerule doDaylightCycle false
+/time set 18000
+/locate biome dudunka:glowing_mushroom_forest
+/locate biome dudunka:pink_meadows
+/locate biome dudunka:memory_forest
+```
+
+Travel to each returned biome and descend to its walkable soil **beneath** the
+mushroom canopy. Observe in Creative or Survival; Spectator does not drive
+natural mob spawning. Wait about ten seconds for the nearby spawn ring to fill,
+then explore for two minutes, stopping to look at nearby groups. Use ordinary
+generated terrain throughout this density check. No summons are needed.
+
+The natural spawn ring is 24–48 blocks. Packs request 3–5 and remain mixed when
+at least two members successfully spawn; incomplete packs remain possible under
+vanilla terrain/collision rules. Look for several groups over the exploration
+route, not a guaranteed fixed count at every position. Check all three palettes.
+
+Count loaded nearby natural residents without altering them:
+
+```text
+/scoreboard objectives add vale_probe dummy
+/scoreboard objectives setdisplay sidebar vale_probe
+/execute store result score nearby vale_probe if entity @e[type=dudunka:vale_firefly,distance=..48]
+/execute store result score golden vale_probe if entity @e[type=dudunka:vale_firefly,distance=..48,nbt={ValeVariant:0}]
+/execute store result score turquoise vale_probe if entity @e[type=dudunka:vale_firefly,distance=..48,nbt={ValeVariant:1}]
+/execute store result score violet vale_probe if entity @e[type=dudunka:vale_firefly,distance=..48,nbt={ValeVariant:2}]
+/execute store result score bats vale_probe if entity @e[type=minecraft:bat,distance=..128]
+```
+
+Repeat the five `execute` commands after moving and after standing still for a
+minute. These count nearby entities, including any hidden by foliage; compare
+with the groups actually visible. Vanilla's ambient cap is still 15 shared with
+bats/other ambient mobs, with normal small-pack overshoot. Counts should settle
+rather than increase indefinitely. Record BMC4's competing ambient population too.
+
+Follow one **naturally spawned** firefly without naming it or changing its AI:
+
+```text
+/tag @e[type=dudunka:vale_firefly,sort=nearest,limit=1,distance=..48] add flight_probe
+/data get entity @e[type=dudunka:vale_firefly,tag=flight_probe,limit=1] Pos
+/data get entity @e[type=dudunka:vale_firefly,tag=flight_probe,limit=1] Motion
+/data get entity @e[type=dudunka:vale_firefly,tag=flight_probe,limit=1] NoGravity
+/data get entity @e[type=dudunka:vale_firefly,tag=flight_probe,limit=1] OnGround
+/data get entity @e[type=dudunka:vale_firefly,tag=flight_probe,limit=1] ValeVariant
+```
+
+Watch for at least a minute: takeoff from the surface, normal hover around 1–3
+blocks above nearby safe terrain, changing X/Y/Z, gentle turns/circles and loose
+pack cohesion. Repeat `Pos`/`Motion` queries after five seconds. `NoGravity`
+should be `1b`; after takeoff `OnGround` should normally be `0b`. Follow beside
+walls, mushroom stems and water: the firefly should turn or retry without entering
+blocks/fluids. Keep within 48 blocks to retain an ordinary tagged resident.
+
+Save/quit/reopen nearby and verify its tag, UUID, variant and flight survive.
+Set `/time set 6000`: new natural spawning stops, while existing residents hover
+and wander more slowly instead of settling. Set midnight again. Walk away more
+than 48 blocks and return: ordinary residents may be replaced by fresh groups.
+Finally remove the probe and restore the clock:
+
+```text
+/tag @e[type=dudunka:vale_firefly,tag=flight_probe] remove flight_probe
+/scoreboard objectives remove vale_probe
+/gamerule doDaylightCycle true
+```
+
+Repeat with two players and in BMC4 v55.5, checking smooth synchronized positions,
+the approved colors/wings/glow, bounded population, and save compatibility. Client
+rendering and BMC4 performance are manual acceptance, separate from headless tests.
+
+Automated commands:
+
+```bash
+python3 tools/run_vale_firefly_checks.py focused
+python3 tools/run_vale_firefly_checks.py population --seed 0
+python3 tools/run_vale_firefly_checks.py population --seed 42
+python3 tools/run_vale_firefly_checks.py population --seed 2026
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew build verifyModels verifyValeFirefly --offline -Dnet.minecraftforge.gradle.check.certs=false
+python3 tools/run_vale_firefly_checks.py full
+```
+
+Population tests use unmodified generated Vale terrain, a real server player,
+8-chunk simulation/view distances and normal engine natural spawning for 1,200
+ticks per biome-start route. The observer moves 16 blocks every 200 ticks.
+Join events record completed spawns and their shared pack data. Fifty snapshots
+measure nearby populations and a visibility proxy (within 48 blocks, within 8
+vertical blocks, with line of sight), not actual client pixels. Tests restore
+clock/rules/distances/listeners and discard their observers/residents, including
+after failure via batch cleanup. The generated startup hook changes Minecraft's
+otherwise hardcoded GameTest seed before worlds load; `server.properties` alone
+does not change GameTest terrain. It is excluded from ordinary builds/JARs.
+
+[Stage 3.2c results and limitations](VALIDATION-MUSHROOM-VALE-STAGE-3.2C.md).

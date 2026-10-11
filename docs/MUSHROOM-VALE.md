@@ -733,3 +733,86 @@ engages within 2.5 blocks and eases out to 3.5 blocks. The cap moves slightly
 back and up to open the sightline beneath its brim. The existing developer
 launch flag enables `/dudunka_pufik_pose rest`, `look_up` and `off` for fixed
 pose comparison; see the deterministic preview steps in `TESTING.md`.
+
+## Stage 3.2a: naturally spawning mixed-color firefly groups
+
+`dudunka:vale_firefly` is an independent 0.2×0.2-block ambient flying mob,
+separate from `Kind` and `Companion`. The original small stepped voxel body,
+head, eyes, antennae and thin translucent animated wings follow the firefly
+panel in `creatures_and_props.png`; the six original 32×16 pixel atlases are
+reproducible with `tools/generate_vale_firefly.py`. Golden, turquoise and violet
+abdomen masks use vanilla's additive `RenderType.eyes` pipeline at full render
+brightness. UUID-based phases pulse independently between 45% and 100%; base
+render block light is clamped to 8 for face/wing readability. These are render
+values only: no actual light source, block, light-engine update or packet.
+
+Each of the three existing Vale biomes adds ambient weight 2, groups 3–5,
+retaining bats and all creature entries. `AMBIENT` shares vanilla's cap of 15
+with bats, rather than competing with Pufik/animals for the creature cap of 10.
+Vanilla eligible-chunk, minimum player distance and local caps still apply;
+full BMC4 spawn balance needs manual acceptance. Natural spawning requires the
+Vale dimension AND one of its three biome IDs, loaded clear dry surface air
+(at the first air block through four blocks above a safe nearby floor, including
+understory up to 12 blocks beneath a mushroom canopy), time
+12000–22999 and a player within 48 blocks. Deep caves, high air and fluid surfaces are excluded.
+Weighted palettes are Glowing Forest 55% golden / 30% turquoise / 15% violet,
+Pink Meadows 70% golden / 20% turquoise / 10% violet, and Memory Forest 70%
+violet / 20% turquoise / 10% golden. NaturalSpawner passes `FireflySpawnGroup`
+through `SpawnGroupData`; it chooses the first color by palette weight and forces
+the second successfully spawned member to a different palette color. Later
+members use normal weights. The biome entries request groups of 3–5 at weight 2
+(previously 2–4 at weight 3), keeping weighted group size near its previous level
+while making groups visibly mixed. The ambient cap remains shared with bats.
+Explicit `/summon` EntityTag values still set their own `ValeVariant`; the saved
+variant and existing assets/rendering are unchanged. Default manual summon is
+golden.
+
+Server flight uses smoothed velocity up to 0.055 blocks/tick at evening/night,
+0.018 by day, with gentle vertical bobbing. Target selection tries at most six
+local candidates every 40–99 active ticks (100–179 by day), also refreshing on arrival.
+One in four active selections can bias toward a loaded pack member within four blocks.
+Occasional small circular flights vary their altitude. Home is bounded
+to horizontal radius 6 and ±3 vertical blocks; both targets and each swept
+movement volume must stay within it. Chunk availability is checked before
+block/collision reads, followed by fluid, fire, wall and build-limit checks.
+Blocked movement stops and retries; there is no expensive pathfinding, chunk
+request or terrain modification. External relocation farther than 16 blocks
+establishes a new local home. There is no Pufik interaction or family behavior.
+
+Vanilla entity NBT preserves UUID/name/health; additive `ValeVariant` and
+`FlightHomeX/Y/Z` preserve color and local bounds. Missing variant defaults to
+golden, invalid values clamp, and invalid/nonfinite homes are ignored. Ordinary
+ambient saving and idle despawning apply, with ordinary unnamed fireflies released
+beyond 48 blocks of every player so distant groups do not occupy their shared cap.
+Naming, explicit persistence and Forge despawn vetoes protect against this release.
+No taming, ownership, item pickup, hostile target, attack, quest or progression
+is added. Existing Pufik, family UUIDs, save data, worldgen, music and album
+protocol **9** remain unchanged. Tests and manual commands are in
+[Stage 3.2 testing](TESTING.md#stage-32-magical-fireflies) and the
+[Stage 3.2a validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.2A.md) and
+[Stage 3.2b validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.2B.md).
+
+## Stage 3.2c: sustained flight and visible natural groups
+
+Natural first-air spawns now take off instead of failing a downward-inflated
+collision check. Steering retains its own momentum so Minecraft's small-velocity
+cutoff does not freeze gentle daytime movement. Normal targets hover about 1–3
+blocks above nearby terrain; takeoff/reloaded ground homes shift their flight
+area upward without moving or teleporting the entity. Exact swept-body checks,
+clearance at destinations, loaded-column probes and world-border checks protect
+each flight. Steering remains server-authoritative; ordinary entity tracking
+and client interpolation carry position/velocity, while existing wings and glow
+remain client rendering.
+
+Natural spawning retains `AMBIENT`, cap 15, biome weights 2, requests for 3–5,
+and all three palettes. Its 24–48-block local spawn ring and matching despawn
+range replace distant invisible residents as players explore. Same-biome
+newborns from adjacent vanilla spawn loops in the same server tick can share
+`SpawnGroupData`, capped at five, so failed positions need not leave neighboring
+singletons as separate groups. No additional members are created to fill packs;
+vanilla safety checks can still leave incomplete groups. Pack identity is
+transient server state; colors and existing home NBT persist normally.
+
+[Stage 3.2c measurements and validation](VALIDATION-MUSHROOM-VALE-STAGE-3.2C.md)
+distinguish actual completed natural spawns from the earlier eligible-position
+estimate. Minecraft/BMC4 visual and multiplayer acceptance remains manual.

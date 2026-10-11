@@ -234,3 +234,11 @@ tasks.register('verifyPufik', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'CheckPufikModel'
 }
+
+// Bake firefly geometry and validate its original atlases and pulse policy offline.
+tasks.register('verifyValeFirefly', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckValeFirefly'
+}
+tasks.named('check').configure { dependsOn 'verifyValeFirefly' }

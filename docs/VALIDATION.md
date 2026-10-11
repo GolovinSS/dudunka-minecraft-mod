@@ -100,3 +100,30 @@ Minecraft/BMC4 graphical, audible and old-save acceptance remains manual.
 Independent Pufik entity, detailed model and texture, gentle behavior and
 forest-only natural spawning. [Stage 3.1 validation report](VALIDATION-MUSHROOM-VALE-STAGE-3.1.md)
 records automated results and pending manual Minecraft/BMC4 acceptance.
+
+## Mushroom Vale Stage 3.2a — mixed-color fireflies
+
+Independent ambient fireflies, three original color atlases, emissive rendering,
+bounded safe server flight and Vale-only night spawning. Build/model/resource
+checks PASS; focused **4/4**, final full suite **173/173** required tests PASS.
+Results and pending Minecraft/BMC4 acceptance are recorded in
+[Stage 3.2a validation](VALIDATION-MUSHROOM-VALE-STAGE-3.2A.md).
+
+## Mushroom Vale Stage 3.2c — sustained flight and natural visibility
+
+Fixed floor-intersecting takeoff checks and vanilla's clearing of tiny steering
+velocities. Safe terrain-relative hovering, local population turnover and
+same-tick pack coordination retain the approved visuals, palettes, requested
+groups of 3–5, spawn weights, ambient cap and album protocol 9.
+
+Build, verifyModels and verifyValeFirefly PASS; focused **7/7**, generated-world
+population checks **9/9** across seeds **0/42/2026** and all three Vale biomes;
+one final complete suite **179/179**, exit 0. Comparable seed-0/42 routes improved
+mean visible fireflies **4.86 → 9.16**; final nearby population peaks **17–19**,
+mean visible groups **2.78** across nine routes. These are server visibility
+proxies, with graphical Minecraft/BMC4 acceptance still pending. Historical
+companion intermittency did not occur in this final suite and remains documented
+separately. Existing uncommitted Stage 3.2–3.2b work is preserved.
+
+[Root causes, exact measurements and validation logs](VALIDATION-MUSHROOM-VALE-STAGE-3.2C.md).
+[Natural-world client acceptance commands](TESTING.md#stage-32c-natural-flight-and-density-acceptance).

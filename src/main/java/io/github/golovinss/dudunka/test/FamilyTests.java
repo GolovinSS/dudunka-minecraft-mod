@@ -970,6 +970,14 @@ public class FamilyTests {
         }
         return family;
     }
+    private static String togetherFriendshipState(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner,Companion a,Companion b,HomeTogetherScenes.Scene scene,FamilyFriendships ledger) {
+        long worldTime=h.getLevel().getGameTime(),serverTime=h.getLevel().getServer().overworld().getGameTime();
+        return "state{worldTime="+worldTime+", serverTime="+serverTime+", ownerAlive="+owner.isAlive()+", ownerShift="+owner.isShiftKeyDown()
+            +", sceneUntil="+scene.until()+", activeA="+HomeTogetherScenes.active(a,scene)+", activeB="+HomeTogetherScenes.active(b,scene)
+            +", a="+a.getUUID()+"/"+a.activity()+"/"+a.position()+"/seat="+a.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(scene.seats().get(a.getUUID())))
+            +", b="+b.getUUID()+"/"+b.activity()+"/"+b.position()+"/seat="+b.distanceToSqr(net.minecraft.world.phys.Vec3.atBottomCenterOf(scene.seats().get(b.getUUID())))
+            +", score="+ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())+", progress="+ledger.progress(owner.getUUID(),a.getUUID(),b.getUUID())+'}';
+    }
     @GameTest(template="empty",batch="home_together",timeoutTicks=40)
     public static void togetherReservesSeparateCoveredPlacesForOwnFamily(GameTestHelper h) {
         var owner=testOwner(h);var family=togetherFamily(h,owner);var foreign=create(h,Kind.MARUSYA,UUID.randomUUID(),new BlockPos(5,2,5));foreign.bindHome(family.get(1).homeAnchor());
@@ -1001,9 +1009,9 @@ public class FamilyTests {
         b.setActivity(Activity.CURIOUS);FamilyFriendships.tickHome(a,scene);FamilyFriendships.tickHome(b,scene);
         h.assertTrue(ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==0,"Approaching cannot earn a point");
         for(var mob:java.util.List.of(a,b)){var seat=scene.seats().get(mob.getUUID());mob.moveTo(seat.getX()+.5,seat.getY(),seat.getZ()+.5,0,0);mob.setNoGravity(true);mob.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);}
-        h.onEachTick(()->{ga.tick();gb.tick();});int[] progress={-1};
+        String[] firstInactive={"none"};h.onEachTick(()->{if(firstInactive[0].equals("none")&&(!HomeTogetherScenes.active(a,scene)||!HomeTogetherScenes.active(b,scene)))firstInactive[0]="time="+h.getLevel().getGameTime()+", "+togetherFriendshipState(h,owner,a,b,scene,ledger);ga.tick();gb.tick();});int[] progress={-1};
         h.runAfterDelay(45,()->{
-            h.assertTrue(a.activity()==Activity.SIT && b.activity()==Activity.SIT && ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==1,"Real goal ticks must finish seeded minute once for simultaneous sitting");
+            h.assertTrue(a.activity()==Activity.SIT && b.activity()==Activity.SIT && ledger.score(owner.getUUID(),a.getUUID(),b.getUUID())==1,"Real goal ticks must finish seeded minute once for simultaneous sitting; "+togetherFriendshipState(h,owner,a,b,scene,ledger)+", firstInactive="+firstInactive[0]);
             owner.setShiftKeyDown(true);ga.tick();gb.tick();progress[0]=ledger.progress(owner.getUUID(),a.getUUID(),b.getUUID());
         });
         h.runAfterDelay(80,()->{
@@ -1117,10 +1125,16 @@ public class FamilyTests {
         var mob=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));
         mob.moveTo(origin.getX()+24.5,origin.getY(),origin.getZ()+.5,0,0);mob.setOnGround(true);return mob;
     }
+    private static String catchUpState(Companion mob,net.minecraft.server.level.ServerPlayer owner) {
+        return " [owner="+owner.position()+", mob="+mob.position()+", ownerLoaded="+mob.level().hasChunkAt(owner.blockPosition())
+            +", mobLoaded="+mob.level().hasChunkAt(mob.blockPosition())+", ownerGround="+owner.onGround()
+            +", enabled="+DudunkaMod.FAMILY_CATCH_UP.get()+", eligible="+FamilyTravel.eligible(mob,owner)+", activity="+mob.activity()
+            +", destination="+FamilyTravel.destination(mob,owner)+", navigationDone="+mob.getNavigation().isDone()+"]";
+    }
     @GameTest(template="empty",timeoutTicks=40)
     public static void catchUpPreservesIdentityAndAvoidsOccupiedPlaces(GameTestHelper h) {
         var owner=testOwner(h);var mob=travelFixture(h,owner);var before=new CompoundTag();mob.addAdditionalSaveData(before);var id=mob.getUUID();
-        var destination=FamilyTravel.destination(mob,owner);h.assertTrue(destination!=null && FamilyTravel.safeDestination(mob,destination),"Fixture must provide a safe loaded landing");
+        var destination=FamilyTravel.destination(mob,owner);h.assertTrue(destination!=null && FamilyTravel.safeDestination(mob,destination),"Fixture must provide a safe loaded landing"+catchUpState(mob,owner));
         var occupant=create(h,Kind.MARUSYA,UUID.randomUUID(),h.relativePos(destination));
         h.assertTrue(!FamilyTravel.safeDestination(mob,destination),"A living entity must reserve its physical landing space");
         h.assertTrue(FamilyTravel.teleportNearOwner(mob,owner),"Another free nearby place must permit catch-up");
@@ -1142,7 +1156,21 @@ public class FamilyTests {
         h.getLevel().setBlock(safe.below(),Blocks.MAGMA_BLOCK.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Magma floor must be rejected");
         h.getLevel().setBlock(safe.below(),Blocks.STONE.defaultBlockState(),3);h.getLevel().setBlock(safe,Blocks.SWEET_BERRY_BUSH.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Damaging plant must be rejected");
         h.getLevel().setBlock(safe,Blocks.AIR.defaultBlockState(),3);h.getLevel().setBlock(safe.above(),Blocks.WATER.defaultBlockState(),3);h.assertTrue(!FamilyTravel.safeDestination(mob,safe),"Water/head fluid must be rejected");
-        boolean setting=DudunkaMod.FAMILY_CATCH_UP.get();try{DudunkaMod.FAMILY_CATCH_UP.set(false);h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner),"World configuration must disable catch-up");}finally{DudunkaMod.FAMILY_CATCH_UP.set(setting);}
+        // Forge's server config autosaves and is reloaded by a watcher thread. Toggling
+        // the live file can race its reload and leave later tests with catch-up disabled.
+        var config=net.minecraftforge.fml.config.ConfigTracker.INSTANCE.configSets()
+            .get(net.minecraftforge.fml.config.ModConfig.Type.SERVER).stream()
+            .filter(c->c.getSpec()==DudunkaMod.CONFIG).findFirst().orElseThrow().getConfigData();
+        boolean setting=DudunkaMod.FAMILY_CATCH_UP.get();
+        DudunkaMod.CONFIG.acceptConfig(com.electronwill.nightconfig.core.CommentedConfig.copy(config));
+        try {
+            DudunkaMod.FAMILY_CATCH_UP.set(false);
+            DudunkaMod.CONFIG.afterReload(); // Exercise the watcher's cache-invalidation path.
+            h.assertTrue(!FamilyTravel.teleportNearOwner(mob,owner),"World configuration must disable catch-up");
+            h.assertTrue(config.<Boolean>get(DudunkaMod.FAMILY_CATCH_UP.getPath())==setting,
+                "Disabled-config check must leave the live file-backed setting unchanged");
+        } finally { DudunkaMod.CONFIG.acceptConfig(config); }
+        h.assertTrue(DudunkaMod.FAMILY_CATCH_UP.get()==setting,"Live catch-up setting restored after the transient check");
         owner.discard();stranger.discard();h.succeed();
     }
     @GameTest(template="empty",timeoutTicks=210)
@@ -1152,7 +1180,7 @@ public class FamilyTests {
         h.onEachTick(goal::tick);
         h.runAfterDelay(100,()->h.assertTrue(mob.distanceToSqr(owner)>=144,"Unreachable gap must not be crossed before six seconds"));
         h.runAfterDelay(165,()->{
-            h.assertTrue(mob.distanceToSqr(owner)<36,"Actual goal ticks must catch up over the unreachable gap");
+            h.assertTrue(mob.distanceToSqr(owner)<36,"Actual goal ticks must catch up over the unreachable gap"+catchUpState(mob,owner));
             goal.stop();owner.discard();h.succeed();
         });
     }

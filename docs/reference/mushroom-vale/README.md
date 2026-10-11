@@ -14,6 +14,6 @@ These images were approved as ART DIRECTION, not as production-ready Minecraft m
 - `pufik.png`: primary Stage 3.1 reference for Pufik's original voxel model, pixel-art colors, turnaround and expressions.
 - `wise_fly_agaric.png`: Wise Fly Agaric's approved character concept.
 - `friendly_spider.png`: approved cute spider design inspired by the user-provided original; no hostile mechanics implied.
-- `creatures_and_props.png`: broader direction for fireflies, fluffy jumpers and related whimsical assets; verify specific designs with the owner when modeling.
+- `creatures_and_props.png`: broader direction for fireflies, fluffy jumpers and related whimsical assets; Stage 3.2 uses its firefly panel for the requested tiny gold/turquoise/violet voxel inhabitant. Original model/atlases are created separately; fluffy jumpers remain future work.
 
 Keep existing world saves and IDs stable. Existing Stage 2.2–2.4 source changes may be uncommitted: inspect `git status` before editing. No commit or push without explicit approval.
