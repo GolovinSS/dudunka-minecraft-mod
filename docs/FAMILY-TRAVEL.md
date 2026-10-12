@@ -12,4 +12,66 @@
 
 Настройка мира `familyCatchUp = true` в `dudunka-server.toml`; установите `false`, чтобы запретить перемещение. Обычное следование сохраняется. Чанки не загружаются принудительно, билетов нет.
 
-Это локальное догоняние уже загруженного персонажа. Восстановления выгруженной/исчезнувшей семьи, перехода за хозяином через портал, вызова из другого измерения и восстановления потерянной переноски нет. Сюсю по-прежнему можно перевезти переноской. В полном BMC4 нужны проверки длительного путешествия, лестниц, леса, воды, границ чанков и сторонних опасных блоков.
+Это локальное догоняние уже загруженного персонажа. Оно не переносит через измерения. Отдельный явный семейный переход Stage 4.0 описан ниже; возврат через альбом описан в FAMILY-RECOVERY.md. Сюсю по-прежнему можно перевезти переноской. В полном BMC4 нужны проверки длительного путешествия, лестниц, леса, воды, границ чанков и сторонних опасных блоков.
+
+## Stage 4.0: explicit family journeys
+
+`FamilyJourney` coordinates awakened-gateway entry, physical return and
+`/dudunka return_family`. The ritual is unchanged. Nearby means within 8 blocks
+of the gateway centre (command: player block centre). Select exactly one owned,
+live, loaded, adult FOLLOW companion of each Kind; reject duplicate candidates,
+noncanonical UUIDs, conflicting registry owner/Kind, carried state, leashes,
+mounts/passengers, fire, fluids, unsafe ground and active portal poses. A pending
+album recovery blocks group travel. Temporary Marusya follow pauses do not change
+her permanent FOLLOW mode or prevent an explicitly requested journey.
+
+Shift + right-click explicitly selects solo travel. With no owned candidates
+nearby the gate retains implicit solo behavior; a partial/ineligible family
+blocks ordinary clicks. `/dudunka return` and developer entry/return stay solo.
+The family command requires all three even while sneaking.
+
+The existing MushroomVale destination/bookmark code is shared with solo travel.
+Explicit travel can normally load its single target chunk, as before; companion
+planning never scans or loads adjacent chunks. A loaded `FULL` chunk is enough for
+block inspection, but native companion transfer requires `ENTITY_TICKING`. On a
+cold target, the family stays at the source while a bounded temporary region
+ticket prepares the selected arrival chunk; the request times out after 200 ticks
+or cancels if the player moves or changes dimension.
+The ticket is removed on completion, cancellation or timeout. No ticket is saved
+as a persistent forced chunk. All four separate boxes
+must fit within that chunk, with loaded hazard halos, border, collision, solid
+floor and native/mod-reported hazards checked. Companion placement searches at
+most radius 4 and Y offsets 0, ±1, ±2 around the player landing. For each
+companion column, placement checks the loaded `MOTION_BLOCKING_NO_LEAVES`
+surface and a fixed five-height neighborhood, still within radius 4 and the same
+arrival chunk. This handles uneven terrain without scanning or loading more chunks.
+Non-colliding vegetation and leaves in the safety halo are allowed; tagged hazards,
+fluids, unsafe floors, intersecting mod path hazards, collision, and occupied space
+remain rejected. Candidate failures log one bounded summary per rejected member,
+with reason counts and at most four position samples. No terrain edits, offline NBT
+recreation or automatic cross-dimensional following.
+
+Plan in server thread → revalidate → cancel transient goals/scenes/navigation →
+transfer Dudunka, Marusya, Syusya using native Entity.teleportTo → verify UUID and
+registry after each → revalidate all arrivals → transfer player last. Reentrant
+journeys for the same owner are denied. Native Forge travel vetoes remain active
+for forward and rollback transfers. Home/furniture assignments and permanent modes
+are retained; normal transient cleanup/cooldowns are not byte-for-byte NBT invariants.
+
+On a normal failure, inspect the three planned UUIDs and attempt rollback in reverse
+order, at most once each, to their exact recorded source positions/rotations.
+No retry loop and no forced rollback through a veto or unsafe/occupied source.
+A player redirected by a listener gets one safe rollback attempt too. Successful
+rollback yields DENIED; incomplete rollback yields ROLLBACK_FAILED, logs owner/UUID
+and sends private recovery feedback, observing surviving live instances immediately
+in FamilyRegistry for existing album recovery. Never spawn a replacement. The
+previous bookmark is untouched on all failed group operations; success writes entry
+bookmark or consumes return bookmark only after the entire move is confirmed.
+
+No persistent transition journal is introduced. JVM death between native entity
+transfers, player save and SavedData writes can leave split dimensions or stale
+bookmarks/index. Vanilla dimension-transfer save ordering is not proven crash atomic;
+use backups and existing live-entity recovery after restart. Registry observation is
+marked dirty, not synchronously flushed. Failure feedback/logs cover live-server
+rollback failure, not guaranteed delivery through a crash. Real restart and BMC4
+acceptance remain separate from in-memory NBT round trips.

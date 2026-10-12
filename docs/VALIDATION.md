@@ -208,3 +208,10 @@ spawning. Final build/verifiers passed and the full suite passed **217/217**,
 with **0 failures**. Exact automated results, preserved local work, changed files and
 pending manual Minecraft/BMC4 acceptance are recorded in
 [Stage 3.5 validation](VALIDATION-MUSHROOM-VALE-STAGE-3.5.md).
+
+## Stage 4.0 — Family Journey (2026-10-12)
+
+[Current implementation and validation report](VALIDATION-FAMILY-JOURNEY-STAGE-4.0.md):
+explicit safe family gateway entry/return, solo compatibility and bounded rollback.
+Prior historical reports above remain unchanged. Graphical Minecraft, real
+multiplayer, old-world restart and full BMC4 acceptance are separate statuses.

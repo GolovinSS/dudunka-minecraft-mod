@@ -456,5 +456,15 @@
   "mystery.dudunka.direction.s": "south",
   "mystery.dudunka.direction.sw": "southwest",
   "mystery.dudunka.direction.w": "west",
-  "mystery.dudunka.direction.nw": "northwest"
+  "mystery.dudunka.direction.nw": "northwest",
+  "message.dudunka.journey.missing": "%s is missing. Gather all three of your companions within 8 blocks.",
+  "message.dudunka.journey.duplicate": "More than one candidate or conflicting identity for %s. Separate the families and try again.",
+  "message.dudunka.journey.carried": "Release %s from the carrier before family travel.",
+  "message.dudunka.journey.young": "%s must be an adult for family travel.",
+  "message.dudunka.journey.follow": "Ask %s to follow before family travel.",
+  "message.dudunka.journey.unsafe": "%s needs safe dry ground, without a leash, passengers or a conflicting activity.",
+  "message.dudunka.journey.recover": "Family rollback could not finish for %s. Use album recovery; the return bookmark was kept.",
+  "message.dudunka.gateway.travel.family_ineligible": "Family travel needs all three eligible companions. Shift + right-click selects solo travel.",
+  "message.dudunka.gateway.travel.rollback_failed": "The family move failed and rollback was incomplete. Check the album recovery list.",
+  "message.dudunka.gateway.travel.preparing": "Preparing the arrival area for your family. Stay here for a moment."
 }

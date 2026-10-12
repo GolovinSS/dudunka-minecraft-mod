@@ -142,6 +142,7 @@ public final class MysteryAdventureTests {
                     var saved=gate.saveWithFullMetadata();level.removeBlockEntity(root);
                     var restored=new FamilyGatewayEntity(root,level.getBlockState(root));restored.load(saved);level.setBlockEntity(restored);
                     h.assertTrue(restored.forgottenArch() && restored.awakened(f.owner.getUUID()) && !restored.awakened(stranger.getUUID()),"Chunk BE reload retains natural origin and private unlock");
+                    f.owner.setShiftKeyDown(true); // Preserve the original natural-arch solo regression.
                     restored.interact(f.owner);
                     h.assertTrue(f.owner.level()==arrival.vale && data.chapters(f.owner.getUUID())==5,"First successful journey unlocks the final illustrated chapter");
                     var exit=MushroomValeReturnGateway.find(arrival.vale);h.assertTrue(exit!=null,"Natural arch supplies the same physical return gateway");
@@ -227,7 +228,7 @@ public final class MysteryAdventureTests {
             try {
                 var data=MysteryAdventure.get(f.owner.server);
                 h.assertTrue(!gate.forgottenArch() && gate.awakened(f.owner.getUUID()) && data.chapters(f.owner.getUUID())==4,"Crafting remains a complete alternative to natural discovery");
-                arrival.unsafe();gate.interact(f.owner);
+                arrival.unsafe();f.owner.setShiftKeyDown(true);gate.interact(f.owner);
                 h.assertTrue(f.owner.level()==f.level && data.chapters(f.owner.getUUID())==4,"Unsafe arrival never awards First Journey");
                 h.succeed();
             } finally {arrival.close();f.close();}

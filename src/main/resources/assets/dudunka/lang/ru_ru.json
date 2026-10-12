@@ -456,5 +456,15 @@
   "mystery.dudunka.direction.s": "юг",
   "mystery.dudunka.direction.sw": "юго-запад",
   "mystery.dudunka.direction.w": "запад",
-  "mystery.dudunka.direction.nw": "северо-запад"
+  "mystery.dudunka.direction.nw": "северо-запад",
+  "message.dudunka.journey.missing": "Не хватает %s. Собери всех троих своих друзей в радиусе 8 блоков.",
+  "message.dudunka.journey.duplicate": "Для %s найдены неоднозначные кандидаты. Раздели семьи и попробуй снова.",
+  "message.dudunka.journey.carried": "Выпусти %s из переноски перед семейным путешествием.",
+  "message.dudunka.journey.young": "Для семейного путешествия %s должен быть взрослым.",
+  "message.dudunka.journey.follow": "Перед семейным путешествием попроси %s следовать за тобой.",
+  "message.dudunka.journey.unsafe": "Для %s нужно безопасное сухое место, без поводка, пассажиров и занятого ритуала.",
+  "message.dudunka.journey.recover": "Не удалось завершить возврат %s. Используй возврат через альбом; точка возвращения сохранена.",
+  "message.dudunka.gateway.travel.family_ineligible": "Для путешествия нужны все трое готовых друзей. Shift + ПКМ — путешествие одному.",
+  "message.dudunka.gateway.travel.rollback_failed": "Семейный переход не завершён, возврат неполный. Проверь список возврата в альбоме.",
+  "message.dudunka.gateway.travel.preparing": "Готовим место прибытия для семьи. Останься здесь ненадолго."
 }

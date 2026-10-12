@@ -1208,6 +1208,10 @@ their own family ritual. Removal/replacement of the gate clears that gate's acce
 
 ### Travel, return and existing saves
 
+Historical Stage 3.7 behavior in this section is superseded by
+[Stage 4.0](#stage-40-scope) for family travel; its old protocol number belongs
+to that historical stage. Current album protocol remains 10.
+
 A subsequent explicit interaction authorizes the awakened owner's player-only
 trip; family presence is no longer required. Collisions never trigger travel.
 The gateway and existing opt-in developer commands share `MushroomVale` travel
@@ -1235,8 +1239,10 @@ No terrain is manufactured or overwritten to force a successful trip.
 
 Activation, nearby entity checks and placement never load chunks. Explicit travel
 may normally load/generate its one destination chunk; return may check one saved
-chunk and one fallback spawn chunk. No force-loading, custom portal tickets or
-unbounded searches are introduced. Existing carrier, recovery, album, memories,
+chunk and one fallback spawn chunk. Cold Stage 4.0 family transfer uses a temporary
+region ticket while the selected destination reaches entity-ticking status; the
+ticket is released on completion, cancellation or timeout and is never persisted
+as forced. Searches remain bounded. Existing carrier, recovery, album, memories,
 inventory behavior and other dimensions retain their own established behavior.
 Companions are never transferred, cloned, reconstructed or respawned by the gate.
 
@@ -1404,3 +1410,10 @@ chapter count and typed optional locator result, plus a new explicit request.
 It is intentionally incompatible with protocol 9 clients; update server and all
 clients together. Historical Stage 3.7 reports correctly retain protocol 9 for
 that published source. The mod version/JAR release has not been incremented.
+
+## Stage 4.0 scope
+
+Safe explicit family entry/return is implemented separately from future Stage 4
+adventure work. See [Family portal](FAMILY-PORTAL.md), [transfer semantics](FAMILY-TRAVEL.md)
+and [validation](VALIDATION-FAMILY-JOURNEY-STAGE-4.0.md). The five Stage 3.8 album
+chapters, awakening ritual, protocol 10, worldgen and music remain unchanged.

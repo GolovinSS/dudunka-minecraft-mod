@@ -51,12 +51,14 @@ public final class FamilyGatewayTests {
         boolean closed;
         Fixture(GameTestHelper h) { this(h, false); }
         Fixture(GameTestHelper h, boolean elevatedDrySite) { this(h,elevatedDrySite,195); }
-        Fixture(GameTestHelper h, boolean elevatedDrySite,long cleanupTick) {
+        Fixture(GameTestHelper h, boolean elevatedDrySite,long cleanupTick) { this(h,elevatedDrySite,cleanupTick,false); }
+        Fixture(GameTestHelper h, boolean elevatedDrySite,long cleanupTick,boolean centeredChunk) {
             this.h = h; level = h.getLevel();
             var normalRoot = h.absolutePos(new BlockPos(8, 4, 8));
             // This opt-in site avoids fluids entering a long-running multiplayer
             // fixture through the generated terrain at the usual GameTest Y=-56.
-            root = elevatedDrySite ? new BlockPos(normalRoot.getX(), 160, normalRoot.getZ()) : normalRoot;
+            root = centeredChunk ? new BlockPos((normalRoot.getX() >> 4) * 16 + 8,160,(normalRoot.getZ() >> 4) * 16 + 8)
+                    : elevatedDrySite ? new BlockPos(normalRoot.getX(), 160, normalRoot.getZ()) : normalRoot;
             for (var p : BlockPos.betweenClosed(root.offset(-5, -1, -5), root.offset(5, 4, 5))) {
                 blocks.put(p.immutable(), level.getBlockState(p));
                 level.setBlock(p, p.getY() == root.getY() - 1 ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(), 18);
@@ -137,7 +139,10 @@ public final class FamilyGatewayTests {
         @Override public void close() {
             if (closed) return; closed = true;
             if (gateway() != null) gateway().cancel();
-            friends.forEach(Entity::discard);
+            for (var friend : friends) for (var world : owner.server.getAllLevels()) {
+                var actual = world.getEntity(friend.getUUID());
+                if (actual instanceof Companion) actual.discard();
+            }
             level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,new AABB(root).inflate(6),
                     item->item.getItem().is(DudunkaMod.FAMILY_GATEWAY_ITEM.get())).forEach(Entity::discard);
             for (var player : players) {
@@ -285,7 +290,17 @@ public final class FamilyGatewayTests {
 
     @GameTest(template="empty", timeoutTicks=200, batch="isolated_gateway_duplicates")
     public static void gatewayRejectsDuplicateKindsAndUuids(GameTestHelper h) {
-        try (var f = new Fixture(h)) {
+        var f=new Fixture(h);
+        var vale=f.owner.server.getLevel(MushroomVale.LEVEL);
+        var forced=new ArrayList<net.minecraft.world.level.ChunkPos>();
+        final Companion[] duplicate={null};
+        Runnable cleanup=()->{
+            if(duplicate[0]!=null)duplicate[0].discard();
+            forced.forEach(chunk->vale.setChunkForced(chunk.x,chunk.z,false));
+            f.close();
+        };
+        h.runAtTickTime(195,cleanup);
+        try {
             f.place(); var family=f.family(f.owner,true);
             var repeated=new ArrayList<>(family); repeated.add(family.get(0));
             h.assertTrue(!FamilyGatewayRules.evaluate(f.level,f.root,f.owner.getUUID(),repeated).ready(), "Same UUID cannot count twice");
@@ -295,24 +310,29 @@ public final class FamilyGatewayTests {
             var impostors=new ArrayList<>(family); impostors.set(0,detached);
             h.assertTrue(!FamilyGatewayRules.evaluate(f.level,f.root,f.owner.getUUID(),impostors).ready(),
                     "Unloaded duplicate NBT cannot impersonate the canonical live entity");
-            var vale=f.owner.server.getLevel(MushroomVale.LEVEL); vale.getChunk(0,0);
-            var duplicate=DudunkaMod.TYPES.get(Kind.SYUSYA).get().create(vale);
-            duplicate.setUUID(family.get(2).getUUID()); duplicate.moveTo(8,100,8,0,0); duplicate.setNoAi(true);
-            // Entity insertion itself can reject duplicate UUIDs (including via Forge).
-            // The portal cannot be expected to inspect a duplicate the engine refused.
-            boolean inserted = vale.addFreshEntity(duplicate);
-            try {
-                if (inserted) {
-                    f.missing("duplicate");
-                } else {
-                    h.assertTrue(vale.getEntity(duplicate.getUUID()) == null,
-                            "Rejected cross-level fixture must not leave a duplicate entity");
-                }
-            } finally { duplicate.discard(); }
-            h.assertTrue(FamilyGatewayRules.inspect(f.level,f.root,f.owner.getUUID()).ready(),
-                    "No live duplicate restores ordinary eligibility");
-        }
-        h.succeed();
+            // Test-only visibility setup: insertion alone does not guarantee that
+            // a cross-level fixture is in the loaded entity lookup yet.
+            for(int x=-1;x<=1;x++)for(int z=-1;z<=1;z++) {
+                vale.getChunk(x,z);var chunk=new net.minecraft.world.level.ChunkPos(x,z);
+                if(!vale.getForcedChunks().contains(chunk.toLong())){forced.add(chunk);vale.setChunkForced(x,z,true);}
+            }
+            duplicate[0]=DudunkaMod.TYPES.get(Kind.SYUSYA).get().create(vale);
+            duplicate[0].setUUID(family.get(2).getUUID()); duplicate[0].moveTo(8,100,8,0,0); duplicate[0].setNoAi(true);
+            boolean inserted=vale.addFreshEntity(duplicate[0]);
+            if(!inserted) {
+                h.assertTrue(vale.getEntity(duplicate[0].getUUID())==null,"Rejected cross-level fixture leaves no duplicate");
+                cleanup.run();h.succeed();return;
+            }
+            h.startSequence().thenWaitUntil(()->h.assertTrue(vale.getEntity(duplicate[0].getUUID())==duplicate[0],
+                    "Inserted cross-level duplicate must be visible before portal inspection"))
+                    .thenExecute(()->{
+                        try {
+                            f.missing("duplicate");duplicate[0].discard();
+                            h.assertTrue(FamilyGatewayRules.inspect(f.level,f.root,f.owner.getUUID()).ready(),
+                                    "No live duplicate restores ordinary eligibility");
+                        } finally {cleanup.run();}
+                    }).thenSucceed();
+        } catch(RuntimeException | Error failure) {cleanup.run();throw failure;}
     }
 
     @GameTest(template="empty", timeoutTicks=200, batch="isolated_gateway_awaken")
@@ -531,12 +551,12 @@ public final class FamilyGatewayTests {
     }
 
     @GameTest(template="empty", timeoutTicks=200, batch="isolated_gateway_round_trip")
-    public static void gatewayExplicitEntryReturnAndSavedDimensionKeepCompanionIdentities(GameTestHelper h) {
+    public static void gatewayExplicitSoloEntryReturnAndSavedDimensionKeepCompanionIdentities(GameTestHelper h) {
         var f=new Fixture(h); f.place(); var family=f.family(f.owner,true); f.homes(family); f.gateway().interact(f.owner);
         f.finish(()->{
             try(var arrival=new Arrival(f.owner)) {
                 var before=new HashMap<UUID,CompoundTag>();for(var mob:family)before.put(mob.getUUID(),mob.saveWithoutId(new CompoundTag()));
-                var departure=f.owner.blockPosition(); f.gateway().interact(f.owner);
+                var departure=f.owner.blockPosition(); f.owner.setShiftKeyDown(true); f.gateway().interact(f.owner);
                 h.assertTrue(f.owner.serverLevel()==arrival.vale && MushroomVale.safeLanding(arrival.vale,f.owner.blockPosition(),f.owner),
                         "A second deliberate interaction enters safely");
                 var savedPlayer=f.owner.saveWithoutId(new CompoundTag());
@@ -569,7 +589,7 @@ public final class FamilyGatewayTests {
             try(var arrival=new Arrival(f.owner)) {
                 var returns=MushroomValeReturns.get(f.owner.server);
                 var previous=new MushroomValeReturns.ReturnPoint(Level.NETHER.location(),new BlockPos(8,70,8),10,5);
-                returns.remember(f.owner.getUUID(),previous); var position=f.owner.position();
+                returns.remember(f.owner.getUUID(),previous); var position=f.owner.position(); f.owner.setShiftKeyDown(true);
                 Consumer<EntityTravelToDimensionEvent> veto=event->{if(event.getEntity()==f.owner)event.setCanceled(true);};
                 MinecraftForge.EVENT_BUS.addListener(veto);
                 try {
@@ -635,7 +655,7 @@ public final class FamilyGatewayTests {
         h.succeed();
     }
 
-    private static void clickReturn(ServerPlayer player, BlockPos root) {
+    static void clickReturn(ServerPlayer player, BlockPos root) {
         var pos=FamilyGatewayBlock.cell(root,7); // The visible veil is selectable even though it has no collision.
         var level=player.serverLevel(); var state=level.getBlockState(pos);
         state.getBlock().use(state,level,pos,player,InteractionHand.MAIN_HAND,
@@ -689,7 +709,7 @@ public final class FamilyGatewayTests {
     }
 
     /** Focused travel fixtures start from a valid, previously persisted owner unlock. */
-    private static void savedUnlock(Fixture f) {
+    static void savedUnlock(Fixture f) {
         f.h.assertTrue(f.place()==InteractionResult.CONSUME,"Departure gateway is placed normally");
         var tag=f.gateway().saveWithFullMetadata(); var owners=new ListTag(); var owner=new CompoundTag();
         owner.putUUID("Owner",f.owner.getUUID()); owners.add(owner); tag.put("AwakenedOwners",owners);
@@ -697,13 +717,14 @@ public final class FamilyGatewayTests {
     }
 
     @GameTest(template="empty", timeoutTicks=200, batch="isolated_gateway_physical_round_trip")
-    public static void returnGatewaySupportsRepeatedPhysicalRoundTripsWithoutMovingFamily(GameTestHelper h) {
-        var f=new Fixture(h); f.place(); var family=f.family(f.owner,true); f.homes(family); f.gateway().interact(f.owner);
+    public static void returnGatewaySupportsRepeatedExplicitSoloRoundTripsWithoutMovingFamily(GameTestHelper h) {
+        // Exact-return assertions need an interior departure, independent of suite layout.
+        var f=new Fixture(h,true,195,true); f.place(); var family=f.family(f.owner,true); f.homes(family); f.gateway().interact(f.owner);
         f.finish(()->{
             try(var arrival=new Arrival(f.owner)) {
                 var snapshots=new HashMap<UUID,CompoundTag>();
                 family.forEach(mob->snapshots.put(mob.getUUID(),mob.saveWithoutId(new CompoundTag())));
-                var departure=f.owner.blockPosition(); f.gateway().interact(f.owner);
+                var departure=f.owner.blockPosition(); f.owner.setShiftKeyDown(true); f.gateway().interact(f.owner);
                 var root=MushroomValeReturnGateway.find(arrival.vale);
                 h.assertTrue(root!=null && returnGateCount(arrival.vale)==1 && root.distSqr(f.owner.blockPosition())<=81,
                         "Successful family gateway entry provides one nearby persistent return gateway");

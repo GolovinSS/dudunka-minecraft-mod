@@ -1,7 +1,11 @@
 package io.github.golovinss.dudunka;
 
 import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -48,31 +52,60 @@ public final class MushroomValeReturnGateway {
         if (!level.dimension().equals(MushroomVale.LEVEL)
                 || !new ChunkPos(player.blockPosition()).equals(ARRIVAL_CHUNK)) return null;
         var chunk = level.getChunkSource().getChunkNow(ARRIVAL_CHUNK.x, ARRIVAL_CHUNK.z);
-        if (chunk == null) return null;
+        if (chunk == null) {
+            LogUtils.getLogger().warn("Return gateway unavailable: owner={}, reason=arrival chunk not FULL", player.getUUID());
+            return null;
+        }
         var existing = find(level);
         if (existing != null) return existing;
         // Do not create a second frame beside an incomplete saved gate. The command remains available.
-        if (!roots(chunk).isEmpty()) return null;
+        if (!roots(chunk).isEmpty()) {
+            LogUtils.getLogger().warn("Return gateway unavailable: owner={}, reason=incomplete existing frame", player.getUUID());
+            return null;
+        }
         var anchor = player.blockPosition();
+        var rejected = new LinkedHashMap<String, Integer>();
+        var samples = new ArrayList<String>();
+        int examined = 0;
         // Search only the already-loaded arrival chunk. Terrain can fall several blocks
         // between the player's landing ridge and the nearest level frame site.
         for (int radius = 0; radius <= 15; radius++)
             for (int dx = -radius; dx <= radius; dx++) for (int dz = -radius; dz <= radius; dz++) {
                 if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
                 var column = anchor.offset(dx, 0, dz);
-                if (!interior(column)) continue;
+                if (!interior(column)) { reject(rejected, samples, column, "chunk edge clearance"); examined++; continue; }
                 int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         column.getX(), column.getZ());
                 BlockPos root = column.atY(surfaceY);
                 // Reserve the whole frame, surrounding clearance and both approach lanes inside this chunk.
-                if (!interior(root.offset(-1, 0, -2)) || !interior(root.offset(1, 0, 2))) continue;
-                if (!FamilyGatewayItem.canPlaceReturnStructure(level, root, player)
-                        || !MushroomVale.safeLanding(level, root, player)
-                        || landing(level, root, player) == null) continue;
+                examined++;
+                if (!interior(root.offset(-1, 0, -2)) || !interior(root.offset(1, 0, 2))) {
+                    reject(rejected, samples, root, "frame/approach crosses chunk edge"); continue;
+                }
+                if (!FamilyGatewayItem.canPlaceReturnStructure(level, root, player)) {
+                    reject(rejected, samples, root, "frame clearance or placement protection"); continue;
+                }
+                if (!MushroomVale.safeLanding(level, root, player)) {
+                    reject(rejected, samples, root, "unsafe frame approach"); continue;
+                }
+                if (landing(level, root, player) == null) {
+                    reject(rejected, samples, root, "no safe approach lane"); continue;
+                }
                 // A protection veto ends this attempt, rather than probing more territory with placement events.
-                return FamilyGatewayItem.placeStructure(level, root, player, true) ? root : null;
+                if (FamilyGatewayItem.placeStructure(level, root, player, true)) return root;
+                reject(rejected, samples, root, "placement event veto or block write failure");
+                LogUtils.getLogger().warn("Return gateway placement failed: owner={}, examined={}, rejected={}, samples={}",
+                        player.getUUID(), examined, rejected, samples);
+                return null;
             }
+        LogUtils.getLogger().warn("Return gateway site unavailable: owner={}, examined={}, rejected={}, samples={}",
+                player.getUUID(), examined, rejected, samples);
         return null;
+    }
+
+    private static void reject(Map<String, Integer> counts, List<String> samples, BlockPos pos, String reason) {
+        counts.merge(reason, 1, Integer::sum);
+        if (samples.size() < 4) samples.add(pos.toShortString() + "=" + reason);
     }
 
     private static boolean interior(BlockPos pos) {

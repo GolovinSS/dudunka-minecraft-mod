@@ -5,11 +5,14 @@ set -Eeuo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 MODE="${1:-all}"
+TEST_SCOPE=full
+if [[ "${DUDUNKA_TEST_JOURNEY:-0}" == 1 ]]; then TEST_SCOPE=family-journey; fi
 case "$MODE" in
   build|gametest|all) ;;
   -h|--help|help)
     printf 'Usage: ./tools/test.sh [build|gametest|all]\n'
     printf 'Default: all. DUDUNKA_TEST_ONLINE=1 disables Gradle --offline.\n'
+    printf 'DUDUNKA_TEST_JOURNEY=1 selects the Stage 4.0 focused GameTests.\n'
     exit 0 ;;
   *) printf 'Unknown mode: %s\n' "$MODE" >&2; exit 2 ;;
 esac
@@ -65,6 +68,10 @@ DIRTY="$( (git status --porcelain 2>/dev/null || true) | wc -l | tr -d ' ')"
 
 INIT="$REPORT_DIR/fresh-world.gradle"
 cat >"$INIT" <<'GROOVY'
+allprojects { afterEvaluate {
+    if (System.getenv('DUDUNKA_TEST_JOURNEY') == '1')
+        minecraft.runs.gameTestServer.property 'forge.enabledGameTestNamespaces', 'dudunka_journey'
+} }
 gradle.taskGraph.whenReady { graph ->
     def task = graph.allTasks.find { it.name == 'runGameTestServer' }
     if (task == null) throw new GradleException('runGameTestServer was not found')
@@ -101,8 +108,8 @@ run_phase() {
   fi
 }
 
-printf 'Dudunka local validation | %s | JDK: %s | HEAD: %s | dirty entries: %s\n' \
-  "$MODE" "$JAVA_VERSION" "$HEAD" "$DIRTY"
+printf 'Dudunka local validation | %s | scope: %s | JDK: %s | HEAD: %s | dirty entries: %s\n' \
+  "$MODE" "$TEST_SCOPE" "$JAVA_VERSION" "$HEAD" "$DIRTY"
 
 if [[ "$MODE" == build || "$MODE" == all ]]; then
   if run_phase 'BUILD' "$REPORT_DIR/build.log" \
@@ -137,6 +144,7 @@ fi
 {
   printf 'run_id=%s\nmode=%s\ngit_head=%s\ngit_dirty_entries=%s\njava=%s\n' \
     "$RUN_ID" "$MODE" "$HEAD" "$DIRTY" "$JAVA_VERSION"
+  printf 'scope=%s\n' "$TEST_SCOPE"
   printf 'build=%s\ngametest=%s\n' "$BUILD_STATUS" "$GAME_STATUS"
   printf 'report=%s\n' "$REPORT_DIR"
   if [[ "$MODE" != build ]]; then printf 'fresh_world=%s\ntest_seed=%s\n' "$WORLD_DIR" "${DUDUNKA_TEST_SEED:--255494441983840131}"; fi

@@ -36,12 +36,12 @@ public final class FamilyGatewayEntity extends BlockEntity {
         }
         // In Vale the same persistent structure is a shared exit, with no owner or ritual requirement.
         if (world.dimension().equals(MushroomVale.LEVEL)) {
-            MushroomVale.tell(player, MushroomVale.returnPlayer(player)); return;
+            MushroomVale.tell(player, FamilyJourney.travel(player, worldPosition, true, false)); return;
         }
         if (!world.dimension().equals(Level.OVERWORLD)) { tell(player, "broken"); return; }
         if (awakened(player.getUUID())) {
             MysteryAdventure.get(player.server).unlockThrough(player.getUUID(),4);
-            var result = MushroomVale.enterPlayer(player);
+            var result = FamilyJourney.travel(player, worldPosition, false, false);
             MushroomVale.tell(player, result);
             if (result == MushroomVale.TravelResult.ENTERED)
                 tell(player, MushroomValeReturnGateway.ensure(player) == null ? "return_unavailable" : "return_ready");

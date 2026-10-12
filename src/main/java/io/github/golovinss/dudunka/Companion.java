@@ -269,6 +269,12 @@ public class Companion extends PathfinderMob {
         if(p!=null){teleportTo(p.getX()+.5,p.getY(),p.getZ()+.5);fallDistance=0;}
     }
 
+    /** Stop transient goals without rebinding homes/furniture or changing permanent modes. */
+    void prepareJourney(){
+        goalSelector.getRunningGoals().forEach(net.minecraft.world.entity.ai.goal.WrappedGoal::stop);
+        targetSelector.getRunningGoals().forEach(net.minecraft.world.entity.ai.goal.WrappedGoal::stop);
+        prepareRecovery();
+    }
     public void prepareRecovery(){WalkScenes.cancel(this);HomeAtmosphereScenes.cancel(this);getNavigation().stop();pettingTicks=0;openedChest=null;homeSceneTarget=null;homecoming.reset();homeWelcomeRunning=false;pauseHomeScenes();setActivity(Activity.IDLE);setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);fallDistance=0;}
     @Override public void remove(net.minecraft.world.entity.Entity.RemovalReason reason){
         if(level() instanceof ServerLevel server && owner!=null){

@@ -28,3 +28,15 @@
 Результат содержит серверный код причины и оставшуюся паузу в пределах 0–10 секунд. Различаются неподходящее положение хозяина, небезопасное/тесное место, поводок/транспорт, отсутствующее измерение, таймаут поиска, уже выполняющийся поиск, отсутствие backup, имеющийся действующий предмет и полный инвентарь. Неавторизованные запросы не раскрывают частные данные. Неудачный поиск сообщает только «не найден в последнем известном месте», а не смерть/удаление. Успех переноса и восстановления переноски имеют отдельные ответы.
 
 Пауза поиска отображается обратным отсчетом на клиенте; сервер остается источником разрешения, при лаге клиентская оценка может закончиться раньше. Все ограничения, лимиты поиска, снятие transient tickets и ротация билетов 0.19 сохранены. Протокол альбома 5 требует одновременного обновления сервера и клиентов.
+
+## Stage 4.0 journey failure recovery
+
+Physical family gateways use `FamilyJourney`; album recovery remains a separate
+explicit operation and retains its existing tickets, cooldowns and carrier ledger.
+Journeys reject a pending recovery for that owner. After an incomplete journey
+rollback, private chat and server logs identify the affected UUID; the registry is
+updated from surviving canonical live entities in their actual dimensions. Use
+album recovery for the separated member, then gather the three FOLLOW adults again.
+No journey recreates a companion from backup NBT. Emergency `/dudunka return` stays
+solo and never waits for the family. Crash/restart consistency is not guaranteed;
+see [travel semantics](FAMILY-TRAVEL.md#stage-40-explicit-family-journeys).

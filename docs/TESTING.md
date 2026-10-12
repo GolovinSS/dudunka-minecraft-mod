@@ -2127,3 +2127,51 @@ of an existing BMC4 v55.5 save:
 
 No Stage 3.8 commit/push or JAR release is authorized by this checklist. Music
 restoration remains outside Stage 3.8.
+
+## Stage 4.0 family journey
+
+Automated commands (JDK 17, fresh worlds and retained logs through the normal wrapper):
+
+```bash
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 DUDUNKA_TEST_JOURNEY=1 ./tools/test.sh gametest
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./tools/test.sh all
+```
+
+`DUDUNKA_TEST_JOURNEY=1` selects only the `dudunka_journey` test namespace;
+normal runs include both it and all existing `dudunka` regressions. This setting
+must be unset for full verification. Results: [Stage 4.0 validation](VALIDATION-FAMILY-JOURNEY-STAGE-4.0.md).
+
+Manual `runClient -PmushroomValeDev=true`, disposable world first:
+
+1. Prepare an ordinary placed gateway and a natural/previously awakened gateway
+   on a COPY of an old save. Confirm unchanged three-second adult/trust/friendship
+   awakening and the five existing album chapters. Never use developer preparation
+   on a player's existing family; it only prepares new disposable test companions.
+2. Gather exactly one owned adult of each kind in FOLLOW within 8 blocks of the
+   awakened gate. Right-click. Confirm four separate safe landings, names, trust,
+   ages, friendship and unchanged original home/furniture assignments in the album.
+   If the cold destination is still loading, stay beside the gateway while the
+   family journey prepares the arrival chunk and completes automatically. Return by physical
+   gateway with the full family. Repeat after save/quit/restart in each dimension.
+3. Break the physical return gate. Use `/dudunka return_family` with all three near
+   the player. Confirm safe group return and consumed bookmark. Test unsafe return
+   floor and then repair it: failed group return must retain the bookmark.
+4. Leave one friend away, switch WAIT/HOME, use a juvenile, carry Syusya, attach a
+   leash, mount a companion, add a second owned companion of the same kind, and
+   put a hazard/obstruction at departure or landing. Each ordinary click must
+   explain refusal and preserve identities/bookmark. Restore eligibility and retry.
+5. Shift + right-click with a partial/ineligible family: player only. With no nearby
+   companions ordinary click: player only. `/dudunka return`: always emergency
+   solo, including when every companion is absent or ineligible. Ensure no duplicate
+   entities remain in either dimension; use album recovery for separated friends.
+6. With a second real client/server player, awaken independently; cross and return
+   independently with each family, including simultaneous requests. Check private
+   messages, ownership and bookmarks. Test a server protection mod veto and inspect
+   rollback logs/recovery for vetoed backward travel on a disposable world.
+7. Repeat on BMC4 v55.5, a copied old server world, natural terrain/chunk boundaries,
+   modded hazards and protected destinations. Restart/reconnect with family in Vale,
+   at home and after an incomplete rollback. Crash interruption testing is separate;
+   keep backups and check for split state, never assume atomic travel across JVM death.
+
+Graphical client, real multiplayer, old-world restart, forced JVM crash and full BMC4
+acceptance must be recorded separately; automated PASS does not imply these passed.

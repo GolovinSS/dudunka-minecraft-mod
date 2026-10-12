@@ -19,11 +19,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/** Shared player-only travel safety and bookmarks for the gateway and opt-in developer route. */
+/** Shared travel safety and bookmarks for the gateway and opt-in developer route. */
 @Mod.EventBusSubscriber(modid = DudunkaMod.ID)
 public final class MushroomVale {
     public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(DudunkaMod.ID, "mushroom_vale");
@@ -41,6 +42,12 @@ public final class MushroomVale {
                 .then(Commands.literal("return").executes(context -> {
                     var player = context.getSource().getPlayerOrException();
                     var result = returnPlayer(player);
+                    tell(player, result);
+                    return result.success() ? 1 : 0;
+                }))
+                .then(Commands.literal("return_family").executes(context -> {
+                    var player = context.getSource().getPlayerOrException();
+                    var result = FamilyJourney.travel(player, player.blockPosition(), true, true);
                     tell(player, result);
                     return result.success() ? 1 : 0;
                 })));
@@ -69,8 +76,9 @@ public final class MushroomVale {
 
     public enum TravelResult {
         ENTERED, RETURNED, FALLBACK, PLAYER_UNSAFE, ALREADY_THERE, DEPARTURE_UNSAFE,
-        UNAVAILABLE, ARRIVAL_UNSAFE, DENIED, WRONG_DIMENSION, RETURN_UNSAFE;
-        public boolean success() { return this == ENTERED || this == RETURNED || this == FALLBACK; }
+        UNAVAILABLE, ARRIVAL_UNSAFE, DENIED, WRONG_DIMENSION, RETURN_UNSAFE, FAMILY_INELIGIBLE, ROLLBACK_FAILED,
+        PREPARING;
+        public boolean success() { return this == ENTERED || this == RETURNED || this == FALLBACK || this == PREPARING; }
         public Component message() { return Component.translatable("message.dudunka.gateway.travel." + name().toLowerCase(java.util.Locale.ROOT)); }
     }
 
@@ -90,7 +98,7 @@ public final class MushroomVale {
         if (event.getEntity() instanceof ServerPlayer player && player.level().dimension().equals(LEVEL)) returnHint(player);
     }
 
-    private static boolean canTravel(ServerPlayer player) {
+    static boolean canTravel(ServerPlayer player) {
         return player.isAlive() && !player.isSpectator() && !player.isSleeping() && !player.isPassenger() && !player.isVehicle();
     }
 
@@ -110,9 +118,14 @@ public final class MushroomVale {
 
     /** Caller authorizes entry (gateway owner or developer command). Only explicit travel loads a target chunk. */
     public static TravelResult enterPlayer(ServerPlayer player) {
+        if (FamilyJourney.busy(player)) return TravelResult.DENIED;
+        return enterPlayer(player, java.util.List.of(), player.blockPosition());
+    }
+
+    static TravelResult enterPlayer(ServerPlayer player, java.util.List<Companion> family, BlockPos anchor) {
         if (!canTravel(player)) return TravelResult.PLAYER_UNSAFE;
         if (player.level().dimension().equals(LEVEL)) return TravelResult.ALREADY_THERE;
-        if (!safeLanding(player.serverLevel(), player.blockPosition(), player)) return TravelResult.DEPARTURE_UNSAFE;
+        if (!safeLanding(player.serverLevel(), player.position(), player)) return TravelResult.DEPARTURE_UNSAFE;
         var destination = player.server.getLevel(LEVEL);
         if (destination == null) return TravelResult.UNAVAILABLE;
         // Prefer the existing return gate's clear approaches; never land on its roof.
@@ -122,18 +135,22 @@ public final class MushroomVale {
         if (pos == null) pos = surfaceLanding(destination, ENTRY, player);
         if (pos == null) return TravelResult.ARRIVAL_UNSAFE;
         var returns = MushroomValeReturns.get(player.server);
-        var previous = returns.point(player.getUUID());
-        returns.remember(player.getUUID(), new MushroomValeReturns.ReturnPoint(
-                player.level().dimension().location(), player.blockPosition().immutable(), player.getYRot(), player.getXRot()));
-        if (!move(player, destination, pos, player.getYRot(), player.getXRot())) {
-            if (previous == null) returns.forget(player.getUUID()); else returns.remember(player.getUUID(), previous);
-            return TravelResult.DENIED;
-        }
+        var bookmark = new MushroomValeReturns.ReturnPoint(
+                player.level().dimension().location(), player.blockPosition().immutable(), player.getYRot(), player.getXRot());
+        var moved = FamilyJourney.move(player, family, anchor, destination, pos, player.getYRot(), player.getXRot(),
+                family.isEmpty() ? null : () -> enterPlayer(player, family, anchor));
+        if (moved != TravelResult.ENTERED) return moved;
+        returns.remember(player.getUUID(), bookmark);
         MysteryAdventure.get(player.server).unlockThrough(player.getUUID(),5);
         return TravelResult.ENTERED;
     }
 
     public static TravelResult returnPlayer(ServerPlayer player) {
+        if (!FamilyJourney.cancelPending(player) && FamilyJourney.busy(player)) return TravelResult.DENIED;
+        return returnPlayer(player, java.util.List.of(), player.blockPosition());
+    }
+
+    static TravelResult returnPlayer(ServerPlayer player, java.util.List<Companion> family, BlockPos anchor) {
         if (!canTravel(player)) return TravelResult.PLAYER_UNSAFE;
         if (!player.level().dimension().equals(LEVEL)) return TravelResult.WRONG_DIMENSION;
         var returns = MushroomValeReturns.get(player.server);
@@ -146,14 +163,16 @@ public final class MushroomVale {
             pos = spawnLanding(destination, player);
         }
         if (pos == null) return TravelResult.RETURN_UNSAFE;
-        if (!move(player, destination, pos, point == null ? 0 : point.yaw(), point == null ? 0 : point.pitch())) return TravelResult.DENIED;
+        var moved = FamilyJourney.move(player, family, anchor, destination, pos, point == null ? 0 : point.yaw(), point == null ? 0 : point.pitch(),
+                family.isEmpty() ? null : () -> returnPlayer(player, family, anchor));
+        if (moved != TravelResult.ENTERED) return moved;
         returns.forget(player.getUUID());
         return fallback ? TravelResult.FALLBACK : TravelResult.RETURNED;
     }
 
-    private static boolean move(ServerPlayer player, ServerLevel destination, BlockPos pos, float yaw, float pitch) {
+    static boolean move(ServerPlayer player, ServerLevel destination, BlockPos pos, float yaw, float pitch) {
         player.teleportTo(destination, pos.getX() + .5, pos.getY(), pos.getZ() + .5, yaw, pitch);
-        if (player.serverLevel() != destination) return false; // Forge travel event may veto the transfer.
+        if (player.serverLevel() != destination || player.position().distanceToSqr(Vec3.atBottomCenterOf(pos)) > .01) return false; // Forge travel event may veto the transfer.
         player.setDeltaMovement(Vec3.ZERO);
         player.fallDistance = 0;
         return true;
@@ -197,22 +216,54 @@ public final class MushroomVale {
 
     /** Read-only, loaded-area landing check using the standing player size, even when crouching/flying. */
     public static boolean safeLanding(ServerLevel level, BlockPos pos, ServerPlayer player) {
-        if (pos.getY() <= level.getMinBuildHeight() || pos.getY() + 2 >= level.getMaxBuildHeight()) return false;
-        var box = player.getDimensions(Pose.STANDING).makeBoundingBox(pos.getX() + .5, pos.getY(), pos.getZ() + .5);
-        if (!level.getWorldBorder().isWithinBounds(box)) return false;
+        return safeLanding(level, pos, (net.minecraft.world.entity.Entity) player);
+    }
+
+    static net.minecraft.world.phys.AABB landingBox(net.minecraft.world.entity.Entity entity, BlockPos pos) {
+        return entity.getDimensions(Pose.STANDING).makeBoundingBox(pos.getX() + .5, pos.getY(), pos.getZ() + .5);
+    }
+
+    public static boolean safeLanding(ServerLevel level, BlockPos pos, net.minecraft.world.entity.Entity entity) {
+        return safeLanding(level, Vec3.atBottomCenterOf(pos), entity);
+    }
+
+    /** Exact-position variant for departure and rollback; never substitutes a centred collision box. */
+    public static boolean safeLanding(ServerLevel level, Vec3 position, net.minecraft.world.entity.Entity entity) {
+        return landingFailure(level, position, entity) == null;
+    }
+
+    /** Returns a short rejection category for bounded portal diagnostics, or null when safe. */
+    static String landingFailure(ServerLevel level, Vec3 position, net.minecraft.world.entity.Entity entity) {
+        var pos = BlockPos.containing(position);
+        if (pos.getY() <= level.getMinBuildHeight() || pos.getY() + 2 >= level.getMaxBuildHeight()) return "build height";
+        var box = entity.getDimensions(Pose.STANDING).makeBoundingBox(position.x, position.y, position.z);
+        if (!level.getWorldBorder().isWithinBounds(box)) return "world border";
         for (var p : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 2, 1))) {
-            if (!level.hasChunkAt(p)) return false;
+            if (!level.hasChunkAt(p)) return "unloaded safety halo";
             var state = level.getBlockState(p);
-            if (!state.getFluidState().isEmpty() || state.is(BlockTags.FIRE) || state.is(Blocks.MAGMA_BLOCK)
-                    || state.is(Blocks.CACTUS) || state.is(Blocks.CAMPFIRE) || state.is(Blocks.SOUL_CAMPFIRE)
-                    || state.is(Blocks.SWEET_BERRY_BUSH) || state.is(Blocks.WITHER_ROSE) || state.is(Blocks.POWDER_SNOW)
-                    || state.is(Blocks.POINTED_DRIPSTONE) || state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL)
-                    || state.is(Blocks.END_GATEWAY)) return false;
+            if (!state.getFluidState().isEmpty()) return "fluid";
+            if (state.is(BlockTags.FIRE) || state.is(Blocks.MAGMA_BLOCK) || state.is(Blocks.CACTUS)
+                    || state.is(Blocks.CAMPFIRE) || state.is(Blocks.SOUL_CAMPFIRE)
+                    || state.is(Blocks.SWEET_BERRY_BUSH) || state.is(Blocks.WITHER_ROSE)
+                    || state.is(Blocks.POWDER_SNOW) || state.is(Blocks.POINTED_DRIPSTONE)
+                    || state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY))
+                return "hazard block";
+            // Pathfinding also assigns malus to harmless adjacent blocks such as leaves.
+            // Keep mod/vanilla malus checks where a colliding block actually intersects
+            // the entity's standing box; non-colliding decoration is safe to stand beside.
+            if (entity instanceof Companion mob) {
+                var collision = state.getCollisionShape(level, p, CollisionContext.of(entity));
+                var pathType = state.getBlockPathType(level, p, mob);
+                if (!collision.isEmpty() && pathType != null && pathType.getMalus() != 0
+                        && collision.move(p.getX(), p.getY(), p.getZ()).bounds().intersects(box))
+                    return "path hazard collision";
+            }
         }
         var floor = level.getBlockState(pos.below());
-        return !floor.is(BlockTags.LEAVES) && !floor.is(DudunkaMod.FAMILY_GATEWAY.get())
-                && floor.isFaceSturdy(level, pos.below(), Direction.UP)
-                && level.noCollision(player, box)
-                && level.getEntities(player, box, entity -> entity.isAlive()).isEmpty();
+        if (floor.is(BlockTags.LEAVES) || floor.is(DudunkaMod.FAMILY_GATEWAY.get())
+                || !floor.isFaceSturdy(level, pos.below(), Direction.UP)) return "unsafe floor";
+        if (!level.noCollision(entity, box)) return "collision shape";
+        if (!level.getEntities(entity, box, other -> other.isAlive()).isEmpty()) return "occupied";
+        return null;
     }
 }
