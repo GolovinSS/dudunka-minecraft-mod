@@ -21,7 +21,11 @@ import net.minecraftforge.registries.RegistryObject;
 public final class MushroomValeLandmarks {
     public static final IntegerProperty PROFILE = IntegerProperty.create("profile", 0, 4);
     public static final Map<String, RegistryObject<Block>> BLOCKS = new LinkedHashMap<>();
+    public static final RegistryObject<Block> DANCE_FLOWER = DudunkaMod.BLOCKS.register("dance_flower", ValeDanceFlower::new);
+    public static final Map<String, RegistryObject<Block>> MUSIC_BELLS = new LinkedHashMap<>();
     static {
+        for (String color : new String[]{"turquoise", "violet", "golden"})
+            MUSIC_BELLS.put(color, DudunkaMod.BLOCKS.register(color+"_music_bell", ValeMusicBell::new));
         part("turquoise_landmark_cap", 10);
         part("violet_landmark_cap", 8);
         part("golden_landmark_cap", 9);

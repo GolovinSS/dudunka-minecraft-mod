@@ -105,10 +105,20 @@ public class ValeSpiderTests {
     }
     @GameTest(template="empty",timeoutTicks=100,batch="isolated_spider_social")
     public static void peacefulEvenWhenSurprised(GameTestHelper h) {
-        var level=h.getLevel();var spider=h.spawn(DudunkaMod.VALE_SPIDER.get(),new BlockPos(2,2,2));
+        var level=h.getLevel();
+        // The 6x5x6 air template does not contain the old seven-block-wide snapshot.
+        // Use a dry controlled volume so outside terrain/fluids and harness markers cannot change it.
+        var origin=h.absolutePos(new BlockPos(2,2,2));var site=new BlockPos(origin.getX(),160,origin.getZ());
+        var saved=new LinkedHashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();
+        for(var pos:BlockPos.betweenClosed(site.offset(-4,-1,-4),site.offset(4,3,4))) {
+            saved.put(pos.immutable(),level.getBlockState(pos));
+            level.setBlock(pos,pos.getY()==159?Blocks.STONE.defaultBlockState():Blocks.AIR.defaultBlockState(),18);
+        }
+        var spider=DudunkaMod.VALE_SPIDER.get().create(level);
+        spider.moveTo(site.getX()+.5,site.getY(),site.getZ()+.5,0,0);level.addFreshEntity(spider);
         var player=ValeFireflyPopulationTests.observer(level);player.moveTo(spider.getX()+1,spider.getY(),spider.getZ(),0,0);
         player.setSprinting(true);level.addNewPlayer(player);
-        socialCleanup=()->{player.discard();spider.discard();};
+        socialCleanup=()->{player.discard();spider.discard();saved.forEach((pos,state)->level.setBlock(pos,state,18));};
         float health=player.getHealth();spider.setTarget(player);
         h.assertTrue(spider.getTarget()==null && !spider.doHurtTarget(player) && spider.getAttribute(Attributes.ATTACK_DAMAGE)==null,"No targets, attacks or attack attribute");
         h.assertTrue(!spider.canTrample(Blocks.FARMLAND.defaultBlockState(),spider.blockPosition().below(),10),"Never tramples cultivated blocks");
@@ -118,7 +128,7 @@ public class ValeSpiderTests {
         h.runAfterDelay(75,()->{
             h.assertTrue(player.getHealth()==health && spider.getTarget()==null && spider.emoteStrength(0)==0,"Surprise subsides without harming player");
             h.assertTrue(blocks.entrySet().stream().allMatch(e->level.getBlockState(e.getKey()).equals(e.getValue())),"No webs or changed blocks");
-            player.discard();spider.discard();h.succeed();
+            cleanupSocial(level);h.succeed();
         });
     }
     @GameTest(template="empty",timeoutTicks=100,batch="isolated_spider_cap")

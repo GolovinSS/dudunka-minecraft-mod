@@ -38,6 +38,7 @@ public final class MushroomVale {
     }
 
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        ValeLandmarkCommands.registerLocate(dispatcher);
         dispatcher.register(Commands.literal("dudunka")
                 .then(Commands.literal("return").executes(context -> {
                     var player = context.getSource().getPlayerOrException();
@@ -56,9 +57,12 @@ public final class MushroomVale {
                 .then(Commands.literal("mushroom_vale")
                         .then(Commands.literal("enter").executes(context -> enter(context.getSource())))
                         .then(Commands.literal("return").executes(context -> leave(context.getSource())))
+                        .then(ValeLandmarkCommands.inspectCommand())
                         .then(FamilyGatewayDevCommand.command())
                         .then(MushroomValeCottagePreview.command())
                         .then(MushroomValeCottagePreview.residentCommand())
+                        .then(MushroomBellsPreview.command())
+                        .then(ValeDanceClearingPreview.command())
                         .then(MushroomValeCottagePreview.decorCommand())));
     }
 

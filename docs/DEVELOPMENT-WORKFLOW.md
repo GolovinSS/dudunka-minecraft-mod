@@ -24,6 +24,8 @@ From the repository root, with **JDK 17**:
 ./tools/test.sh build       # Gradle build/check and existing model verifiers
 ./tools/test.sh gametest    # Full mod GameTest suite in an unused world
 ./tools/test.sh all         # Build, then GameTests
+DUDUNKA_TEST_LANDMARKS=1 ./tools/test.sh gametest # Stage 4.1 focused suite
+DUDUNKA_TEST_MUSIC=1 ./tools/test.sh gametest # Stage 4.2a–e focused suite
 ```
 
 `./tools/test.sh` defaults to `all` and uses `--offline`. If a dependency has not been cached, set `DUDUNKA_TEST_ONLINE=1` for a deliberate online run. `JAVA_HOME` may point to the JDK 17 installation.

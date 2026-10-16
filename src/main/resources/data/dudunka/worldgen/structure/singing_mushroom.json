@@ -1,0 +1,8 @@
+{
+  "type": "dudunka:vale_adventure_landmark",
+  "landmark": "singing_mushroom",
+  "biomes": "#dudunka:has_structure/singing_mushroom",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

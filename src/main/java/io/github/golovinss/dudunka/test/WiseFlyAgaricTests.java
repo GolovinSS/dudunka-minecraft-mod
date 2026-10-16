@@ -27,10 +27,14 @@ public class WiseFlyAgaricTests {
     public static void safeActiveMovement(GameTestHelper h) {
         var level=h.getLevel();var center=h.absolutePos(new BlockPos(3,4,3));
         var saved=new HashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();
-        for(var p:BlockPos.betweenClosed(center.offset(-5,-2,-5),center.offset(5,2,5))) {
+        // GameTests run underground in normal terrain. Seal out aquifers/falling blocks;
+        // keep the original island and its open water/cliff edges inside the shell.
+        for(var p:BlockPos.betweenClosed(center.offset(-6,-3,-6),center.offset(6,3,6))) {
             saved.put(p.immutable(),level.getBlockState(p));
             int edge=Math.max(Math.abs(p.getX()-center.getX()),Math.abs(p.getZ()-center.getZ()));
-            level.setBlock(p,p.getY()<center.getY() && edge<5?Blocks.MYCELIUM.defaultBlockState():Blocks.AIR.defaultBlockState(),18);
+            boolean shell=edge==6 || p.getY()==center.getY()-3 || p.getY()==center.getY()+3;
+            level.setBlock(p,shell?Blocks.STONE.defaultBlockState():
+                    p.getY()<center.getY() && edge<5?Blocks.MYCELIUM.defaultBlockState():Blocks.AIR.defaultBlockState(),18);
         }
         // Half the island edge has water; the other half is a two-block cliff.
         for(int x=-5;x<=5;x++)level.setBlock(center.offset(x,-1,-5),Blocks.WATER.defaultBlockState(),18);
@@ -38,9 +42,27 @@ public class WiseFlyAgaricTests {
         elder.setPersistenceRequired();elder.getRandom().setSeed(340);level.addFreshEntity(elder);
         groundCleanup=()->{elder.discard();saved.forEach((p,state)->level.setBlock(p,state,18));};
         double[] distance={0};var start=elder.position();
+        net.minecraft.world.phys.Vec3[] previous={start};
         h.onEachTick(()->{
-            h.assertTrue(!elder.isInWaterOrBubble() && !elder.isOnFire() && elder.getY()>=center.getY()-.1,"Active AI remains on safe dry island");
+            var violated=new ArrayList<String>();
+            if(elder.isInWaterOrBubble())violated.add("inWaterOrBubble");
+            if(elder.isOnFire())violated.add("onFire");
+            if(!(elder.getY()>=center.getY()-.1))violated.add("belowSafeY");
+            if(!violated.isEmpty()) {
+                var feet=elder.blockPosition();var path=elder.getNavigation().getPath();
+                var surroundings=new ArrayList<String>();
+                for(var p:BlockPos.betweenClosed(feet.offset(-1,-2,-1),feet.offset(1,2,1)))
+                    surroundings.add(p.toShortString()+"="+level.getBlockState(p)+"/fluid="+level.getFluidState(p));
+                h.fail("Active AI remains on safe dry island: violated="+violated+", tick="+h.getTick()
+                        +", entityTick="+elder.tickCount+", center="+center+", minimumY="+(center.getY()-.1)
+                        +", position="+elder.position()+", previousPosition="+previous[0]
+                        +", velocity="+elder.getDeltaMovement()+", bounds="+elder.getBoundingBox()
+                        +", onGround="+elder.onGround()+", alive="+elder.isAlive()+", removed="+elder.isRemoved()
+                        +", nextNode="+(path==null || path.isDone()?"none":path.getNextNode().asBlockPos())
+                        +", surroundings="+surroundings,elder);
+            }
             distance[0]=Math.max(distance[0],elder.position().distanceToSqr(start));
+            previous[0]=elder.position();
         });
         h.runAfterDelay(800,()->{
             h.assertTrue(distance[0]>.1,"Stroll goal actually moves, rather than only rejecting destinations");

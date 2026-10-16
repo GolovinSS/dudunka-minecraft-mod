@@ -6,13 +6,25 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 MODE="${1:-all}"
 TEST_SCOPE=full
+EXPECTED_GAME_TESTS='[1-9][0-9]*'
 if [[ "${DUDUNKA_TEST_JOURNEY:-0}" == 1 ]]; then TEST_SCOPE=family-journey; fi
+if [[ "${DUDUNKA_TEST_LANDMARKS:-0}" == 1 ]]; then TEST_SCOPE=vale-landmarks; fi
+if [[ "${DUDUNKA_TEST_MUSIC:-0}" == 1 ]]; then TEST_SCOPE=vale-music; fi
+case "${DUDUNKA_TEST_STRUCTURE_EXPORT:-}" in
+  '') ;;
+  generate) TEST_SCOPE=dance-structure-generate; EXPECTED_GAME_TESTS=2 ;;
+  resource) TEST_SCOPE=dance-structure-resource; EXPECTED_GAME_TESTS=1 ;;
+  *) echo 'DUDUNKA_TEST_STRUCTURE_EXPORT must be generate or resource.' >&2; exit 2 ;;
+esac
 case "$MODE" in
   build|gametest|all) ;;
   -h|--help|help)
     printf 'Usage: ./tools/test.sh [build|gametest|all]\n'
     printf 'Default: all. DUDUNKA_TEST_ONLINE=1 disables Gradle --offline.\n'
     printf 'DUDUNKA_TEST_JOURNEY=1 selects the Stage 4.0 focused GameTests.\n'
+    printf 'DUDUNKA_TEST_LANDMARKS=1 selects the Stage 4.1 focused GameTests.\n'
+    printf 'DUDUNKA_TEST_MUSIC=1 selects the Stage 4.2a–e focused GameTests.\n'
+    printf 'DUDUNKA_TEST_STRUCTURE_EXPORT=generate|resource selects headless NBT export or resource validation.\n'
     exit 0 ;;
   *) printf 'Unknown mode: %s\n' "$MODE" >&2; exit 2 ;;
 esac
@@ -71,6 +83,14 @@ cat >"$INIT" <<'GROOVY'
 allprojects { afterEvaluate {
     if (System.getenv('DUDUNKA_TEST_JOURNEY') == '1')
         minecraft.runs.gameTestServer.property 'forge.enabledGameTestNamespaces', 'dudunka_journey'
+    if (System.getenv('DUDUNKA_TEST_LANDMARKS') == '1')
+        minecraft.runs.gameTestServer.property 'forge.enabledGameTestNamespaces', 'dudunka_landmarks'
+    if (System.getenv('DUDUNKA_TEST_MUSIC') == '1')
+        minecraft.runs.gameTestServer.property 'forge.enabledGameTestNamespaces', 'dudunka_music'
+    if (System.getenv('DUDUNKA_TEST_STRUCTURE_EXPORT') == 'generate')
+        minecraft.runs.gameTestServer.property 'forge.enabledGameTestNamespaces', 'dudunka_structure_export'
+    if (System.getenv('DUDUNKA_TEST_STRUCTURE_EXPORT') == 'resource')
+        minecraft.runs.gameTestServer.property 'forge.enabledGameTestNamespaces', 'dudunka_structure_resource'
 } }
 gradle.taskGraph.whenReady { graph ->
     def task = graph.allTasks.find { it.name == 'runGameTestServer' }
@@ -128,12 +148,12 @@ if [[ "$MODE" == gametest || "$MODE" == all ]]; then
       ./gradlew "${GRADLE_ARGS[@]}" -I "$INIT" \
       "-PdudunkaTestWorld=$WORLD_REL" runGameTestServer -x downloadAssets; then
     # Forge can exit zero after a startup exception. Require a completed suite.
-    if grep -Eq 'All [0-9]+ required tests passed' "$REPORT_DIR/gametest.log"; then
+    if grep -Eq "All ${EXPECTED_GAME_TESTS} required tests passed" "$REPORT_DIR/gametest.log"; then
       GAME_STATUS=PASS
     else
       GAME_STATUS=FAIL
       FAILED=1
-      echo 'GAME TESTS: FAIL: server did not report a completed passing suite.' >&2
+      echo "GAME TESTS: FAIL: server did not report a completed passing suite (expected count: ${EXPECTED_GAME_TESTS})." >&2
     fi
   else
     GAME_STATUS=FAIL

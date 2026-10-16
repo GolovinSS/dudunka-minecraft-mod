@@ -1,0 +1,12 @@
+# Generated from approved bbmodel; coordinates are local world-block units.
+mtllib palette.mtl
+vt 0.5 0.5
+usemtl concept_earth
+# Soft_earth_diorama_edge_Refined
+v 0.00000000 0.02546677 0.00000000
+v 0.00000000 0.00000000 0.01171211
+v 0.02238076 0.00000000 0.00000000
+vn 0.42938246 0.37735082 0.82051024
+f 1/1/1 2/1/1 3/1/1
+vn -0.42938246 -0.37735082 -0.82051024
+f 3/1/2 2/1/2 1/1/2

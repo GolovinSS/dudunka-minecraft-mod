@@ -1,0 +1,6 @@
+{
+  "parent": "dudunka:block/mushroom_bells_styled/base",
+  "visibility": {
+    "cell_066": true
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "type": "dudunka:vale_adventure_landmark",
+  "landmark": "music_bells",
+  "biomes": "#dudunka:has_structure/music_bells",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

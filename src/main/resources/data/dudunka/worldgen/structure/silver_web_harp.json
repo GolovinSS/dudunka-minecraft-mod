@@ -1,0 +1,8 @@
+{
+  "type": "dudunka:vale_adventure_landmark",
+  "landmark": "silver_web_harp",
+  "biomes": "#dudunka:has_structure/silver_web_harp",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

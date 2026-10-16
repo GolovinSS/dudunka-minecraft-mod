@@ -1,0 +1,30 @@
+{
+  "structures": [
+    {
+      "structure": "dudunka:music_bells",
+      "weight": 1
+    },
+    {
+      "structure": "dudunka:jumper_dance",
+      "weight": 1
+    },
+    {
+      "structure": "dudunka:memory_stone",
+      "weight": 1
+    },
+    {
+      "structure": "dudunka:silver_web_harp",
+      "weight": 1
+    },
+    {
+      "structure": "dudunka:singing_mushroom",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 10,
+    "separation": 4,
+    "salt": 41410731
+  }
+}

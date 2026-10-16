@@ -53,7 +53,7 @@ minecraft {
     // However, it must be at "META-INF/accesstransformer.cfg" in the final mod jar to be loaded by Forge.
     // This default location is a best practice to automatically put the file in the right place in the final jar.
     // See https://docs.minecraftforge.net/en/latest/advanced/accesstransformers/ for more information.
-    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
@@ -83,14 +83,14 @@ minecraft {
 
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
-            property 'forge.enabledGameTestNamespaces', mod_id + ',dudunka_journey'
+            property 'forge.enabledGameTestNamespaces', mod_id + ',dudunka_journey,dudunka_landmarks,dudunka_music'
             if (project.findProperty('mushroomValeDev') == 'true') {
                 property 'dudunka.devMushroomVale', 'true'
             }
         }
 
         server {
-            property 'forge.enabledGameTestNamespaces', mod_id + ',dudunka_journey'
+            property 'forge.enabledGameTestNamespaces', mod_id + ',dudunka_journey,dudunka_landmarks,dudunka_music'
             if (project.findProperty('mushroomValeDev') == 'true') {
                 property 'dudunka.devMushroomVale', 'true'
             }
@@ -101,7 +101,7 @@ minecraft {
         // By default, the server will crash when no gametests are provided.
         // The gametest system is also enabled by default for other run configs under the /test command.
         gameTestServer {
-            property 'forge.enabledGameTestNamespaces', mod_id + ',dudunka_journey'
+            property 'forge.enabledGameTestNamespaces', mod_id + ',dudunka_journey,dudunka_landmarks,dudunka_music'
             property 'dudunka.devMushroomVale', 'true'
         }
 
@@ -266,3 +266,26 @@ tasks.register('verifyFluffyJumper', JavaExec) {
     mainClass = 'CheckFluffyJumper'
 }
 tasks.named('check').configure { dependsOn 'verifyFluffyJumper' }
+
+// Static first-two-landmark model contracts; does not replace in-game visual acceptance.
+tasks.register('verifyValeFantasyVisuals', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckValeFantasyVisuals'
+}
+tasks.named('check').configure { dependsOn 'verifyValeFantasyVisuals' }
+
+// Static Blockbench-derived OBJ/layout contracts; graphical acceptance remains manual.
+tasks.register('verifyMushroomBellsPreview', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckMushroomBellsPreview'
+}
+tasks.named('check').configure { dependsOn 'verifyMushroomBellsPreview' }
+
+tasks.register('verifyMushroomBellsStyle', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'CheckMushroomBellsStyle'
+}
+tasks.named('check').configure { dependsOn 'verifyMushroomBellsStyle' }

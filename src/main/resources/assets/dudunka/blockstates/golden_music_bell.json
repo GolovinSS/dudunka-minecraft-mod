@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "segment=0": {
+      "model": "dudunka:block/golden_music_bell_0"
+    },
+    "segment=1": {
+      "model": "dudunka:block/golden_music_bell_1"
+    }
+  }
+}

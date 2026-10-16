@@ -4,7 +4,20 @@
 
 Mushroom Vale is a cozy, magical dimension for Dudunka Family on Minecraft 1.20.1, Forge 47.4.13, and Java 17. The target modpack is Better MC BMC4 v55.5. Its landscapes include glowing mushroom forests, pink meadows, and a mysterious memory forest. Friendly inhabitants are Pufik, a small living mushroom; the Wise Fly Agaric; magical fireflies; and fluffy jumping creatures.
 
-The story, **Restore the Music of the Valley**, unfolds across four chapters. Access opens through cooperation between grown-up Dudunka, Marusya, and Syusya after sufficient family friendship. The experience stays gentle: combat is never mandatory, and failure or missed activities do not punish the player. An original instrumental soundtrack has been prepared separately. Approved visual concepts are artistic references only; they are not production-ready models or textures. Do not assume reference images or audio assets are present in Git.
+The story, **Restore the Music of the Valley**, unfolds across five chapters. Access opens through cooperation between grown-up Dudunka, Marusya, and Syusya after sufficient family friendship. The experience stays gentle: combat is never mandatory, and failure or missed activities do not punish the player. An original instrumental soundtrack has been prepared separately. Approved visual concepts are artistic references only; they are not production-ready models or textures. Do not assume reference images or audio assets are present in Git.
+
+The approved music storyline follows the five native musical landmarks:
+
+| Chapter | Landmark | Story role / implementation status |
+| --- | --- | --- |
+| 1. “Where Did the First Note Go?” / «Куда пропала первая нотка?» | `dudunka:music_bells` | Dudunka and Pufik help restore the first three-note melody; Stage 4.2a |
+| 2. “Dance of the Fluffy Jumpers” / «Танец пушистых прыгунов» | `dudunka:jumper_dance` | Marusya guides repeated flower tap groups; Stage 4.2b |
+| 3. “The Forest That Remembers” / «Лес, который помнит» | `dudunka:memory_stone` | Syusya and the Wise Fly Agaric guide a quiet firefly memory; Stage 4.2c |
+| 4. “The Secret of the Silver Web” / «Тайна серебряной паутинки» | `dudunka:silver_web_harp` | Friendly mushroom spiders join the family’s three melodies through harmonic tuning; Stage 4.2d |
+| 5. “A Song for All Friends” / «Песня для всех друзей» | `dudunka:singing_mushroom` | A private, replayable family concert celebrates all four restored motifs; Stage 4.2e |
+
+This music story is separate from the five existing **Mystery of Mushroom Vale**
+album chapters. Stages 4.2a–e introduce no album UI or protocol change.
 
 ## Compatibility principles
 
@@ -46,9 +59,9 @@ Git and the implemented source are authoritative for existing behavior and compa
 
 ### 5. Quests
 
-**Scope:** Implement the four chapters of **Restore the Music of the Valley**. Use exploration, friendly encounters, family cooperation, and restoration of musical elements to advance the story. Integrate the prepared instrumental soundtrack only from assets explicitly included and tracked for the implementation.
+**Scope:** Implement the five chapters of **Restore the Music of the Valley**. Use exploration, friendly encounters, family cooperation, and restoration of musical elements to advance the story. Integrate the prepared instrumental soundtrack only from assets explicitly included and tracked for the implementation.
 
-**Acceptance:** All four chapters can be completed in order, explain their goals in accessible language, and preserve progress across save/reload. Players can pause or leave and return without losing progress. No chapter requires combat, time-limited attendance, consumable progression items, or punitive failure. Existing requests, keepsakes, memories, and album progress remain intact.
+**Acceptance:** All five chapters can be completed in order, explain their goals in accessible language, and preserve progress across save/reload. Players can pause or leave and return without losing progress. No chapter requires combat, time-limited attendance, consumable progression items, or punitive failure. Existing requests, keepsakes, memories, and album progress remain intact.
 
 **Compatibility risks:** New quest progress must use additive, version-tolerant saved data and must not reinterpret existing memories or request state. Audio registration and playback must tolerate a missing optional asset during development and avoid interrupting unrelated game audio. Do not presume the separately prepared soundtrack or concept art is committed.
 
@@ -56,7 +69,7 @@ Git and the implemented source are authoritative for existing behavior and compa
 
 **Scope:** Validate the complete dimension and progression on the required Minecraft/Forge/Java versions, first with focused automated checks and then in a graphical client and full BMC4 v55.5. Include multiplayer and old-world upgrade scenarios.
 
-**Acceptance:** Appropriate Gradle build, model/resource checks, and relevant GameTests pass with results recorded. Manual Minecraft testing confirms all three environments, inhabitants, four chapters, portal requirements, travel and return, save/reload, multiplayer ownership, and gentle failure handling. Full BMC4 acceptance is recorded separately from automated results. Existing IDs, UUIDs, saves, protocol behavior, and established mechanics pass regression checks.
+**Acceptance:** Appropriate Gradle build, model/resource checks, and relevant GameTests pass with results recorded. Manual Minecraft testing confirms all three environments, inhabitants, five chapters, portal requirements, travel and return, save/reload, multiplayer ownership, and gentle failure handling. Full BMC4 acceptance is recorded separately from automated results. Existing IDs, UUIDs, saves, protocol behavior, and established mechanics pass regression checks.
 
 **Compatibility risks:** A successful build or GameTest run does not establish visual quality, client/server GUI behavior, or compatibility with the full modpack. Test actual BMC4 worldgen, dimensions, audio, and multiplayer interactions; document unresolved issues and migration limits before release. Never commit, push, or create a PR without explicit approval.
 
@@ -1155,7 +1168,7 @@ and gateway appearance, activation and entry worked in local `runClient`.
 Dedicated BMC4 acceptance is postponed. Stage 3.7b build and all 245 required
 GameTests passed; the user confirmed local manual acceptance of both gateways. Real multiplayer remains **NOT RUN**.
 This implements the family portal from design Stage 4;
-the four quest chapters remain deferred. User instructions, the exact recipe and
+the music quest chapters remained deferred at that stage. User instructions, the exact recipe and
 entry/exit steps are in [FAMILY-PORTAL.md](FAMILY-PORTAL.md). Deployment and real
 restart acceptance are in [TESTING.md](TESTING.md#stage-37-family-portal-on-an-existing-dedicated-bmc4-save).
 
@@ -1417,3 +1430,331 @@ Safe explicit family entry/return is implemented separately from future Stage 4
 adventure work. See [Family portal](FAMILY-PORTAL.md), [transfer semantics](FAMILY-TRAVEL.md)
 and [validation](VALIDATION-FAMILY-JOURNEY-STAGE-4.0.md). The five Stage 3.8 album
 chapters, awakening ritual, protocol 10, worldgen and music remain unchanged.
+
+## Stage 4.1 — native adventure landmarks
+
+Five additive native `Structure` entries use shared type/piece
+`dudunka:vale_adventure_landmark` and StructureSet
+`dudunka:vale_adventure_landmarks`. They are discoverable by vanilla
+`/locate structure`; they are distinct from the older decorative placed-feature
+mushrooms and cottages.
+
+| Structure ID | Eligible biome | Visual identity |
+| --- | --- | --- |
+| `dudunka:music_bells` | `dudunka:glowing_mushroom_forest` | Three turquoise/violet/golden mushroom bells of different heights, with glowing undersides |
+| `dudunka:jumper_dance` | `dudunka:pink_meadows` | Terrain-following allium/tulip circle, four glowing mushroom posts, open dance space |
+| `dudunka:memory_stone` | `dudunka:memory_forest` | Crying-obsidian monolith, amethyst crest and four outlying crystal stones |
+| `dudunka:silver_web_harp` | `dudunka:memory_forest` | Nine-block silver quartz frame, glass strings and amethyst web crosspieces |
+| `dudunka:singing_mushroom` | `dudunka:glowing_mushroom_forest` | Giant golden bell canopy above a concert clearing and crescent of stone seats |
+
+The shared random-spread set attempts **one** of these landmarks per **10×10
+chunk region** (160×160 blocks), separation **4**, salt **41410731**, equal
+weights. Vanilla retries the other entries when a chosen entry is biome/site
+ineligible. At most one of the five starts occurs per region; the two forest
+biomes split their accepted starts between two landmarks. This is an attempt
+frequency, not a guaranteed density or maximum travel distance. Water, slopes
+and biome boundaries reduce actual frequency; seed-dependent exploration and
+BMC4 visual acceptance remain separate from automated discovery evidence.
+
+Start selection requires the Vale's noise-settings key and the exact intended
+biome throughout a 13×13 footprint. All noise-surface columns must be dry, above
+sea level, and within two blocks of each other. Geometry fits inside one chunk
+with an empty margin, follows the saved terrain profile, and places supported
+posts down to the existing surface. There is no terrain adaptation, flattening,
+excavation, water filling, cross-chunk writing or background chunk loading.
+Structures run before vegetation; existing feature preflights reject overlapping
+solid landmark geometry. Nearby vegetation can still decorate unused air.
+Neighboring chunks can decorate before the owning chunk; predicted starts are
+not evidence that placement ultimately succeeded.
+
+Placement additionally checks the actual `dudunka:mushroom_vale` dimension,
+world border, build height, writable generation region, unfinished/non-upgrading
+chunk, soil support, fluids, block entities and the entire air/plant volume.
+Trees and builds reject the whole placement; only small `BushBlock` vegetation
+may be replaced at blueprint positions. Rejected attempts in new chunks invalidate
+their native start and refresh vanilla's presence cache; failed writes restore
+this attempt's touched cells. Ordinary exploration uses vanilla chunk generation.
+The five exact `/locate structure dudunka:<music ID>` commands finish native
+candidate chunks and verify all blueprint blocks before returning the saved
+anchor X/Z, with at most 16 physical candidates and vanilla's 100-region search
+bound. Other IDs/tag selectors retain vanilla behavior. These landmarks install
+no persistent forced chunk tickets. Old missing/damaged starts are skipped by
+these five commands without rewriting old starts, terrain or chapter progress.
+
+Each piece persists its kind, root `Anchor` and 169-column `Ground` profile in
+native structure NBT. A visible chiseled-stone-brick block at that root is the
+reserved Stage 4.2 interaction anchor. It has no quest/block entity state yet;
+there are no music puzzles, new chapters, progression or added sounds here.
+Version remains **0.27.1-alpha**, album protocol **10**. Cottages, Forgotten
+Arch, gateway state and Stage 4.0 travel code retain their existing IDs/behavior.
+
+Existing completed chunks are never retrofitted. Structures require enabled
+world structure generation and new chunks with the current Vale generator.
+Legacy flat Vale generators do not gain these starts. Datapacks that clone the
+Vale noise settings/biomes into another dimension are unsupported: Minecraft's
+start-generation context has no dimension key, so such a clone could expose
+starts to `/locate`, but the placement dimension guard refuses writes. Changed
+worldgen or third-party structures may invalidate an otherwise predicted site;
+placement prioritizes preserving terrain/builds. Full modpack verification is
+required before claiming all third-party conflicts absent.
+
+The 2026-10-14 source investigation confirmed that the previous placement early
+returns could leave valid, saved, empty starts for all five IDs. The exact cause
+at the two manually reported Bells sites still needs seed/site evidence. New
+native-generation regressions and the read-only developer `inspect_music x z`
+command are documented in [native landmark validation](VALIDATION-MUSHROOM-VALE-NATIVE-LANDMARKS.md).
+Build, GameTests and manual acceptance for this correction are **NOT RUN**.
+
+Commands and acceptance: [Stage 4.1 validation](VALIDATION-MUSHROOM-VALE-STAGE-4.1.md).
+
+
+## Stage 4.2a — Where Did the First Note Go?
+
+Implementation binds existing Stage 4.1 blocks to the saved native
+`dudunka:music_bells` piece in an already loaded chunk of Mushroom Vale. It does
+not change world generation or retrofit chunks. An intact central chiseled-stone
+root must exist, and clicked blocks must match the piece’s blueprint; identical
+decorative mushrooms outside that native start do nothing. Root-relative bell
+centers are turquoise **(-3, 0)**, violet **(0, 2)** and golden **(3, -1)**.
+Their existing stems, caps and underside lights can be played. The central root
+and the amethyst listening marker at **(0, 1, -3)** replay the clue.
+
+On approach (within 12 blocks), a private localized message explains right-click
+interaction. Dudunka invites the player to listen to Pufik’s clue; the crystal
+plays **turquoise → violet → golden**, low → middle → high. Vanilla harp notes
+use pitches **0.75, 1.0, 1.25**, volume **0.45**, 12 ticks between demonstration
+notes. Private note particles identify the sounding bell, with no light blocks,
+terrain changes, damage or forced chunk tickets. RU/EN text also spells out the
+colors/order for players who cannot hear the clue. No natural Pufik or companion
+entity is required, summoned, moved or modified.
+
+Correct notes advance the player’s own attempt. Wrong order gently resets it;
+the player can immediately begin again, without a timer, consumable, combat,
+penalty or reward farming. Completing the sequence plays the melody and stores
+completion once. Bells remain playable afterward and the crystal can replay the
+melody. Listening again resets only the incomplete attempt. Logout, dimension
+change or leaving the area discards partial notes; completed chapters persist.
+Attempts cannot combine notes from different landmarks.
+
+New Overworld SavedData **`dudunka_vale_music`** uses a `Version` envelope and
+`Owners` rows keyed by player UUID. Each row has a `Chapters` compound keyed by
+stable resource IDs, starting with `dudunka:music_bells` / `Completed` boolean.
+Stage 4.2b adds `dudunka:jumper_dance`; the remaining three landmark IDs
+are reserved for later chapters. Unknown envelope/owner/chapter data
+and future version values survive round-trips; duplicate owner rows cannot
+revoke valid completion. Attempts/playback are transient, and idempotent replay
+does not dirty completion data. Existing Mystery progress, album protocol **10**,
+entity/home/travel formats and version **0.27.1-alpha** remain unchanged.
+
+Broken/replaced bell blocks are inactive; breaking the root disables the site.
+The quest never repairs or overwrites shared player builds. Restore those blocks
+manually or use another intact native bells landmark. Client audio/particle
+settings and resource packs can affect presentation. SavedData uses ordinary
+Minecraft saving, not a transaction across unrelated world files.
+
+Validation and short runClient acceptance: [Stage 4.2a report](VALIDATION-MUSHROOM-VALE-STAGE-4.2a.md).
+
+
+## Stage 4.2b — Dance of the Fluffy Jumpers
+
+Marusya narrates the fluffy jumpers’ dance at the existing native
+`dudunka:jumper_dance` flower ring. Neither Marusya nor naturally spawned jumpers
+are required, spawned, moved or changed; their involvement is narrative.
+All existing alliums and pink tulips become playable, each with a distinct gentle
+vanilla harp pitch and private note/sparkle particles. No geometry, assets,
+registrations, world-generation data or shared blocks are changed.
+
+Right-click any central carved-stone pillar block to watch six demonstrated taps:
+**north twice → east once → south twice → west once** (two hops, bow, two hops,
+bow). These four flowers lie at root-relative X/Z **(0,-5), (5,0), (0,5), (-5,0)**,
+using the blueprint’s actual terrain-following Y. Demonstration taps are one
+second apart; text names the directions and explains them. The player’s input
+has **no timing requirement**. Repeat taps on the same flower and spatial tap
+groups distinguish the dance from Chapter 1’s ascending three-bell melody.
+Other flowers sound too; a different sequence simply invites an immediate retry.
+Listening again restarts only that player’s unfinished dance. Private approach
+text discovers the interaction within 12 blocks. RU/EN text and visual clues
+support playing without audio; audio supports following the sparkling flowers.
+
+Chapter 1 must already be complete before any dance input can advance Chapter 2.
+The existing `dudunka_vale_music` ledger adds `Chapters/dudunka:jumper_dance/Completed`
+per UUID, preserving unknown fields, existing music progress and duplicate-row
+monotonic completion. Bell and dance attempts are separate and transient, bound
+to one native anchor. Logout, dimension change or leaving the site clears only
+partial dance state. Completed players can freely play every flower and replay
+the demonstration without dirtying progress or receiving duplicate rewards.
+No reward item is introduced.
+
+Binding checks the already-loaded Vale native start, intact root and exact
+blueprint state. Decorative copies, replaced flowers, offhand clicks, spectators
+and unloaded chunks cannot advance it. Broken flowers/root are not repaired;
+use another intact naturally generated site. No chunks are forced or searched
+through generation. Mystery chapters, family travel, version **0.27.1-alpha**,
+protocol **10** and the album UI remain unchanged. Chapters 3–5 remain deferred.
+
+Validation and manual acceptance: [Stage 4.2b report](VALIDATION-MUSHROOM-VALE-STAGE-4.2b.md).
+
+
+## Stage 4.2c — The Forest That Remembers
+
+Chapter 3 is bound to the saved native `dudunka:memory_stone` piece in an
+already loaded Mushroom Vale chunk. Right-click the bottom-center crying obsidian
+block, just above the mossy base (`anchor + (0,1,0)`), to start a private,
+repeatable listening scene. Its north and south faces are exposed; the hidden
+chiseled-stone anchor still identifies the saved site. Its patient story follows
+Syusya home by firefly light, with the Wise Fly Agaric narrating and Syusya reflecting on
+kindness. Three short chimes and private firefly-like particles mark the
+memory. The player then interprets one of three existing blueprint symbols:
+the single crest crystal, the paired side crystals, or the little corner
+lights. The crest remains symbol 0, the paired crystals symbol 1, and the
+corner lights symbol 2: the correct shared-light interpretation. The listening
+block is separate from all choice targets.
+
+Both earlier music chapters must be complete before an interpretation can
+restore the forest voice. Listening is explicit; choices before listening,
+at another anchor, or before the prerequisites are met cannot advance. A wrong
+choice gives Syusya's gentle hint and leaves the player free to listen again or
+retry indefinitely. Correct completion is saved once in the existing
+UUID-keyed `dudunka_vale_music` ledger under
+`Chapters/dudunka:memory_stone/Completed`. Listening state is transient and
+private. Completed players can replay the story without changing saved data.
+
+The resolver requires the loaded native structure start, the original anchor,
+and every block in its saved Stage 4.1 blueprint to match. A missing or changed
+piece disables the interaction without repair. No chunk is forced, no terrain
+or landmark block is changed, and naturally spawned fireflies or Wise Fly
+Agarics are not required. Feedback is private to the interacting player. Album
+protocol **10**, version **0.27.1-alpha**, the five Mystery chapters, family
+travel, prior music chapters and soundtrack remain unchanged.
+
+Validation and manual acceptance: [Stage 4.2c report](VALIDATION-MUSHROOM-VALE-STAGE-4.2c.md).
+
+
+## Stage 4.2d — The Secret of the Silver Web
+
+The friendly mushroom spiders have woven a harp that can join the bell melody,
+the fluffy jumpers’ dance and the forest memory. Dudunka offers the deep bell
+voice, Marusya the high dancing voice, and Syusya the quiet middle voice. Text
+encourages bringing all three companions to enjoy the scene together, without
+requiring their presence, AI movement or exact positioning. Nearby real peaceful
+`vale_spider` entities receive optional private sparkle applause at a successful
+chord; missing spiders never block progression. The woven clue speaks for its
+makers even when no spiders have spawned.
+
+The existing native harp has three interactive string columns at root-relative
+X **−2 / 0 / +2**, Z **0**, Y **1–6**. Other glass columns remain decorative.
+West is decreasing X; east is increasing X. Right-click a string to cycle
+**low → middle → high → low**. All three start at middle. Their current tones
+have explicit RU/EN names and **1 / 2 / 3** vertically separated white sparkles;
+no pitch or color recognition is needed. Each feedback line also names the
+string’s chapter and its desired tone. The spiders’ clue asks for **west low,
+middle high, east middle**. Strings can be adjusted in any order, with no
+sequence, memory choice, rhythm or time limit.
+
+Right-click the existing central chiseled-stone anchor to read the full family
+clue, hear all three selected tones together and explicitly check the harmony.
+Correct tuning restores the Silver Web’s voice. A mismatch gently suggests
+comparing current and desired tones, preserving every setting. All three earlier
+chapters must be complete before tuning or checking. No item, combat, spawned
+inhabitant or companion positioning is required.
+
+Completion is saved once under `Chapters/dudunka:silver_web_harp/Completed` in
+the existing UUID-scoped `dudunka_vale_music` ledger. Tuning is private, transient
+and bound to one saved anchor per player; switching harps starts fresh middle
+tones. Logout, death, spectator mode or dimension change clears transient
+settings. Leaving the area does not clear the selected tones. Save/reload keeps
+completion, while unfinished tuning starts again at middle. Completed players
+can retune freely and play both matching and mismatched chords without changing
+persistent progress or duplicating completion.
+
+Resolution uses only the loaded native `dudunka:silver_web_harp` start and its
+stored anchor, with the entire blueprint checked against actual blocks. Damaged
+or incomplete structures and decorative copies are inert; there is no repair,
+shared block state, terrain edit, forced chunk loading or entity AI mutation.
+All quest text, chords and effects go only to the interacting player. Existing
+ambient music, Chapters 1–3, Mystery, travel, worldgen, album protocol **10** and
+version **0.27.1-alpha** are preserved. Chapter 5 and album UI remain deferred.
+
+Validation: [Stage 4.2d report](VALIDATION-MUSHROOM-VALE-STAGE-4.2d.md).
+Manual runClient/BMC4 acceptance is intentionally deferred until the full music
+quest chain is implemented.
+
+
+## Stage 4.2e: A Song for All Friends / «Песня для всех друзей»
+
+The fifth chapter concludes **Restore the Music of the Valley** at the native
+`dudunka:singing_mushroom` in Glowing Mushroom Forest. Chapters 1–4 must be
+complete. Discovery gives a private invitation; right-click the original central
+carved stone to explicitly start a 440-tick (about 22-second) concert. Repeated
+clicks during playback do nothing, so the song cannot stack, restart or skip.
+
+Dudunka and Pufik’s three ascending bell notes open the song. Marusya’s paired
+fluffy-jumper rhythm follows, then Syusya’s shared-light memory with the Wise Fly
+Agaric and fireflies. The friendly spiders’ low/high/middle harp chord introduces
+the reunion. A short interwoven reprise and final chord celebrate the player and
+family bringing the Valley’s music back. RU/EN narrative names all participants
+without pretending absent NPCs are physically present. Nearby real owned family
+and inhabitants optionally receive private applause sparkles; no AI, emote,
+owner, home or entity state changes. No NPC presence or precise positioning is
+required. Existing vanilla harp and amethyst sounds accompany restrained private
+colorful notes and light particles; the ambient soundtrack is untouched.
+
+`ValeConcertQuest` verifies the persisted native start and every blueprint block
+at activation and each active tick, using loaded chunks only. Seats, the secondary
+amethyst marker and giant stem are decorative. Missing/damaged pieces fail
+closed without repairs. Moving beyond 16 blocks, death, spectator mode, logout,
+dimension change or reload discards playback. Nothing is lost: earlier chapters
+remain saved, and another explicit click starts fresh. Completion is awarded
+only after the entire concert at a still-valid site. Each UUID has its own score;
+players can start and finish independently at the same mushroom.
+
+The additive `Chapters/dudunka:singing_mushroom/Completed` flag lives in the
+existing `dudunka_vale_music` ledger. Unknown metadata and duplicate-row monotonic
+completion are preserved. Subsequent clicks replay the whole song without save
+mutation or repeat rewards. No terrain, biome, native geometry, registries,
+dependencies, album UI/protocol **10** or version **0.27.1-alpha** change.
+
+See [Stage 4.2e validation](VALIDATION-MUSHROOM-VALE-STAGE-4.2e.md) and
+[manual music-chain acceptance](TESTING.md#stages-42ae-complete-music-chain).
+Implementation and automatic validation are separate from manual acceptance.
+Manual runClient/BMC4 testing remains **NOT RUN**, intentionally deferred by the
+user for this milestone until the five chapters are ready for manual review.
+
+Stage 4.2e automatic evidence: build/model/resource checks **PASS**, focused music
+**40/40 PASS**, full suite **312/313 PASS with 1 unresolved failure** in the
+existing live flower-walk test. All music tests and native concert-anchor checks
+passed. Full regression acceptance remains pending; see the validation report.
+
+## Stage 4.3a — visual polish for the first two music landmarks
+
+Newly generated `dudunka:music_bells` uses three distinct gilled bell silhouettes
+and static glowing clappers in a mossy, crystal-and-spore clearing. Newly generated
+`dudunka:jumper_dance` replaces its vanilla flower ring with four modeled fantasy
+blooms, soft glowing centers and a moss/quartz center composition. Quest targets,
+flower voice order and all Stage 4.2 mechanics stay unchanged.
+
+Native pieces save a visual revision; pieces without it retain their old geometry
+and interactions. There is no retrofit of existing worlds. One block with four
+states/models is added, reusing existing textures. No version/protocol, audio,
+other music landmarks or Stage 4.3b changes are included. Automated and manual
+acceptance are **NOT RUN**. See [Stage 4.3a validation](VALIDATION-MUSHROOM-VALE-STAGE-4.3a.md)
+for the stage's file list, compatibility details and external validation commands.
+
+## Stage 4.3a.1 — fantasy visual refinement
+
+New first-two native pieces use visual revision 2: smaller modeled bell mushrooms
+with thin stems, hanging luminous gills and spores; volumetric flowers with Forge
+fullbright centers and real block light 10; richer natural clearings and a connected
+bell listening alcove. Original low bell targets, both clue stones, the complete
+flower ring and six-tap pattern are retained. Saved revisions 0/1 keep their layouts;
+shared existing flower models/light improve without a terrain retrofit. Decorative
+loss no longer invalidates the otherwise playable first-two puzzle integrity checks.
+
+A loaded, simulated music clearing near a player can receive a bounded top-up to
+three existing Vale fireflies at evening/night. Assistance respects mob-spawning
+rules, server animal spawning, Forge vetoes, safe volumes and the existing population,
+without chunk tickets or persistence flags. Quest completion is not required for
+ambient wildlife. Other landmarks, music progress, version and protocol are unchanged.
+
+Build/GameTests and graphical acceptance of this refinement are **NOT RUN**.
+See [Stage 4.3a.1 handoff](VALIDATION-MUSHROOM-VALE-STAGE-4.3a.1.md).

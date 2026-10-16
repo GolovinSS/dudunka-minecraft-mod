@@ -1,0 +1,544 @@
+{
+  "variants": {
+    "part=0": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_000"
+    },
+    "part=1": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_001"
+    },
+    "part=2": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_002"
+    },
+    "part=3": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_003"
+    },
+    "part=4": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_004"
+    },
+    "part=5": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_005"
+    },
+    "part=6": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_006"
+    },
+    "part=7": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_007"
+    },
+    "part=8": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_008"
+    },
+    "part=9": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_009"
+    },
+    "part=10": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_010"
+    },
+    "part=11": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_011"
+    },
+    "part=12": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_012"
+    },
+    "part=13": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_013"
+    },
+    "part=14": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_014"
+    },
+    "part=15": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_015"
+    },
+    "part=16": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_016"
+    },
+    "part=17": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_017"
+    },
+    "part=18": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_018"
+    },
+    "part=19": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_019"
+    },
+    "part=20": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_020"
+    },
+    "part=21": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_021"
+    },
+    "part=22": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_022"
+    },
+    "part=23": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_023"
+    },
+    "part=24": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_024"
+    },
+    "part=25": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_025"
+    },
+    "part=26": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_026"
+    },
+    "part=27": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_027"
+    },
+    "part=28": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_028"
+    },
+    "part=29": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_029"
+    },
+    "part=30": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_030"
+    },
+    "part=31": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_031"
+    },
+    "part=32": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_032"
+    },
+    "part=33": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_033"
+    },
+    "part=34": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_034"
+    },
+    "part=35": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_035"
+    },
+    "part=36": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_036"
+    },
+    "part=37": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_037"
+    },
+    "part=38": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_038"
+    },
+    "part=39": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_039"
+    },
+    "part=40": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_040"
+    },
+    "part=41": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_041"
+    },
+    "part=42": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_042"
+    },
+    "part=43": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_043"
+    },
+    "part=44": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_044"
+    },
+    "part=45": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_045"
+    },
+    "part=46": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_046"
+    },
+    "part=47": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_047"
+    },
+    "part=48": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_048"
+    },
+    "part=49": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_049"
+    },
+    "part=50": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_050"
+    },
+    "part=51": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_051"
+    },
+    "part=52": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_052"
+    },
+    "part=53": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_053"
+    },
+    "part=54": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_054"
+    },
+    "part=55": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_055"
+    },
+    "part=56": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_056"
+    },
+    "part=57": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_057"
+    },
+    "part=58": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_058"
+    },
+    "part=59": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_059"
+    },
+    "part=60": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_060"
+    },
+    "part=61": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_061"
+    },
+    "part=62": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_062"
+    },
+    "part=63": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_063"
+    },
+    "part=64": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_064"
+    },
+    "part=65": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_065"
+    },
+    "part=66": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_066"
+    },
+    "part=67": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_067"
+    },
+    "part=68": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_068"
+    },
+    "part=69": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_069"
+    },
+    "part=70": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_070"
+    },
+    "part=71": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_071"
+    },
+    "part=72": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_072"
+    },
+    "part=73": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_073"
+    },
+    "part=74": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_074"
+    },
+    "part=75": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_075"
+    },
+    "part=76": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_076"
+    },
+    "part=77": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_077"
+    },
+    "part=78": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_078"
+    },
+    "part=79": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_079"
+    },
+    "part=80": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_080"
+    },
+    "part=81": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_081"
+    },
+    "part=82": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_082"
+    },
+    "part=83": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_083"
+    },
+    "part=84": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_084"
+    },
+    "part=85": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_085"
+    },
+    "part=86": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_086"
+    },
+    "part=87": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_087"
+    },
+    "part=88": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_088"
+    },
+    "part=89": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_089"
+    },
+    "part=90": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_090"
+    },
+    "part=91": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_091"
+    },
+    "part=92": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_092"
+    },
+    "part=93": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_093"
+    },
+    "part=94": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_094"
+    },
+    "part=95": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_095"
+    },
+    "part=96": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_096"
+    },
+    "part=97": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_097"
+    },
+    "part=98": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_098"
+    },
+    "part=99": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_099"
+    },
+    "part=100": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_100"
+    },
+    "part=101": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_101"
+    },
+    "part=102": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_102"
+    },
+    "part=103": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_103"
+    },
+    "part=104": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_104"
+    },
+    "part=105": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_105"
+    },
+    "part=106": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_106"
+    },
+    "part=107": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_107"
+    },
+    "part=108": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_108"
+    },
+    "part=109": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_109"
+    },
+    "part=110": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_110"
+    },
+    "part=111": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_111"
+    },
+    "part=112": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_112"
+    },
+    "part=113": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_113"
+    },
+    "part=114": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_114"
+    },
+    "part=115": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_115"
+    },
+    "part=116": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_116"
+    },
+    "part=117": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_117"
+    },
+    "part=118": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_118"
+    },
+    "part=119": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_119"
+    },
+    "part=120": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_120"
+    },
+    "part=121": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_121"
+    },
+    "part=122": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_122"
+    },
+    "part=123": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_123"
+    },
+    "part=124": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_124"
+    },
+    "part=125": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_125"
+    },
+    "part=126": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_126"
+    },
+    "part=127": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_127"
+    },
+    "part=128": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_128"
+    },
+    "part=129": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_129"
+    },
+    "part=130": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_130"
+    },
+    "part=131": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_131"
+    },
+    "part=132": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_132"
+    },
+    "part=133": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_133"
+    },
+    "part=134": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_134"
+    },
+    "part=135": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_135"
+    },
+    "part=136": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_136"
+    },
+    "part=137": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_137"
+    },
+    "part=138": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_138"
+    },
+    "part=139": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_139"
+    },
+    "part=140": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_140"
+    },
+    "part=141": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_141"
+    },
+    "part=142": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_142"
+    },
+    "part=143": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_143"
+    },
+    "part=144": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_144"
+    },
+    "part=145": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_145"
+    },
+    "part=146": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_146"
+    },
+    "part=147": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_147"
+    },
+    "part=148": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_148"
+    },
+    "part=149": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_149"
+    },
+    "part=150": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_150"
+    },
+    "part=151": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_151"
+    },
+    "part=152": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_152"
+    },
+    "part=153": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_153"
+    },
+    "part=154": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_154"
+    },
+    "part=155": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_155"
+    },
+    "part=156": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_156"
+    },
+    "part=157": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_157"
+    },
+    "part=158": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_158"
+    },
+    "part=159": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_159"
+    },
+    "part=160": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_160"
+    },
+    "part=161": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_161"
+    },
+    "part=162": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_162"
+    },
+    "part=163": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_163"
+    },
+    "part=164": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_164"
+    },
+    "part=165": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_165"
+    },
+    "part=166": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_166"
+    },
+    "part=167": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_167"
+    },
+    "part=168": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_168"
+    },
+    "part=169": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_169"
+    },
+    "part=170": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_170"
+    },
+    "part=171": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_171"
+    },
+    "part=172": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_172"
+    },
+    "part=173": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_173"
+    },
+    "part=174": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_174"
+    },
+    "part=175": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_175"
+    },
+    "part=176": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_176"
+    },
+    "part=177": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_177"
+    },
+    "part=178": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_178"
+    },
+    "part=179": {
+      "model": "dudunka:block/mushroom_bells_styled/cell_179"
+    }
+  }
+}

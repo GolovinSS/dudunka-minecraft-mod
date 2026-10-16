@@ -197,9 +197,12 @@ public class FluffyJumperTests {
             h.assertTrue(jumper.position().distanceToSqr(start)<.001,"Disabled AI does not launch impulses");
             // GameTest batches share a dimension, so place the check away from other tests' mock players.
             var level=h.getLevel();double siteX=start.x;int attempts=0;
-            while(attempts<32 && level.getNearestPlayer(siteX,start.y,start.z,128,false)!=null) {siteX+=512;attempts++;}
-            h.assertTrue(level.getNearestPlayer(siteX,start.y,start.z,128,false)==null,
-                    "Despawn fixture has no unrelated nearby GameTest player");
+            // The observer will be 256 blocks away. Excluding only 128 blocks can
+            // leave another player between 128 and 256, invalidating nearest identity.
+            while(attempts<32 && level.getNearestPlayer(siteX,start.y,start.z,257,false)!=null) {siteX+=512;attempts++;}
+            h.assertTrue(level.getNearestPlayer(siteX,start.y,start.z,257,false)==null,
+                    "Despawn fixture has no unrelated player closer than its observer: "
+                    +GameTestChunkDiagnostics.describe(level,BlockPos.containing(siteX,start.y,start.z)));
             level.getChunk(((int)siteX)>>4,((int)start.z)>>4);
             // Exercise vanilla checkDespawn with a real registered distant non-spectator player.
             var player=ValeFireflyPopulationTests.observer(level);player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
@@ -207,9 +210,14 @@ public class FluffyJumperTests {
             var wild=DudunkaMod.FLUFFY_JUMPER.get().create(level);wild.moveTo(siteX,start.y,start.z,0,0);level.addFreshEntity(wild);
             try {
                 double distance=wild.distanceToSqr(player);
+                var nearest=level.getNearestPlayer(wild,-1);
                 h.assertTrue(level.getNearestPlayer(wild,-1)==player && distance>128*128
-                        && !wild.isPersistenceRequired() && wild.removeWhenFarAway(distance),
-                        "Vanilla despawn preconditions include the fixture's distant player and unnamed wild mob");
+                        && !wild.isPersistenceRequired() && !wild.requiresCustomPersistence()
+                        && !wild.hasCustomName() && wild.removeWhenFarAway(distance),
+                        "Vanilla despawn preconditions include the fixture's distant player and unnamed wild mob: observer="
+                        +player.getUUID()+", nearest="+(nearest==null?"none":nearest.getUUID()+"@"+nearest.position())
+                        +", distanceSquared="+distance+", persistent="+wild.isPersistenceRequired()
+                        +", customPersistence="+wild.requiresCustomPersistence()+", named="+wild.hasCustomName());
                 wild.checkDespawn();h.assertTrue(wild.isRemoved(),"Unnamed wild entity actually despawns beyond the creature distance");
             }
             finally {wild.discard();player.discard();clean("noai");}

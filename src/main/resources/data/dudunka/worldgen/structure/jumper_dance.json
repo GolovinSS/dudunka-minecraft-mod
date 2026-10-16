@@ -1,0 +1,8 @@
+{
+  "type": "dudunka:vale_adventure_landmark",
+  "landmark": "jumper_dance",
+  "biomes": "#dudunka:has_structure/jumper_dance",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

@@ -2175,3 +2175,54 @@ Manual `runClient -PmushroomValeDev=true`, disposable world first:
 
 Graphical client, real multiplayer, old-world restart, forced JVM crash and full BMC4
 acceptance must be recorded separately; automated PASS does not imply these passed.
+
+
+## Stages 4.2a–e: complete music chain
+
+Manual runClient / BMC4 acceptance: **NOT RUN — intentionally deferred for the
+implementation milestone; all five chapters are now implemented for later review.**
+
+Use a disposable or backed-up save with the required family journey unlocked.
+
+1. In new Vale chunks, complete native bells, jumper dance, Memory Stone and
+   Silver Web Harp in order. Confirm each chapter survives save/reload. At the
+   Singing Mushroom before each prerequisite, verify the friendly missing-chapter
+   hint and no playback. Check existing Mystery album and family travel still work.
+2. Locate `dudunka:singing_mushroom` in Glowing Mushroom Forest. Approach for the
+   invitation, then explicitly right-click the central carved stone. Verify no
+   automatic concert from proximity, offhand or clicking seats/secondary marker.
+3. In RU and EN, listen to the approximately 22-second concert: ascending bells,
+   paired dance rhythm, quiet memory chimes, low/high/middle harp, combined reprise
+   and final chord. Read the four introductions and the Valley-restored ending.
+   Assess sound balance alongside existing ambient music, note colors, readable
+   pacing and restrained effects under BMC4 graphics/audio settings.
+4. Complete once without NPCs; repeat with your actual family and inhabitants
+   nearby. Check optional applause, unchanged companion UUIDs, owner/home/modes,
+   no forced positioning and no duplicates. The player’s family must feel central
+   even if one friend is absent or standing behind a seat.
+5. Repeatedly click during playback; it must continue once without restarting.
+   Leave beyond 16 blocks, log out, switch dimension, die or use spectator mode
+   during a test concert. Return and click to restart freely. In a disposable copy,
+   damage a canopy/seat/anchor before and during playback: no completion or repair.
+6. Finish, save/reload, and replay repeatedly. Confirm saved Chapter 5 remains
+   complete with the same enjoyable score and no repeated reward. Verify no
+   permanent terrain/biome changes and no new album music-chapter UI.
+7. With two real clients, start at different times on the same native mushroom.
+   Verify private text/effects and independent completion; cancel one while the
+   other finishes. Repeat on a copied old save and a dedicated BMC4 v55.5 server.
+
+Automated commands and exact evidence are in
+[Stage 4.2e validation](VALIDATION-MUSHROOM-VALE-STAGE-4.2e.md). Passing GameTests
+does not establish audible/graphical quality, real multiplayer or BMC4 acceptance.
+
+## Vanilla `/tp` and `/teleport` accompaniment
+
+See [FAMILY-TELEPORT.md](FAMILY-TELEPORT.md) for the local investigation, exact
+supported paths, failure semantics, 14 new focused GameTests and reproducible
+runClient checks. External validation: `./tools/test.sh build`, then
+`DUDUNKA_TEST_JOURNEY=1 ./tools/test.sh gametest`. Current automated release
+evidence is recorded in [VALIDATION-0.28.0.md](VALIDATION-0.28.0.md). The ordinary
+journey scope has 31 tests; 13 dedicated runtime scenarios are an opt-in separate
+suite documented in [the fixture guide](VALIDATION-TELEPORT-FIXTURE-REDESIGN.md).
+runClient/BMC4 acceptance remains outstanding; the earlier manual `/tp` incident
+requires an actual retest.

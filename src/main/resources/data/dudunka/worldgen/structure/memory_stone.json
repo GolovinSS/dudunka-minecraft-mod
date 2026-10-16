@@ -1,0 +1,8 @@
+{
+  "type": "dudunka:vale_adventure_landmark",
+  "landmark": "memory_stone",
+  "biomes": "#dudunka:has_structure/memory_stone",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

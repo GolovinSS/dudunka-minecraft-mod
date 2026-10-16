@@ -1,0 +1,18 @@
+newmtl surface
+Kd 1 1 1
+forge_TintIndex -1
+Ka 0 0 0
+map_Kd dudunka:block/mushroom_bells_styled/atlas
+
+newmtl warm
+Kd 1 1 1
+forge_TintIndex -1
+Ka 0.4 0.4 0.4
+map_Kd dudunka:block/mushroom_bells_styled/atlas
+
+newmtl glint
+Kd 1 1 1
+forge_TintIndex -1
+Ka 0.8 0.8 0.8
+map_Kd dudunka:block/mushroom_bells_styled/atlas
+

@@ -1644,7 +1644,23 @@ public class FamilyTests {
         var ledger=FamilyFriendships.get(owner.server);var home=guest.homeAnchor();int trust=guest.trust();var familyHome=host.homeAnchor();
         h.onEachTick(()->FurnitureVisits.tickFriendship(host,scene));
         h.runAfterDelay(25,()->{h.assertTrue(ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID())==0,"Approaching or idle visitor earns no friendship");var seat=scene.seats().get(guest.getUUID());guest.moveTo(seat.getX()+.5,seat.getY(),seat.getZ()+.5,0,0);guest.setActivity(Activity.SIT);});
-        h.runAfterDelay(95,()->{var before=ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID());h.assertTrue(before>0 && before<=80,"Actually seated visitor earns sampled time only");FurnitureVisits.tickFriendship(host,scene);FurnitureVisits.tickFriendship(host,scene);h.assertTrue(ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID())==before,"Repeated same-tick sampling never doubles progress");h.assertTrue(guest.trust()==trust && guest.homeAnchor().equals(home) && host.homeAnchor().equals(familyHome) && guest.atHomeMode(),"Visit must not change care, home or mode");FurnitureVisits.cancelHost(host);host.discard();guest.discard();owner.discard();h.succeed();});
+        h.runAfterDelay(95,()->{
+            long now=owner.server.overworld().getGameTime();
+            int before=ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID());
+            h.assertTrue(before>0 && before<=80,"Actually seated visitor earns sampled time only: gameTime="+now+", progress="+before);
+            // Same-tick GameTest callbacks are unordered: this first call may precede onEachTick's sample.
+            FurnitureVisits.tickFriendship(host,scene);
+            int afterFirst=ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID());
+            FurnitureVisits.tickFriendship(host,scene);
+            int afterDuplicate=ledger.progress(owner.getUUID(),host.getUUID(),guest.getUUID());
+            var samples="gameTime="+now+", testTick="+h.getTick()+", before="+before
+                    +", afterFirst="+afterFirst+", afterDuplicate="+afterDuplicate;
+            h.assertTrue((afterFirst==before || now%20==0 && afterFirst==before+20) && afterFirst<=80,
+                    "First observation credits at most one eligible sampling interval: "+samples);
+            h.assertTrue(afterDuplicate==afterFirst,"Repeated same-tick sampling never doubles progress: "+samples);
+            h.assertTrue(guest.trust()==trust && guest.homeAnchor().equals(home) && host.homeAnchor().equals(familyHome) && guest.atHomeMode(),"Visit must not change care, home or mode");
+            FurnitureVisits.cancelHost(host);host.discard();guest.discard();owner.discard();h.succeed();
+        });
     }
     @GameTest(template="empty",timeoutTicks=300,batch="isolated_visittimeout")
     public static void visitsExpireWithCooldownAndRestoreWithoutTransientScene(GameTestHelper h){
@@ -1763,7 +1779,7 @@ public class FamilyTests {
     }
     private static WalkScenes.Scene walkFixture(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner,Companion dudunka,Companion cat){
         for(var threat:h.getLevel().getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,new net.minecraft.world.phys.AABB(h.absolutePos(new BlockPos(3,2,3))).inflate(20)))threat.discard();
-        interestFloor(h);var flower=h.absolutePos(new BlockPos(3,2,3));h.getLevel().setBlock(flower,Blocks.DANDELION.defaultBlockState(),3);owner.moveTo(dudunka.getX()+1,dudunka.getY(),dudunka.getZ(),0,0);owner.setOnGround(true);dudunka.setOnGround(true);cat.setOnGround(true);
+        interestFloor(h);var flower=h.absolutePos(new BlockPos(3,2,3));h.getLevel().setBlock(flower.below(),Blocks.GRASS_BLOCK.defaultBlockState(),3);h.getLevel().setBlock(flower,Blocks.DANDELION.defaultBlockState(),3);owner.moveTo(dudunka.getX()+1,dudunka.getY(),dudunka.getZ(),0,0);owner.setOnGround(true);dudunka.setOnGround(true);cat.setOnGround(true);
         return new WalkScenes.Scene(owner.getUUID(),dudunka.getUUID(),flower,owner.position(),java.util.Map.of(dudunka.getUUID(),dudunka.blockPosition(),cat.getUUID(),cat.blockPosition()),h.getLevel().getGameTime()+200);
     }
     @GameTest(template="empty",timeoutTicks=40,batch="isolated_walkinterruptions")
@@ -1784,9 +1800,13 @@ public class FamilyTests {
     }
     @GameTest(template="empty",timeoutTicks=350,batch="isolated_liveflowerwalk")
     public static void liveFlowerWalkStartsAndReturnsToFollowing(GameTestHelper h){
-        var level=h.getLevel();level.setDayTime(1000);level.setWeatherParameters(6000,0,false,false);level.setRainLevel(0);interestFloor(h);var owner=testOwner(h);var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));var snail=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,4));var fixture=walkFixture(h,owner,d,cat);snail.setOnGround(true);
+        var level=h.getLevel();level.setDayTime(1000);level.setWeatherParameters(6000,0,false,false);level.setRainLevel(0);interestFloor(h);
+        // Clearing this underground template releases natural gravel above it. Catch it before it buries the walk spots.
+        for(var p:BlockPos.betweenClosed(h.absolutePos(new BlockPos(0,4,0)),h.absolutePos(new BlockPos(5,4,5))))level.setBlock(p,Blocks.STONE.defaultBlockState(),3);
+        var owner=testOwner(h);var d=create(h,Kind.DUDUNKA,owner.getUUID(),new BlockPos(2,2,2));var cat=create(h,Kind.MARUSYA,owner.getUUID(),new BlockPos(4,2,2));var snail=create(h,Kind.SYUSYA,owner.getUUID(),new BlockPos(4,2,4));var fixture=walkFixture(h,owner,d,cat);snail.setOnGround(true);
         // Keep the owner still while ordinary AI approaches the flower. Initiator has a throttled scan.
-        WalkScenes.select(d);h.runAfterDelay(80,()->{d.setOnGround(true);cat.setOnGround(true);snail.setOnGround(true);owner.setOnGround(true);var scene=WalkScenes.select(d);h.assertTrue(scene!=null && scene.spots().size()==3,"Stationary owner permits all three friends to stop: scene="+scene+", d="+d.position()+", cat="+cat.position()+", snail="+snail.position()+", owner="+owner.position()+", initial="+fixture.ownerStart()+", rain="+level.isRaining()+", day="+level.getDayTime()+", monsters="+level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,d.getBoundingBox().inflate(10)).size());d.setNoAi(false);cat.setNoAi(false);snail.setNoAi(false);});
+        WalkScenes.select(d);
+        h.runAfterDelay(80,()->{d.setOnGround(true);cat.setOnGround(true);snail.setOnGround(true);owner.setOnGround(true);h.assertTrue(level.getBlockState(fixture.flower()).is(Blocks.DANDELION),"Flower disappeared before walk selection");var scene=WalkScenes.select(d);h.assertTrue(scene!=null && scene.spots().size()==3,"Stationary owner permits all three friends to stop: scene="+scene+", d="+d.position()+", cat="+cat.position()+", snail="+snail.position()+", owner="+owner.position()+", initial="+fixture.ownerStart()+", rain="+level.isRaining()+", day="+level.getDayTime()+", monsters="+level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,d.getBoundingBox().inflate(10)).size());d.setNoAi(false);cat.setNoAi(false);snail.setNoAi(false);});
         h.runAfterDelay(180,()->{var scene=WalkScenes.current(d);h.assertTrue(scene!=null && WalkScenes.settled(d,scene) && WalkScenes.settled(cat,scene) && WalkScenes.settled(snail,scene),"Live friends must really approach, including snail: d="+d.position()+" cat="+cat.position()+" snail="+snail.position()+" scene="+scene);h.assertTrue(level.getBlockState(fixture.flower()).is(Blocks.DANDELION),"Flower is untouched");owner.moveTo(owner.getX()+4,owner.getY(),owner.getZ(),0,0);owner.setOnGround(true);});
         h.runAfterDelay(190,()->{h.assertTrue(WalkScenes.current(d)==null && d.activity()!=Activity.SIT && cat.activity()!=Activity.SIT,"Moving player cancels and releases movement goals");owner.discard();h.succeed();});
     }

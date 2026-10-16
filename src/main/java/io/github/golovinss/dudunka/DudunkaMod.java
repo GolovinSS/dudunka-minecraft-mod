@@ -37,6 +37,8 @@ public class DudunkaMod {
     public static final DeferredRegister<net.minecraft.world.level.levelgen.feature.Feature<?>> FEATURES=DeferredRegister.create(ForgeRegistries.FEATURES,ID);
     public static final DeferredRegister<net.minecraft.world.level.levelgen.structure.StructureType<?>> STRUCTURE_TYPES=DeferredRegister.create(net.minecraft.core.registries.Registries.STRUCTURE_TYPE,ID);
     public static final DeferredRegister<net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType> STRUCTURE_PIECES=DeferredRegister.create(net.minecraft.core.registries.Registries.STRUCTURE_PIECE,ID);
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.StructureType<ValeAdventureStructure>> VALE_ADVENTURE_TYPE=STRUCTURE_TYPES.register("vale_adventure_landmark",()->()->ValeAdventureStructure.CODEC);
+    public static final RegistryObject<net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType> VALE_ADVENTURE_PIECE=STRUCTURE_PIECES.register("vale_adventure_landmark",()->(context,tag)->new ValeAdventurePiece(tag));
     public static final RegistryObject<net.minecraft.world.level.levelgen.structure.StructureType<ForgottenArchStructure>> FORGOTTEN_ARCH_TYPE=STRUCTURE_TYPES.register("forgotten_mushroom_arch",()->()->ForgottenArchStructure.CODEC);
     public static final RegistryObject<net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType> FORGOTTEN_ARCH_PIECE=STRUCTURE_PIECES.register("forgotten_mushroom_arch",()->(context,tag)->new ForgottenArchPiece(tag));
     public static final RegistryObject<EntityType<ValeBenchSeat>> VALE_BENCH_SEAT=ENTITIES.register("vale_bench_seat",()->EntityType.Builder.<ValeBenchSeat>of(ValeBenchSeat::new,MobCategory.MISC).sized(.01f,.01f).clientTrackingRange(8).noSave().noSummon().build(ID+":vale_bench_seat"));
@@ -96,10 +98,13 @@ public class DudunkaMod {
         MushroomValeVegetation.register();
         MushroomValeDecor.register();
         MushroomValeLandmarks.register();
+        MushroomBellsPreview.register();
+        MushroomBellsStyledPreview.register();
         SOUNDS.register(bus); ENTITIES.register(bus); BLOCKS.register(bus); ITEMS.register(bus); BLOCK_ENTITIES.register(bus); TABS.register(bus); LOOT.register(bus); FEATURES.register(bus); STRUCTURE_TYPES.register(bus); STRUCTURE_PIECES.register(bus);
         bus.addListener(this::attributes);
         bus.addListener(this::spawnPlacements);
         AlbumNetwork.register();
+        ValeMusicNetwork.register();
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER,CONFIG);
     }
     private void attributes(EntityAttributeCreationEvent e) {

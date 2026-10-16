@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "bloom=0": {
+      "model": "dudunka:block/dance_flower_0"
+    },
+    "bloom=1": {
+      "model": "dudunka:block/dance_flower_1"
+    },
+    "bloom=2": {
+      "model": "dudunka:block/dance_flower_2"
+    },
+    "bloom=3": {
+      "model": "dudunka:block/dance_flower_3"
+    }
+  }
+}
