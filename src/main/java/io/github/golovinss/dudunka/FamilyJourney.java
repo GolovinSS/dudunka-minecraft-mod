@@ -60,7 +60,7 @@ public final class FamilyJourney {
         if (event.phase != TickEvent.Phase.END) return;
         for (var entry : List.copyOf(RELEASING.entrySet())) {
             var pending=entry.getValue();
-            if ((++pending.ticks >= 2 && pending.destination.areEntitiesLoaded(pending.chunk.toLong()))
+            if ((++pending.ticks >= 2 && entityTickingWithData(pending.destination,pending.chunk.getWorldPosition()))
                     || pending.ticks >= 20) {
                 RELEASING.remove(entry.getKey(),pending);
                 releaseTicket(pending);
@@ -77,7 +77,7 @@ public final class FamilyJourney {
                 finishPending(owner,pending,MushroomVale.TravelResult.ARRIVAL_UNSAFE);
                 continue;
             }
-            if (!pending.destination.areEntitiesLoaded(pending.chunk.toLong())) continue;
+            if (!entityTickingWithData(pending.destination,pending.chunk.getWorldPosition())) continue;
             PENDING.remove(owner);
             ACTIVE.add(owner);
             MushroomVale.TravelResult result;
@@ -143,7 +143,7 @@ public final class FamilyJourney {
         return new Eligibility(List.copyOf(chosen.values()), null, false);
     }
 
-    private static boolean canonical(ServerPlayer player, Companion mob) {
+    static boolean canonical(ServerPlayer player, Companion mob) {
         if (!mob.isAlive() || mob.isRemoved() || !mob.level().hasChunkAt(mob.blockPosition())
                 || !(mob.level() instanceof ServerLevel source) || source.getEntity(mob.getUUID()) != mob) return false;
         for (var level : player.server.getAllLevels()) {
@@ -152,6 +152,12 @@ public final class FamilyJourney {
         }
         var indexed = FamilyRegistry.get(player.server).member(mob.getUUID());
         return indexed == null || indexed.owner().equals(player.getUUID()) && indexed.kind() == mob.kind;
+    }
+
+    // Disk entity loading and active simulation are independent in Minecraft 1.20.1.
+    // A tracked FULL chunk may already have its entity data without ticking entities.
+    static boolean entityTickingWithData(ServerLevel level, BlockPos pos) {
+        return level.areEntitiesLoaded(new ChunkPos(pos).toLong()) && level.isPositionEntityTicking(pos);
     }
 
     private static boolean eligible(ServerPlayer player, Companion mob, BlockPos anchor) {
@@ -185,7 +191,8 @@ public final class FamilyJourney {
 
     // Entity.teleportTo(ServerLevel, ...) itself does not post Forge's dimension veto.
     // Keep native identity-preserving transfer, but explicitly honor that event in both directions.
-    private static boolean transfer(Companion mob, ServerLevel destination, Vec3 pos, float yaw, float pitch,
+    // Shared with command accompaniment; gateway planning and rollback remain separate.
+    static boolean transfer(Companion mob, ServerLevel destination, Vec3 pos, float yaw, float pitch,
                                     java.util.function.BooleanSupplier revalidate) {
         if (mob.level() != destination && !net.minecraftforge.common.ForgeHooks.onTravelToDimension(mob, destination.dimension())) return false;
         if (!revalidate.getAsBoolean()) return false;
@@ -236,15 +243,15 @@ public final class FamilyJourney {
         if (!check.ready() || !check.family().equals(family) || !MushroomVale.canTravel(player))
             return MushroomVale.TravelResult.FAMILY_INELIGIBLE;
         var arrivalChunk=new ChunkPos(landing);
-        if (!destination.areEntitiesLoaded(arrivalChunk.toLong())) {
+        if (!entityTickingWithData(destination,landing)) {
             if (retry==null) return MushroomVale.TravelResult.ARRIVAL_UNSAFE;
             if (PENDING.containsKey(player.getUUID())) return MushroomVale.TravelResult.PREPARING;
             var pending=new Pending(player,source,departure,destination,arrivalChunk,retry);
             destination.getChunkSource().addRegionTicket(JOURNEY_TICKET,arrivalChunk,2,player.getUUID());
             PENDING.put(player.getUUID(),pending);
-            LogUtils.getLogger().info("Preparing family journey arrival: owner={}, chunk={}, full={}, entityTicking={}",
+            LogUtils.getLogger().info("Preparing family journey arrival: owner={}, chunk={}, full={}, entitiesLoaded={}, entityTicking={}",
                     player.getUUID(),arrivalChunk,destination.getChunkSource().getChunkNow(arrivalChunk.x,arrivalChunk.z)!=null,
-                    destination.areEntitiesLoaded(arrivalChunk.toLong()));
+                    destination.areEntitiesLoaded(arrivalChunk.toLong()),destination.isPositionEntityTicking(landing));
             return MushroomVale.TravelResult.PREPARING;
         }
         var occupied = new ArrayList<AABB>();
@@ -260,12 +267,9 @@ public final class FamilyJourney {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue;
                     var column = landing.offset(dx, 0, dz);
                     var chunk = new ChunkPos(column);
-                    // The player's explicit entry synchronously prepares this destination
-                    // chunk to FULL before family planning. Entity ticking starts only
-                    // after a player arrives, so areEntitiesLoaded() rejects every
-                    // companion on the first trip into a cold dimension. FULL is enough
-                    // for safe block inspection and native entity insertion; no adjacent
-                    // chunks or tickets are needed.
+                    // Preparation above establishes entity data AND ticking for the
+                    // selected chunk. Keep every reserved landing inside that chunk;
+                    // block inspection must never request an adjacent chunk.
                     if (!chunk.equals(new ChunkPos(landing))
                             || destination.getChunkSource().getChunkNow(chunk.x, chunk.z) == null) {
                         reject(rejected, samples, column, "unloaded/outside arrival chunk"); examined++; continue;

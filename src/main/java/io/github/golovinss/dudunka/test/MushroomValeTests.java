@@ -776,6 +776,9 @@ public class MushroomValeTests {
         var companions = new ArrayList<Companion>();
         var snapshots = new HashMap<UUID, CompanionTravelSnapshot>();
         var arrival = new ArrivalFixture(h);
+        var releaseChunks=FamilyGatewayTests.keepTestEntitiesVisible(source,origin);
+        h.runAtTickTime(119,()->{companions.forEach(Entity::discard);cleanup(player);arrival.close();releaseChunks.run();});
+        FamilyGatewayTests.whenTestNeighborhoodTicks(h,source,origin,()->{
         try {
             for (var kind : Kind.values()) {
                 var companion = DudunkaMod.TYPES.get(kind).get().create(source);
@@ -819,8 +822,10 @@ public class MushroomValeTests {
             companions.forEach(Entity::discard);
             cleanup(player);
             arrival.close();
+            releaseChunks.run();
         }
         h.succeed();
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 40, batch = "isolated_vale_bookmarks")

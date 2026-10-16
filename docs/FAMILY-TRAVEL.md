@@ -12,7 +12,7 @@
 
 Настройка мира `familyCatchUp = true` в `dudunka-server.toml`; установите `false`, чтобы запретить перемещение. Обычное следование сохраняется. Чанки не загружаются принудительно, билетов нет.
 
-Это локальное догоняние уже загруженного персонажа. Оно не переносит через измерения. Отдельный явный семейный переход Stage 4.0 описан ниже; возврат через альбом описан в FAMILY-RECOVERY.md. Сюсю по-прежнему можно перевезти переноской. В полном BMC4 нужны проверки длительного путешествия, лестниц, леса, воды, границ чанков и сторонних опасных блоков.
+Это локальное догоняние уже загруженного персонажа. Оно не переносит через измерения. Отдельный явный семейный переход Stage 4.0 описан ниже; сопровождение vanilla `/tp` и `/teleport` описано в [FAMILY-TELEPORT.md](FAMILY-TELEPORT.md), возврат через альбом — в FAMILY-RECOVERY.md. Сюсю по-прежнему можно перевезти переноской. В полном BMC4 нужны проверки длительного путешествия, лестниц, леса, воды, границ чанков и сторонних опасных блоков.
 
 ## Stage 4.0: explicit family journeys
 
@@ -49,7 +49,9 @@ Non-colliding vegetation and leaves in the safety halo are allowed; tagged hazar
 fluids, unsafe floors, intersecting mod path hazards, collision, and occupied space
 remain rejected. Candidate failures log one bounded summary per rejected member,
 with reason counts and at most four position samples. No terrain edits, offline NBT
-recreation or automatic cross-dimensional following.
+recreation or ordinary tick-driven cross-dimensional following. Vanilla command
+accompaniment is a separate pre-departure/post-arrival operation documented in
+[FAMILY-TELEPORT.md](FAMILY-TELEPORT.md).
 
 Plan in server thread → revalidate → cancel transient goals/scenes/navigation →
 transfer Dudunka, Marusya, Syusya using native Entity.teleportTo → verify UUID and

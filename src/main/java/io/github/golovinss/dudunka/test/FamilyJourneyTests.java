@@ -20,6 +20,25 @@ import net.minecraftforge.gametest.*;
 @GameTestHolder("dudunka_journey")
 @PrefixGameTestTemplate(false)
 public final class FamilyJourneyTests {
+    private static final Set<Trip> OPEN = new HashSet<>();
+    private static void cleanup() { for(var trip:List.copyOf(OPEN))trip.close(); }
+    @AfterBatch(batch="isolated_journey_round_trip") public static void afterRoundTrip(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_command") public static void afterCommand(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_eligibility") public static void afterEligibility(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_solo") public static void afterSolo(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_no_space") public static void afterNoSpace(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_natural_terrain") public static void afterTerrain(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_member_veto") public static void afterMemberVeto(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_player_veto") public static void afterPlayerVeto(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_rollback_veto") public static void afterRollbackVeto(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_two_players") public static void afterTwoPlayers(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_join_veto") public static void afterJoinVeto(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_return_veto") public static void afterReturnVeto(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_revalidation") public static void afterRevalidation(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_conflicts") public static void afterConflicts(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_cold") public static void afterCold(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_cold_emergency_return") public static void afterColdReturn(ServerLevel level) { cleanup(); }
+    @AfterBatch(batch="isolated_journey_player_landing_change") public static void afterLandingChange(ServerLevel level) { cleanup(); }
     private static final List<String> STABLE = List.of("UUID", "FamilyOwner", "FamilyHome", "HomeDimension", "HomeMarker",
             "HomeMode", "Furniture", "FurnitureDimension", "Staying", "Trust", "GrowthTicks", "CustomName",
             "CharacterVariant", "NextCharacterVariant", "NoAI");
@@ -55,11 +74,15 @@ public final class FamilyJourneyTests {
             // Test-only visibility fixture, matching recovery_dimension. Production adds no tickets.
             keepVisible(f.level, new net.minecraft.world.level.ChunkPos(f.root));
             if (keepTargetVisible) keepVisible(arrival.vale, new net.minecraft.world.level.ChunkPos(0,0));
+            OPEN.add(this);
             h.runAtTickTime(1195, this::close);
         }
         void ready(GameTestHelper h, Runnable assertions) {
-            h.startSequence().thenWaitUntil(() -> h.assertTrue(arrival.vale.areEntitiesLoaded(0L) && ids.stream().allMatch(id -> f.level.getEntity(id) instanceof Companion),
-                    "Arrival entity sections must be visible before synchronous group travel"))
+            h.startSequence().thenWaitUntil(() -> h.assertTrue(arrival.vale.areEntitiesLoaded(0L)
+                    && arrival.vale.isPositionEntityTicking(new BlockPos(8,301,8)) && f.level.isPositionEntityTicking(f.root)
+                    && ids.stream().allMatch(id -> f.level.getEntity(id) instanceof Companion),
+                    "Entity sections ready before synchronous group travel: source="+GameTestChunkDiagnostics.describe(f.level,f.root)
+                    +"; target="+GameTestChunkDiagnostics.describe(arrival.vale,new BlockPos(8,301,8))))
                     .thenExecute(() -> { try { assertions.run(); } finally { close(); } }).thenSucceed();
         }
         Companion live(UUID id) {
@@ -83,7 +106,8 @@ public final class FamilyJourneyTests {
             unique(h, arrival.vale);
         }
         @Override public void close() { if (closed) return; closed=true; f.close(); arrival.close();
-            testTickets.forEach((level, chunks)->chunks.forEach(id->{var c=new net.minecraft.world.level.ChunkPos(id);level.setChunkForced(c.x,c.z,false);})); }
+            testTickets.forEach((level, chunks)->chunks.forEach(id->{var c=new net.minecraft.world.level.ChunkPos(id);level.setChunkForced(c.x,c.z,false);}));
+            OPEN.remove(this); }
     }
 
     private static int command(ServerPlayer player, String text) {
@@ -201,9 +225,11 @@ public final class FamilyJourneyTests {
 
     @GameTest(template="empty", timeoutTicks=1200, batch="isolated_journey_eligibility")
     public static void journeyRejectsMissingYoungDuplicateCarriedForeignTetheredMountedAndUnsafeMembers(GameTestHelper h) {
-        try (var t = new Trip(h)) {
+        var t = new Trip(h);
+        t.ready(h, () -> {
             var f = t.f; var mob = f.friends.get(2); var pos = mob.position();
-            h.assertTrue(FamilyJourney.inspect(f.owner, f.root).ready(), "Zero trust and no friendship still allow travel after awakening");
+            h.assertTrue(FamilyJourney.inspect(f.owner, f.root).ready(), "Zero trust and no friendship still allow travel after awakening: "
+                    +FamilyJourney.inspect(f.owner,f.root));
             mob.moveTo(pos.add(30,0,0));
             h.assertTrue(!FamilyJourney.inspect(f.owner,f.root).ready(), "Partial family never silently becomes solo");
             f.gateway().interact(f.owner); h.assertTrue(f.owner.serverLevel()==f.level, "Missing member blocks actual gate entry"); mob.moveTo(pos);
@@ -214,7 +240,8 @@ public final class FamilyJourneyTests {
             var duplicate=f.friend(Kind.SYUSYA,f.owner); duplicate.commandStay(f.owner,false);
             h.assertTrue(!FamilyJourney.inspect(f.owner,f.root).ready(), "Ambiguous kind rejected"); duplicate.discard();
             var token=UUID.randomUUID(); var ledger=CarrierLedger.get(f.owner.server); ledger.capture(mob.getUUID(),token,f.owner.getUUID());
-            h.assertTrue(!FamilyJourney.inspect(f.owner,f.root).ready(), "Carried/live conflict rejected"); ledger.consume(mob.getUUID(),token,f.owner.getUUID());
+            try {h.assertTrue(!FamilyJourney.inspect(f.owner,f.root).ready(), "Carried/live conflict rejected");}
+            finally {ledger.consume(mob.getUUID(),token,f.owner.getUUID());}
             var foreign=saved.copy();foreign.putUUID("FamilyOwner",UUID.randomUUID());mob.load(foreign);
             h.assertTrue(!FamilyJourney.inspect(f.owner,f.root).ready(), "Foreign companion cannot substitute for missing owned one");mob.load(saved);
             mob.setLeashedTo(f.owner,false); h.assertTrue(!FamilyJourney.inspect(f.owner,f.root).ready(),"Leash rejected");mob.dropLeash(false,false);
@@ -226,8 +253,7 @@ public final class FamilyJourneyTests {
             var remote=new BlockPos(2000000,160,2000000);int loaded=f.level.getChunkSource().getLoadedChunksCount();var forced=Set.copyOf(f.level.getForcedChunks());
             h.assertTrue(FamilyJourney.inspect(f.owner,remote).absent() && !f.level.hasChunkAt(remote)
                     && loaded==f.level.getChunkSource().getLoadedChunksCount() && forced.equals(f.level.getForcedChunks()),"Ordinary family checks never load or force chunks");
-        }
-        h.succeed();
+        });
     }
 
     @GameTest(template="empty", timeoutTicks=1200, batch="isolated_journey_solo")
@@ -427,8 +453,7 @@ public final class FamilyJourneyTests {
                     var chunk=t.arrival.vale.getChunkSource().getChunkNow(32,32);
                     h.assertTrue(chunk!=null && chunk.getFullStatus()==net.minecraft.server.level.FullChunkStatus.FULL,
                             "Cold destination blocks are available in a FULL chunk");
-                    long coldId=new net.minecraft.world.level.ChunkPos(32,32).toLong();
-                    boolean entityTicking=t.arrival.vale.areEntitiesLoaded(coldId);
+                    boolean entityTicking=t.arrival.vale.isPositionEntityTicking(new BlockPos(520,301,520));
                     h.assertTrue(!entityTicking,
                             "Fresh target chunk is FULL but not ENTITY_TICKING before family transfer");
                     var landing=new BlockPos(520,301,520);
@@ -459,9 +484,8 @@ public final class FamilyJourneyTests {
                 for(int y=301;y<=304;y++)overworld.setBlock(new BlockPos(x,y,z),Blocks.AIR.defaultBlockState(),18);
             }
             var chunk=overworld.getChunkSource().getChunkNow(32,32);
-            long chunkId=new net.minecraft.world.level.ChunkPos(32,32).toLong();
             h.assertTrue(chunk!=null && chunk.getFullStatus()==net.minecraft.server.level.FullChunkStatus.FULL
-                    && !overworld.areEntitiesLoaded(chunkId),"Emergency fixture uses a FULL, non-ticking return chunk");
+                    && !overworld.isPositionEntityTicking(new BlockPos(520,301,520)),"Emergency fixture uses a FULL, non-ticking return chunk");
             MushroomValeReturns.get(t.f.owner.server).remember(t.f.owner.getUUID(),
                     new MushroomValeReturns.ReturnPoint(Level.OVERWORLD.location(),new BlockPos(520,301,520),0,0));
             h.assertTrue(FamilyJourney.travel(t.f.owner,t.f.owner.blockPosition(),true,true)

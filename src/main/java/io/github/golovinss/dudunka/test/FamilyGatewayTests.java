@@ -129,7 +129,8 @@ public final class FamilyGatewayTests {
         void missing(String suffix) {
             var result = FamilyGatewayRules.inspect(level, root, owner.getUUID());
             h.assertTrue(!result.ready() && result.missing().getContents() instanceof TranslatableContents text
-                    && text.getKey().equals("message.dudunka.gateway." + suffix), "Exact private missing condition: " + suffix);
+                    && text.getKey().equals("message.dudunka.gateway." + suffix), "Exact private missing condition: " + suffix
+                    + ", actual=" + (result.ready() ? "ready" : result.missing()));
         }
         void finish(Runnable assertions) {
             h.runAfterDelay(FamilyGatewayRules.RITUAL_TICKS + 2, () -> {
@@ -327,6 +328,15 @@ public final class FamilyGatewayTests {
                     "Inserted cross-level duplicate must be visible before portal inspection"))
                     .thenExecute(()->{
                         try {
+                            var result=FamilyGatewayRules.inspect(f.level,f.root,f.owner.getUUID());
+                            var nearby=f.level.getEntitiesOfClass(Companion.class,new AABB(f.root).inflate(FamilyGatewayRules.RADIUS));
+                            for(var mob:family)h.assertTrue(f.level.getEntity(mob.getUUID())==mob && nearby.contains(mob),
+                                    "Original gateway family must remain visible during cross-level duplicate inspection: kind="+mob.kind
+                                            +", canonical="+(f.level.getEntity(mob.getUUID())==mob)+", nearby="+nearby.contains(mob)
+                                            +", alive="+mob.isAlive()+", removed="+mob.isRemoved()+", position="+mob.position()
+                                            +", entityTicking="+f.level.isPositionEntityTicking(mob.blockPosition())
+                                            +", duplicateVisible="+(vale.getEntity(duplicate[0].getUUID())==duplicate[0])
+                                            +", actual="+(result.ready()?"ready":result.missing()));
                             f.missing("duplicate");duplicate[0].discard();
                             h.assertTrue(FamilyGatewayRules.inspect(f.level,f.root,f.owner.getUUID()).ready(),
                                     "No live duplicate restores ordinary eligibility");
@@ -366,21 +376,53 @@ public final class FamilyGatewayTests {
         });
     }
 
+    // Entity fixtures must remain observable when GameTest batch insertion shifts chunk alignment.
+    static Runnable keepTestEntitiesVisible(ServerLevel level, BlockPos root) {
+        var center=new net.minecraft.world.level.ChunkPos(root);
+        var added=new ArrayList<net.minecraft.world.level.ChunkPos>();
+        for(int dx=-1;dx<=1;dx++) for(int dz=-1;dz<=1;dz++) {
+            var chunk=new net.minecraft.world.level.ChunkPos(center.x+dx,center.z+dz);
+            level.getChunk(chunk.x,chunk.z);
+            if(!level.getForcedChunks().contains(chunk.toLong())) {
+                level.setChunkForced(chunk.x,chunk.z,true); added.add(chunk);
+            }
+        }
+        return ()->added.forEach(c->level.setChunkForced(c.x,c.z,false));
+    }
+    static void whenTestNeighborhoodTicks(GameTestHelper h,ServerLevel level,BlockPos root,Runnable action) {
+        var center=new net.minecraft.world.level.ChunkPos(root);
+        for(int dx=-1;dx<=1;dx++) for(int dz=-1;dz<=1;dz++)
+            if(!level.isPositionEntityTicking(new BlockPos((center.x+dx)*16+8,root.getY(),(center.z+dz)*16+8))) {
+                h.runAfterDelay(1,()->whenTestNeighborhoodTicks(h,level,root,action)); return;
+            }
+        action.run();
+    }
+
     @GameTest(template="empty", timeoutTicks=200, batch="isolated_gateway_pose")
     public static void gatewayUsesExistingCharacterPosesAndCancelsWhenAFriendLeaves(GameTestHelper h) {
-        var f=new Fixture(h); f.place(); var family=f.family(f.owner,true);
+        var f=new Fixture(h);
+        var releaseChunks=keepTestEntitiesVisible(f.level,f.root);
+        h.runAtTickTime(195,releaseChunks);
+        whenTestNeighborhoodTicks(h,f.level,f.root,()->{
+        f.place(); var family=f.family(f.owner,true);
         for(var mob:family) mob.setNoAi(false);
         f.gateway().interact(f.owner);
         h.runAfterDelay(12,()->{
             try {
                 h.assertTrue(family.get(0).activity()==Activity.WAVE && family.get(1).activity()==Activity.PURR
                         && family.get(2).activity()==Activity.CURIOUS, "Each character performs an existing characteristic pose");
-                family.get(2).moveTo(f.root.getX()+20,f.root.getY(),f.root.getZ());
+                // Leave the eight-block ritual radius while staying inside the fixture's
+                // ticking 3x3 chunks for every GameTest batch/chunk alignment.
+                var departing=family.get(2);
+                departing.moveTo(f.root.getX()+FamilyGatewayRules.RADIUS+2,f.root.getY(),f.root.getZ());
+                h.assertTrue(f.level.getEntity(departing.getUUID())==departing,
+                        "Departing participant remains loaded so cancellation can release its pose");
                 FamilyGatewayEntity.tick(f.level,f.root,f.gateway().getBlockState(),f.gateway());
                 h.assertTrue(!f.gateway().awakening() && !f.gateway().awakened(f.owner.getUUID()), "A departing friend cancels without unlock");
                 for(var mob:family) h.assertTrue(!mob.portalPosing(), "Cancellation releases every pose");
                 h.succeed();
-            } finally { f.close(); }
+            } finally { f.close(); releaseChunks.run(); }
+        });
         });
     }
 
@@ -754,7 +796,8 @@ public final class FamilyGatewayTests {
 
     @GameTest(template="empty", timeoutTicks=200, batch="isolated_gateway_return_reload")
     public static void returnGatewayAndTwoPersonalBookmarksSurviveSerializationTogether(GameTestHelper h) {
-        try(var f=new Fixture(h);var arrival=new Arrival(f.owner)) {
+        // The suite layout can place a departure on a chunk edge, which safe return deliberately skips.
+        try(var f=new Fixture(h,true,195,true);var arrival=new Arrival(f.owner)) {
             var second=f.player(); var firstDeparture=f.owner.blockPosition(); var secondDeparture=second.blockPosition();
             h.assertTrue(!firstDeparture.equals(secondDeparture),"Players have distinct departure points");
             h.assertTrue(MushroomVale.enterPlayer(f.owner)==MushroomVale.TravelResult.ENTERED,"First entry succeeds");
